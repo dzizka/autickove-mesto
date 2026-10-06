@@ -169,10 +169,10 @@ for (const width of WIDTHS) {
   });
 }
 
-test("version-3 saves migrate to version 4 with the starter look", async () => {
+test("version-3 saves migrate to the current schema with the starter look", async () => {
   const page = await openGame(env.browser, env.server.url, { storage: { version: 3, coins: 33, scrap: 4, bagSize: 35 } });
   const s = await page.evaluate(() => window.__game.state.getState());
-  assert.equal(s.version, 4);
+  assert.equal(s.version, await page.evaluate(() => window.__game.state.CURRENT_VERSION));
   assert.equal(s.coins, 33);
   assert.equal(s.bagSize, 35);
   assert.equal(s.look.car, "sedan");

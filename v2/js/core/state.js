@@ -6,7 +6,7 @@ import { starterParts, emptyLootHistory } from "../systems/loot.js";
 import { defaultLook, defaultOwned } from "../systems/tuning.js";
 
 export const STORAGE_KEY = "autickove-mesto-v2";
-export const CURRENT_VERSION = 4;
+export const CURRENT_VERSION = 5;
 
 export function defaultState() {
   return {
@@ -32,6 +32,12 @@ export function defaultState() {
     // v4: appearance — chosen look (category → item id) and owned items per category.
     look: defaultLook(),
     owned: defaultOwned(),
+    // v5: set book (set id → slots found), beaten bosses (track → wins), eggs from bosses (part 5),
+    // legendary abilities seen at least once (for trophies in part 7).
+    setsFound: {},
+    bosses: {},
+    eggs: [],
+    legendariesFound: [],
   };
 }
 
@@ -60,6 +66,8 @@ const MIGRATIONS = {
   },
   // v3 → v4: appearance (filled from defaults: the red starter car, free items owned).
   3: (s) => ({ ...s, version: 4 }),
+  // v4 → v5: sets, bosses, eggs (filled from defaults).
+  4: (s) => ({ ...s, version: 5 }),
 };
 
 const isPlainObject = (v) => v !== null && typeof v === "object" && !Array.isArray(v);

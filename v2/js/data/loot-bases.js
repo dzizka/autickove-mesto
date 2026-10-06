@@ -21,8 +21,10 @@ export const LOOT = {
   guaranteeGoodRace: 1,
   guaranteeRareRace: 2,
   // Bad-luck counter for legendaries (§4.8): chance grows after every race without one.
-  legendaryBaseChance: 0.004,
-  legendaryPerRace: 0.012,
+  legendaryBaseChance: 0.002,
+  legendaryPerRace: 0.0025, // ≈ 90 % to see one within 50 races …
+  legendaryHardPity: 60, // … and surely by race 60 (2–3 hours of play)
+  setChance: 0.35, // an epic drop is a set piece this often (§4.7)
   bagStart: 30,
   bagMax: 60,
   bagStep: 5,

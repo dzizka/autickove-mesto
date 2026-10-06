@@ -4,6 +4,8 @@
 
 import { RACE } from "../../data/tracks.js";
 import { generateCourse, spawnFuelIfLow } from "./spawner.js";
+import { initAbilities, onGo, updateAbilities, absorbHit, coinValue, rampJump, pickStar } from "./abilities.js";
+import { createBossRival, updateBoss } from "./boss.js";
 
 const COUNTDOWN = 3; // seconds
 const PLAYER_LEN = 4.2;
@@ -21,8 +23,10 @@ const finite = (v, fallback = 0) => (Number.isFinite(v) ? v : fallback);
  * @param {object} o.effects  from systems/stats.raceEffects()
  * @param {object} o.rng      core/rng.js (random, int, pick)
  * @param {boolean} [o.short] test-menu short race
+ * @param {Set}     [o.abilities] legendary ability ids on the car
+ * @param {object}  [o.boss] entry of BOSSES for a boss race (one big rival instead of three)
  */
-export function createRace({ track, level, effects, rng, short = false }) {
+export function createRace({ track, level, effects, rng, short = false, abilities = new Set(), boss = null }) {
   const length = short ? RACE.shortLength : RACE.length;
   const rivalSpeed = (track.rivalBase + RACE.rivalLevelStep * (level - 1)) * RACE.baseSpeed;
   const grid = [
@@ -30,12 +34,14 @@ export function createRace({ track, level, effects, rng, short = false }) {
     { lane: 2, d: 8 },
     { lane: 1, d: 14 },
   ];
-  return {
+  const race = {
     track,
     level,
     length,
     effects,
     rng,
+    abilities: abilities instanceof Set ? abilities : new Set(abilities),
+    boss,
     phase: "countdown", // countdown | racing | finished
     countdown: COUNTDOWN,
     time: 0,
@@ -51,12 +57,13 @@ export function createRace({ track, level, effects, rng, short = false }) {
       turboT: 0,
       magnetT: 0,
       airT: 0,
+      airMax: track.airTime, // length of the current jump (for drawing)
       fuel: 1,
       coins: 0,
       hits: 0,
       finishTime: null,
     },
-    rivals: RACE.rivals.map((r, i) => ({
+    rivals: boss ? [createBossRival(boss, track, level, rng)] : RACE.rivals.map((r, i) => ({
       name: r.name,
       color: r.color,
       lane: grid[i].lane,
@@ -72,6 +79,8 @@ export function createRace({ track, level, effects, rng, short = false }) {
     place: null,
     events: [],
   };
+  initAbilities(race);
+  return race;
 }
 
 /** Change lane by -1 (left) or +1 (right). */
@@ -100,12 +109,17 @@ export function step(race, dt) {
     if (race.countdown <= 0) {
       race.phase = "racing";
       race.events.push({ type: "go" });
+      onGo(race);
     }
     return;
   }
   race.time += dt;
-  if (race.phase === "racing") updatePlayer(race, dt);
+  if (race.phase === "racing") {
+    updatePlayer(race, dt);
+    updateAbilities(race, dt);
+  }
   updateRivals(race, dt);
+  updateBoss(race, dt);
   updateTraffic(race, dt);
   if (race.phase === "racing") {
     collide(race);
@@ -144,7 +158,7 @@ function updatePlayer(race, dt) {
 }
 
 function laneBlocked(race, lane, d, ahead) {
-  return race.objects.some((o) => SOLID.has(o.kind) && !o.hit && Math.abs(o.x - lane) < 0.6 && o.d > d - 3 && o.d < d + ahead);
+  return race.objects.some((o) => SOLID.has(o.kind) && !o.hit && o.warn <= 0 && Math.abs(o.x - lane) < 0.6 && o.d > d - 3 && o.d < d + ahead);
 }
 
 function updateRivals(race, dt) {
@@ -157,14 +171,15 @@ function updateRivals(race, dt) {
     r.d += r.speed * dt;
     // dodge obstacles and traffic ahead, and make room for the player coming from behind
     // (rivals are never solid for the player: bumping into them would only frustrate)
-    const playerBehind = race.phase === "racing" && Math.abs(p.x - r.lane) < 0.6 && p.d < r.d && r.d - p.d < 12 && p.speed > r.speed;
-    if (laneBlocked(race, r.lane, r.d, 18) || playerBehind) {
+    const playerBehind = !r.isBoss && race.phase === "racing" && Math.abs(p.x - r.lane) < 0.6 && p.d < r.d && r.d - p.d < 12 && p.speed > r.speed;
+    if (!r.isBoss && (laneBlocked(race, r.lane, r.d, 18) || playerBehind)) {
       const options = [r.lane - 1, r.lane + 1].filter((l) => l >= 0 && l < RACE.lanes && !laneBlocked(race, l, r.d, 18));
       if (options.length) r.lane = options[Math.floor(race.rng.random() * options.length)];
     }
     r.x += (r.lane - r.x) * Math.min(1, dt * 6);
     for (const o of race.objects) {
-      if (SOLID.has(o.kind) && !o.hit && Math.abs(o.x - r.x) < 0.5 && Math.abs(o.d - r.d) < 2.5 && r.slowT <= 0) r.slowT = 1;
+      if (r.isBoss) break; // the boss rolls over everything
+      if (SOLID.has(o.kind) && !o.hit && o.warn <= 0 && Math.abs(o.x - r.x) < 0.5 && Math.abs(o.d - r.d) < 2.5 && r.slowT <= 0) r.slowT = 1;
     }
     if (r.finishTime === null && r.d >= race.length) r.finishTime = race.time;
     // overtakes (only while the player races)
@@ -207,7 +222,7 @@ function collide(race) {
       }
       if (touching || (o.pulled && dx < 0.25 && dd < 1.5)) {
         o.taken = true;
-        p.coins += o.value;
+        p.coins += coinValue(race, o.value);
         race.events.push({ type: "coin", pulled: o.pulled });
       }
     } else if (o.kind === "powerup" || o.kind === "fuel") {
@@ -222,13 +237,17 @@ function collide(race) {
         if (o.value === "magnet") p.magnetT = MAGNET_TIME;
         race.events.push({ type: "powerup", id: o.value });
       }
+    } else if (o.kind === "star") {
+      if (!touching) continue;
+      o.taken = true;
+      pickStar(race);
     } else if (o.kind === "ramp") {
       if (touching && p.airT <= 0) {
         o.taken = true;
-        p.airT = race.track.airTime;
+        p.airT = p.airMax = rampJump(race);
         race.events.push({ type: "jump" });
       }
-    } else if (touching && p.airT <= 0) {
+    } else if (touching && p.airT <= 0 && o.warn <= 0 && race.ab.ghostT <= 0) {
       hitSolid(race, o);
     }
   }
@@ -244,6 +263,7 @@ function hitSolid(race, o) {
     race.events.push({ type: "smash" });
     return;
   }
+  if (absorbHit(race)) return;
   if (p.shields > 0) {
     p.shields--;
     race.events.push({ type: "shield" });
@@ -266,7 +286,7 @@ function checkFinish(race) {
 
 /** Final order for the podium: [{ name, color, isPlayer }] best first. */
 export function finalOrder(race) {
-  const rows = race.rivals.map((r) => ({ name: r.name, color: r.color, isPlayer: false, t: r.finishTime ?? Infinity, d: r.d }));
+  const rows = race.rivals.map((r) => ({ name: r.name, color: r.color, icon: r.icon || null, isBoss: !!r.isBoss, isPlayer: false, t: r.finishTime ?? Infinity, d: r.d }));
   rows.push({ name: "Ty", color: null, isPlayer: true, t: race.player.finishTime ?? Infinity, d: race.player.d });
   return rows.sort((a, b) => a.t - b.t || b.d - a.d);
 }

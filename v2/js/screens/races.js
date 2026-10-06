@@ -6,7 +6,8 @@ import { speak, sfx } from "../core/audio.js";
 import { startGame } from "../core/router.js";
 import { TRACKS, MEDALS, RACE } from "../data/tracks.js";
 import { carStats, carPower, recommendedPower, difficulty } from "../systems/stats.js";
-import { trackProgress, isTrackUnlocked, isLevelUnlocked, CHALLENGE_RACES } from "../systems/progress.js";
+import { trackProgress, isTrackUnlocked, isLevelUnlocked, CHALLENGE_RACES, isBossReady, bossWins } from "../systems/progress.js";
+import { BOSSES } from "../data/bosses.js";
 import { statPanel, powerBadge } from "./stat-panel.js";
 
 const LIGHT = { green: "🟢", yellow: "🟡", red: "🔴" };
@@ -116,7 +117,32 @@ export default {
 
       const segs = [];
       for (let i = 0; i < CHALLENGE_RACES; i++) segs.push(h("i", { class: i < prog.challenge ? "on" : "" }));
-      challenge.replaceChildren(h("span", { class: "challenge-segs" }, segs), h("span", { class: "challenge-boss locked", "aria-hidden": "true" }, "👑"));
+      const boss = BOSSES.find((b) => b.track === selected.track);
+      const ready = isBossReady(selected.track);
+      const wins = bossWins(selected.track);
+      const bossBtn = h(
+        "button",
+        {
+          class: `boss-btn${ready ? " ready" : ""}`,
+          "data-testid": "boss-start",
+          "data-ready": String(ready),
+          "aria-label": boss.name,
+          onclick: () => {
+            if (!ready) {
+              sfx.oops();
+              speak(`${boss.name} príde, keď naplníš pruh. Jazdi preteky na tejto trati.`);
+              return;
+            }
+            sfx.tap();
+            startGame("race", selected.track, selected.level, "boss");
+          },
+        },
+        h("span", { class: "boss-face", "aria-hidden": "true" }, boss.icon),
+        h("span", { class: "boss-crown", "aria-hidden": "true" }, "👑"),
+        wins > 0 && h("span", { class: "boss-wins", "aria-hidden": "true" }, "✔"),
+      );
+      challenge.replaceChildren(h("span", { class: "challenge-segs" }, segs), bossBtn);
+      if (ready) speak(`${boss.name} ťa čaká! Ťukni na neho.`, { interrupt: false });
     }
 
     function paint() {

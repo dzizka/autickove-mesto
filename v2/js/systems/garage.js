@@ -5,7 +5,7 @@ import { emit } from "../core/events.js";
 import { SLOTS, STAT_IDS } from "../data/stats.js";
 import { LOOT, PART_BASES } from "../data/loot-bases.js";
 import { partStats, carStats, carPower, raceEffects, recommendedPower } from "./stats.js";
-import { rarityIndex, rarityDef, generateDrops } from "./loot.js";
+import { rarityIndex, rarityDef, generateDrops, generateBossPrize } from "./loot.js";
 import { TRACKS } from "../data/tracks.js";
 import * as rng from "../core/rng.js";
 import { spendCoins, canAfford } from "./economy.js";
@@ -41,7 +41,10 @@ export function addParts(parts) {
   let scrap = 0;
   update((s) => {
     for (const p of parts) {
-      if (s.inventory.length < s.bagSize) {
+      if (p.set) s.setsFound[p.set] = [...new Set([...(s.setsFound[p.set] || []), p.slot])];
+      if (p.legendary && !s.legendariesFound.includes(p.legendary)) s.legendariesFound.push(p.legendary);
+      if (s.inventory.length < s.bagSize || p.rarity === "legendary") {
+        // a legendary never gets scrapped because the bag is full
         s.inventory.push({ ...p, isNew: true });
         kept.push(p);
       } else {
@@ -195,9 +198,10 @@ export function expandBag() {
  * Chest after a race (DESIGN-v2 §4.5): 3/2/1/1 parts by place, quality by track level
  * and luck, with the first-race guarantees and the bad-luck counter.
  */
-export function grantRaceLoot({ track, level, place }) {
+export function grantRaceLoot({ track, level, place, bossWin = false }) {
   const trackIndex = Math.max(0, TRACKS.findIndex((t) => t.id === track));
-  const count = LOOT.dropsByPlace[Math.max(0, Math.min(3, (place || 4) - 1))];
+  // a boss win: the sure epic (or legendary) prize plus two normal parts
+  const count = bossWin ? 2 : LOOT.dropsByPlace[Math.max(0, Math.min(3, (place || 4) - 1))];
   const { parts, history } = generateDrops({
     count,
     budget: recommendedPower(track, level) * LOOT.partBudgetShare,
@@ -207,9 +211,15 @@ export function grantRaceLoot({ track, level, place }) {
     rng,
     history: getState().loot,
   });
+  let hist = history;
+  if (bossWin) {
+    const prize = generateBossPrize({ budget: recommendedPower(track, level) * LOOT.partBudgetShare, rng, history: hist });
+    hist = prize.history;
+    parts.unshift(prize.part);
+  }
   update((s) => {
-    s.loot = history;
+    s.loot = hist;
   });
   const { kept, scrapped, scrap } = addParts(parts);
-  return { parts, kept, scrapped, scrap };
+  return { parts, kept, scrapped, scrap, bossPrize: bossWin ? parts[0] : null };
 }

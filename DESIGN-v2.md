@@ -76,9 +76,10 @@ v2/
 │   │                       # settings.js test-menu.js topbar.js soon.js („ešte sa stavia“)
 │   │                       # races.js (výber trate a úrovne), stat-panel.js (pruhy štatistík, sila auta)
 │   │                       # part-card.js (karta dielu, detail s porovnaním), chest.js (truhlica po pretekoch)
+│   │                       # set-book.js (kniha setov)
 │   └── games/
 │       ├── demo/           # skúšobná jazda len z testovacieho menu (overuje slučku a odmeny)
-│       ├── race/           # index.js  track.js  spawner.js  physics.js  draw.js  hud.js  boss.js
+│       ├── race/           # index.js  track.js  spawner.js  physics.js  draw.js  hud.js  boss.js  abilities.js (legendárne schopnosti)
 │       └── coloring/       # index.js  free-paint.js  by-number.js  brush.js
 └── tests/                  # Playwright testy (bod 10): node --test, package.json, helpers.mjs
 ```
@@ -168,6 +169,7 @@ Každá schopnosť má vlastný zvuk a efekt, aby ju dieťa spoznalo.
 
 - **Koniec pretekov:** truhlica, ktorá sa otvorí s animáciou. 1. miesto dá 3 diely, 2. miesto 2, 3. a 4. miesto 1. Vzácnosť závisí od úrovne trate a od šťastia.
 - **Bossovia:** každá trať má svojho bossa: Kráľ ciest (Mesto), Medveď Drevorubač (Les), Škorpión (Púšť), Snežný Yeti (Sneh), Netopier (Noc) a Ufo (Vesmír). Boss príde po naplnení „pruhu výziev“ (3 preteky na trati). Je väčší, má vlastnú hudbu a niečo hádže na cestu. Výhra nad ním dá istý epický diel, malú šancu na legendárny a vajíčko s kamarátom (bod 6).
+- **Boss podrobnejšie:** pred dopadom hodenej veci svieti na ceste červený terč a vždy ostane voľný pruh. Boss je o niečo pomalší než najrýchlejší súper úrovne, aby ho auto s 🟢 isto porazilo. Po výhre sa pruh výziev vyprázdni a k istému dielu pribudnú 2 obyčajné diely. Prehra nič nezoberie: dieťa dostane mince a diel a pruh ostane plný na ďalší pokus.
 
 ### 4.6 Garáž
 
@@ -182,7 +184,7 @@ Každá schopnosť má vlastný zvuk a efekt, aby ju dieťa spoznalo.
 
 ### 4.7 Sety
 
-Sú 4 sety po 3 dieloch: **Policajný, Hasičský, Vesmírny, Džungľa**. Pri 2 dieloch zo setu sa zapne malý bonus, pri 3 veľký bonus a zvláštny vzhľad (napr. siréna na streche, plamene za autom). V Garáži je kniha setov, kde sa nájdené diely odfarbia.
+Sú 4 sety po 3 dieloch: **Policajný, Hasičský, Vesmírny, Džungľa**. Diel zo setu je epický: padne ako každý tretí epický diel z truhlice (35 %) a ako polovica istých dielov od bossov. Pri 2 dieloch zo setu sa zapne malý bonus, pri 3 veľký bonus a zvláštny vzhľad (napr. siréna na streche, plamene za autom). V Garáži je kniha setov, kde sa nájdené diely odfarbia.
 
 ### 4.8 Vyváženie
 

@@ -141,3 +141,36 @@ export function unlockAllTracks() {
     }
   });
 }
+
+// ---------- bosses (DESIGN-v2 §4.5) ----------
+
+/** The boss comes when the challenge bar of a track is full. */
+export function isBossReady(trackId, s = getState()) {
+  return isTrackUnlocked(trackId, s) && trackProgress(trackId, s).challenge >= CHALLENGE_RACES;
+}
+
+export function bossWins(trackId, s = getState()) {
+  return s.bosses?.[trackId] || 0;
+}
+
+/** After a boss race: a win empties the challenge bar and counts the win; a loss keeps the bar full. */
+export function recordBoss({ track, bossWin }) {
+  if (!TRACK_ORDER.includes(track)) return;
+  update((s) => {
+    const p = trackProgress(track, s);
+    if (bossWin) {
+      p.challenge = 0;
+      s.bosses[track] = (s.bosses[track] || 0) + 1;
+    } else {
+      p.challenge = CHALLENGE_RACES;
+    }
+    s.races.tracks[track] = p;
+  });
+}
+
+/** Test menu: fill every challenge bar. */
+export function readyAllBosses() {
+  update((s) => {
+    for (const id of TRACK_ORDER) s.races.tracks[id] = { ...trackProgress(id, s), challenge: CHALLENGE_RACES };
+  });
+}

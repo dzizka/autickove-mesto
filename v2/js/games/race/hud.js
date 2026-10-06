@@ -11,7 +11,7 @@ const PLAYER_COLOR = "#ff5a5f";
 
 export function createHud(root, race, { onExit }) {
   const markers = [
-    ...race.rivals.map((r) => h("span", { class: "rh-dot", style: { background: r.color } })),
+    ...race.rivals.map((r) => (r.isBoss ? h("span", { class: "rh-dot boss", style: { background: r.color } }, r.icon) : h("span", { class: "rh-dot", style: { background: r.color } }))),
     h("span", { class: "rh-dot me", style: { background: PLAYER_COLOR } }, "🚗"),
   ];
   const track = h("div", { class: "rh-track" }, h("span", { class: "rh-flag", "aria-hidden": "true" }, "🏁"), markers);
@@ -86,6 +86,7 @@ export function showPodium(root, order, { place, unlocks, look }) {
       "div",
       { class: `pd-step pd-${i + 1}${row.isPlayer ? " me" : ""}` },
       row.isPlayer && h("div", { class: "pd-crown", "aria-hidden": "true" }, i === 0 ? "👑" : "⭐"),
+      row.isBoss && h("div", { class: "pd-crown boss", "aria-hidden": "true" }, row.icon),
       h("div", { class: "pd-car" }, car),
       h("div", { class: "pd-block" }, MEDALS[i]),
     );

@@ -5,12 +5,13 @@ import { h, confirm, toast } from "../core/ui.js";
 import { speak, sfx } from "../core/audio.js";
 import { getState } from "../core/state.js";
 import { SLOTS } from "../data/stats.js";
-import { carStats, carPower } from "../systems/stats.js";
+import { carStats, carPower, activeSetBonuses, setLook } from "../systems/stats.js";
 import { partPower, compareToEquipped, equipBest, dismantleableLow, dismantleLow, bagPrice, expandBag } from "../systems/garage.js";
 import { canAfford } from "../systems/economy.js";
 import { carSide } from "../render/car-side.js";
 import { getLook } from "../systems/tuning.js";
 import { partCard, openPartDetail } from "./part-card.js";
+import { openSetBook } from "./set-book.js";
 import { statPanel, powerBadge } from "./stat-panel.js";
 
 let filter = "all";
@@ -50,7 +51,7 @@ export default {
         "div",
         { class: "lift card" },
         h("div", { class: "lift-slots left" }, SLOTS.slice(0, 3).map(slotBtn)),
-        h("div", { class: "lift-car" }, carSide(getLook()), h("div", { class: "lift-post", "aria-hidden": "true" })),
+        h("div", { class: "lift-car" }, carSide({ ...getLook(), ...setLook() }), h("div", { class: "lift-post", "aria-hidden": "true" })),
         h("div", { class: "lift-slots right" }, SLOTS.slice(3).map(slotBtn)),
       );
 
@@ -76,6 +77,8 @@ export default {
           "✨ Najlepšie",
         ),
         h("div", { class: "scrap", "data-testid": "scrap", "aria-label": "Súčiastky" }, "🔩 ", String(s.scrap)),
+        h("button", { class: "btn small sky", "data-testid": "open-sets", "aria-label": "Kniha setov", onclick: openSetBook }, "📖"),
+        ...activeSetBonuses().map((b) => h("span", { class: `set-badge${b.pieces >= 3 ? " full" : ""}`, style: { "--set": b.set.color }, "data-testid": `active-set-${b.set.id}` }, b.set.icon, " ", String(b.pieces))),
       );
 
       const bagFill = Math.min(100, (s.inventory.length / s.bagSize) * 100);

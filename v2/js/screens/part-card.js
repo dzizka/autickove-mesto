@@ -6,6 +6,8 @@ import { h, modal, closeModal, confirm, toast } from "../core/ui.js";
 import { speak, sfx } from "../core/audio.js";
 import { getState } from "../core/state.js";
 import { STATS, STAT_IDS, SLOTS } from "../data/stats.js";
+import { SETS } from "../data/sets.js";
+import { LEGENDARIES } from "../data/legendaries.js";
 import { partStats } from "../systems/stats.js";
 import { rarityDef, rarityIndex } from "../systems/loot.js";
 import { partPower, partIcon, compareToEquipped, findPart, equip, dismantle, upgrade, upgradeCost, canUpgrade, toggleLock, markSeen, scrapValue } from "../systems/garage.js";
@@ -33,6 +35,7 @@ export function partCard(part, { onClick, compare = true, testId } = {}) {
     part.isNew && h("span", { class: "pc-new" }, "NOVÉ"),
     part.locked && h("span", { class: "pc-lock", "aria-hidden": "true" }, "🔒"),
     part.legendary && h("span", { class: "pc-spark", "aria-hidden": "true" }, "✨"),
+    part.set && h("span", { class: "pc-set", "aria-hidden": "true" }, SETS.find((x) => x.id === part.set)?.icon || ""),
   );
 }
 
@@ -148,6 +151,8 @@ export function openPartDetail(uid, { onChange } = {}) {
         h("div", {}, h("div", { class: "pd-rarity" }, r.name), h("div", { class: "pd-stars", "aria-hidden": "true" }, "⭐".repeat(part.plus || 0) || "·"), h("div", { class: "pd-power" }, "💪 ", String(partPower(part)), inBag && mounted ? h("span", { class: "pd-vs" }, ` / ${partPower(mounted)}`) : "")),
         cmp !== 0 && h("span", { class: `pd-arrow ${cmp > 0 ? "up" : "down"}`, "aria-hidden": "true" }, ARROW[cmp]),
       ),
+      part.legendary && h("div", { class: "pd-ability", "data-testid": "part-ability" }, h("span", { "aria-hidden": "true" }, LEGENDARIES.find((l) => l.id === part.legendary)?.icon || "✨"), " ", LEGENDARIES.find((l) => l.id === part.legendary)?.name || ""),
+      part.set && h("div", { class: "pd-set" }, SETS.find((x) => x.id === part.set)?.icon, " ", SETS.find((x) => x.id === part.set)?.name || ""),
       inBag && mounted && h("div", { class: "cmp-legend", "aria-hidden": "true" }, h("span", { class: "leg-old" }, partIcon(mounted)), " → ", h("span", { class: "leg-new" }, partIcon(part))),
       h("div", { class: "cmp" }, compareRows(part, inBag ? mounted : part)),
       h("div", { class: "pd-actions" }, actions),
@@ -155,6 +160,8 @@ export function openPartDetail(uid, { onChange } = {}) {
     ],
     { className: "part-modal", testId: "part-detail" },
   );
-  if (!inBag) speak("Toto máš namontované.");
+  const leg = LEGENDARIES.find((l) => l.id === part.legendary);
+  if (leg) speak(`Legendárny diel! ${leg.name}.`);
+  else if (!inBag) speak("Toto máš namontované.");
   else speak(cmp > 0 ? `${RARITY_SAY[rarityIndex(part.rarity)]} Je lepší ako ten v aute!` : cmp < 0 ? "Tento diel je slabší ako ten v aute." : RARITY_SAY[rarityIndex(part.rarity)]);
 }

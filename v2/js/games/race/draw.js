@@ -57,7 +57,7 @@ export function drawObjects(g, L, race, time) {
       g.scale(w, 1);
       drawEmoji(g, "🪙", 0, 0, size * 0.62);
       g.restore();
-    } else if (o.kind === "powerup" || o.kind === "fuel") {
+    } else if (o.kind === "powerup" || o.kind === "fuel" || o.kind === "star") {
       const pulse = 1 + 0.1 * Math.sin(time * 6 + o.id);
       g.fillStyle = o.kind === "fuel" ? "rgba(255,140,66,.35)" : "rgba(255,255,255,.45)";
       g.beginPath();
@@ -68,6 +68,15 @@ export function drawObjects(g, L, race, time) {
       const fly = o.hit ? Math.min(1, o.fly / 0.6) : 0;
       if (fly >= 1) continue;
       drawCarTop(g, { traffic: true, colorHex: safeColor(o.color, "#cccccc") }, x + o.spin * fly * L.laneW, y - fly * 40, L.laneW * 0.5, { angle: o.spin * fly * 1.5 });
+    } else if (o.warn > 0) {
+      // boss throw on its way down: a pulsing target where it will land
+      const k = Math.min(1, o.warn / 1.2);
+      g.strokeStyle = `rgba(255,60,60,${0.5 + 0.4 * Math.sin(time * 14)})`;
+      g.lineWidth = 4;
+      g.beginPath();
+      g.ellipse(x, y, size * 0.6, size * 0.35, 0, 0, 6.29);
+      g.stroke();
+      drawEmoji(g, o.icon, x, y - k * L.laneW * 2.2, size * (1 + k * 0.6));
     } else {
       const fly = o.hit ? Math.min(1, o.fly / 0.6) : 0;
       if (fly >= 1) continue;
@@ -82,8 +91,16 @@ export function drawObjects(g, L, race, time) {
 
   for (const r of race.rivals) {
     const y = distToY(L, r.d, pd);
-    if (!visible(L, y)) continue;
-    drawCarTop(g, { colorHex: safeColor(r.color, "#2f80ed") }, laneToX(L, r.x), y, L.laneW * 0.46, { angle: (r.lane - r.x) * 0.25 });
+    if (!visible(L, y, 140)) continue;
+    const x = laneToX(L, r.x);
+    if (r.isBoss) {
+      // the boss is big, wobbles and wears its face on the roof
+      const bw = L.laneW * 0.82;
+      drawCarTop(g, { colorHex: safeColor(r.color, "#ffd23f") }, x, y, bw, { angle: Math.sin(time * 3) * 0.06 });
+      drawEmoji(g, r.icon, x, y, bw * 0.75);
+    } else {
+      drawCarTop(g, { colorHex: safeColor(r.color, "#2f80ed") }, x, y, L.laneW * 0.46, { angle: (r.lane - r.x) * 0.25 });
+    }
   }
 }
 
@@ -95,7 +112,7 @@ export function drawPlayer(g, L, race, time, fx = {}, dt = 1 / 60) {
   const p = race.player;
   const x = laneToX(L, p.x);
   const y = L.playerY;
-  const air = p.airT > 0 ? Math.sin(Math.min(1, 1 - p.airT / race.track.airTime) * Math.PI) : 0;
+  const air = p.airT > 0 ? Math.sin(Math.max(0, Math.min(1, 1 - p.airT / (p.airMax || race.track.airTime))) * Math.PI) : 0;
   const scale = 1 + air * 0.35;
   const w = L.laneW * 0.48 * scale;
   const tilt = Math.max(-0.35, Math.min(0.35, finite(p.vx) * 0.06));
@@ -125,7 +142,18 @@ export function drawPlayer(g, L, race, time, fx = {}, dt = 1 / 60) {
     drawTrail(g, fx.trail);
   }
   if (fx.neon) drawNeon(g, fx.neon, x, y - air * 20, w * 0.85, w * 1.2, time);
+  const ghost = race.ab?.ghostT > 0;
+  if (ghost) g.globalAlpha = 0.4 + 0.2 * Math.sin(time * 20);
   drawCarTop(g, fx.look || "#ff5a5f", x, y - air * 20, w, { angle: tilt + wobble });
+  g.globalAlpha = 1;
+  // a legendary part shows as a small spark on the car (DESIGN-v2 §4.2)
+  if (fx.sparkle) drawEmoji(g, "✨", x + w * 0.45, y - w * 0.9 - air * 20, w * 0.35, 0.6 + 0.4 * Math.sin(time * 5));
+  // ability popups rise above the car
+  for (const pop of fx.popups || []) {
+    pop.t += dt;
+    drawEmoji(g, pop.icon, x, y - w * 1.2 - pop.t * 60, w * 0.8, Math.max(0, 1 - pop.t / 1.2));
+  }
+  if (fx.popups) fx.popups = fx.popups.filter((pop) => pop.t < 1.2);
 
   // Odolnosť is visible: one bubble ring per shield around the car.
   for (let i = 0; i < Math.min(6, p.shields); i++) {

@@ -11,7 +11,7 @@ export function makeObject(kind, { lane, d, icon = "", color = "#ffffff", len = 
   const l = Math.max(0, Math.min(RACE.lanes - 1, Math.round(Number(lane) || 0)));
   return {
     id: nextId++,
-    kind, // obstacle | traffic | coin | powerup | ramp | fuel
+    kind, // obstacle | traffic | coin | powerup | ramp | fuel | star
     lane: l,
     x: l, // lane position (float, changes for traffic and pulled coins)
     d: Number.isFinite(d) ? d : 0, // distance along the track (metres, centre)
@@ -25,6 +25,8 @@ export function makeObject(kind, { lane, d, icon = "", color = "#ffffff", len = 
     fly: 0, // seconds since smashed, for the fly-away animation
     spin: 0,
     pulled: false, // pulled by the magnet
+    warn: 0, // boss throws: seconds until it lands (not solid before)
+    springSeen: false, // counted by the Springs legendary
   };
 }
 

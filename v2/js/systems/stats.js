@@ -4,6 +4,7 @@
 import { STATS, STAT_IDS, EFFECTS } from "../data/stats.js";
 import { RACE, TRACKS } from "../data/tracks.js";
 import { getState } from "../core/state.js";
+import { SETS } from "../data/sets.js";
 
 const num = (v) => (Number.isFinite(v) ? v : 0);
 
@@ -19,12 +20,38 @@ export function partStats(part) {
   return out;
 }
 
-/** Total stats of the car from equipped parts. */
+/** How many parts of each set are mounted: { police: 2, … }. */
+export function setCounts(equipped = getState().car.equipped) {
+  const out = {};
+  for (const part of Object.values(equipped || {})) if (part?.set) out[part.set] = (out[part.set] || 0) + 1;
+  return out;
+}
+
+/** Active set bonuses: [{ set, pieces, bonus }] (3 pieces → big bonus instead of the small one). */
+export function activeSetBonuses(equipped = getState().car.equipped) {
+  const counts = setCounts(equipped);
+  return SETS.filter((st) => (counts[st.id] || 0) >= 2).map((st) => ({ set: st, pieces: counts[st.id], bonus: counts[st.id] >= 3 ? st.bonus3 : st.bonus2 }));
+}
+
+/** Legendary abilities on mounted parts (DESIGN-v2 §4.4). */
+export function carAbilities(equipped = getState().car.equipped) {
+  return new Set(Object.values(equipped || {}).map((p) => p?.legendary).filter(Boolean));
+}
+
+/** Look overrides from complete sets (siren, flames behind the car, …). */
+export function setLook(equipped = getState().car.equipped) {
+  return Object.assign({}, ...activeSetBonuses(equipped).filter((b) => b.pieces >= 3).map((b) => b.set.look));
+}
+
+/** Total stats of the car: equipped parts plus set bonuses (crew buddy joins in part 5). */
 export function carStats(equipped = getState().car.equipped) {
   const total = Object.fromEntries(STAT_IDS.map((id) => [id, 0]));
   for (const part of Object.values(equipped || {})) {
     const ps = partStats(part);
     for (const id of STAT_IDS) total[id] += ps[id];
+  }
+  for (const { bonus } of activeSetBonuses(equipped)) {
+    for (const b of bonus) if (b.stat in total) total[b.stat] = total[b.stat] * (1 + (b.pct || 0)) + (b.flat || 0);
   }
   for (const id of STAT_IDS) total[id] = Math.round(total[id]);
   return total;
@@ -50,10 +77,14 @@ export function statBarFill(statId, value) {
   return Math.max(0, Math.min(1, (num(value) - lo) / (bars[lit] - lo)));
 }
 
-/** Race effects derived from stats. All values finite by construction. */
-export function raceEffects(stats = carStats()) {
+/**
+ * Race effects derived from stats and legendary abilities. All values finite by construction.
+ * Abilities that change numbers live here; abilities with events live in games/race/abilities.js.
+ */
+export function raceEffects(stats = carStats(), abilities = new Set()) {
   const s = Object.fromEntries(STAT_IDS.map((id) => [id, Math.max(0, num(stats[id]))]));
-  return {
+  const a = abilities instanceof Set ? abilities : new Set(abilities || []);
+  const fx = {
     topSpeed: RACE.baseSpeed * (1 + s.speed * EFFECTS.speedPerPoint),
     laneStiffness: 1 + s.handling * EFFECTS.handlingPerPoint, // lane-change spring
     gripOnSnow: Math.min(1, s.handling / 110), // 1 = no sliding at all
@@ -62,7 +93,14 @@ export function raceEffects(stats = carStats()) {
     fuelDrain: RACE.fuelDrainPerSecond / (1 + s.fuel * EFFECTS.fuelPerPoint),
     magnetLanes: s.magnet * EFFECTS.magnetLanesPerPoint,
     luck: s.luck * EFFECTS.luckPerPoint,
+    lightRange: 1,
   };
+  if (a.has("iceShield")) fx.gripOnSnow = 1;
+  if (a.has("headlight")) fx.lightRange = 2;
+  if (a.has("superMagnet")) fx.magnetLanes += 2.5;
+  if (a.has("endlessTank")) fx.fuelDrain = 0;
+  if (a.has("bubble")) fx.shields += 2;
+  return fx;
 }
 
 export function getTrack(id) {

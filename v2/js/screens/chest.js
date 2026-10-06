@@ -70,8 +70,14 @@ export function presentReward(granted, { onHome, onAgain } = {}) {
     loot.parts.forEach((p, i) => {
       const card = partCard(p, { compare: true, onClick: () => go("garage") });
       card.style.animationDelay = `${0.25 + i * 0.35}s`;
+      if (loot.bossPrize && p.uid === loot.bossPrize.uid) card.classList.add("boss-prize");
       partsRow.append(card);
     });
+    if (granted.egg) {
+      const egg = h("div", { class: "chest-egg", "data-testid": "chest-egg", "aria-label": "Vajíčko" }, "🥚");
+      egg.style.animationDelay = `${0.25 + loot.parts.length * 0.35}s`;
+      partsRow.append(egg);
+    }
     // a mounted-vs-new ⬆ on any card lights up the garage button
     if (partsRow.querySelector('[data-compare="1"]')) garageBtn.classList.add("pulse");
     setTimeout(() => {
@@ -79,9 +85,11 @@ export function presentReward(granted, { onHome, onAgain } = {}) {
       sfx.win();
       if (granted.coins > 0) flyCoins(coinsRow, granted.coins / 5);
     }, 400 + loot.parts.length * 350);
-    speak(BEST_SAY[best] || BEST_SAY[0]);
+    if (granted.boss && granted.extra?.bossWin) speak(`Poklad od bossa! ${BEST_SAY[best] || ""} A vajíčko s kamarátom!`);
+    else speak(BEST_SAY[best] || BEST_SAY[0]);
   };
   chest.addEventListener("click", open);
+  if (granted.boss && granted.extra?.bossWin) chest.classList.add("boss-chest");
   speak("Truhlica! Ťukni na ňu.");
   setTimeout(open, 1600);
   return box;

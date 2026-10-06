@@ -62,10 +62,10 @@ test("first green part in race 1 and first blue part by race 2, for every seed",
       history = res.history;
       seen.push(...res.parts.map((p) => p.rarity));
       if (race === 1) assert.ok(seen.some((r) => r !== "common"), `seed ${seed}: no green in race 1`);
-      if (race === 2) assert.ok(seen.some((r) => r === "rare" || r === "epic"), `seed ${seed}: no blue by race 2`);
+      if (race === 2) assert.ok(seen.some((r) => ["rare", "epic", "legendary"].includes(r)), `seed ${seed}: no blue by race 2`);
     }
     assert.equal(history.races, 3);
-    assert.equal(history.sinceLegendary, 3, "bad-luck counter counts races without a legendary");
+    assert.ok(history.sinceLegendary <= 3, "bad-luck counter counts races without a legendary");
   }
 });
 
@@ -77,8 +77,27 @@ test("drops by place: 3 / 2 / 1 / 1 parts", () => {
   });
 });
 
-test("no legendary can drop while the legendary list is empty", () => {
-  assert.equal(legendaryChance({ sinceLegendary: 500 }), 0);
+test("bad-luck counter: the chance grows every race and a legendary is sure by race 60", () => {
+  assert.ok(legendaryChance({ sinceLegendary: 10 }) > legendaryChance({ sinceLegendary: 0 }));
+  assert.equal(legendaryChance({ sinceLegendary: LOOT.legendaryHardPity - 1 }), 1);
+  let firsts = [];
+  for (let seed = 1; seed <= 200; seed++) {
+    rng.setSeed(seed);
+    let history = { ...emptyLootHistory(), gotGood: true, gotRare: true };
+    for (let race = 1; race <= 60; race++) {
+      const res = generateDrops({ count: 2, budget: 30, rng, history });
+      history = res.history;
+      const leg = res.parts.find((p) => p.rarity === "legendary");
+      if (leg) {
+        assert.ok(leg.legendary && leg.subs.length === 2, "legendary has an ability and 2 side stats");
+        firsts.push(race);
+        break;
+      }
+    }
+    assert.equal(firsts.length, seed, `seed ${seed}: no legendary in 60 races`);
+  }
+  const avg = firsts.reduce((a, b) => a + b, 0) / firsts.length;
+  assert.ok(avg > 10 && avg < 45, `first legendary on average in race ${avg.toFixed(1)}: rare but not too rare`);
 });
 
 test("drops feel like progress: a car full of blue parts from a race beats its recommended power", () => {

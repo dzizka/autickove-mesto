@@ -3,8 +3,10 @@
 
 import { h } from "../../core/ui.js";
 import { RACE } from "../../data/tracks.js";
-import { carStats, raceEffects, getTrack } from "../../systems/stats.js";
-import { isLevelUnlocked, previewUnlocks } from "../../systems/progress.js";
+import { carStats, raceEffects, getTrack, carAbilities, setLook } from "../../systems/stats.js";
+import { isLevelUnlocked, previewUnlocks, isBossReady } from "../../systems/progress.js";
+import { LEGENDARIES } from "../../data/legendaries.js";
+import { BOSSES } from "../../data/bosses.js";
 import { getLook, resolveLook } from "../../systems/tuning.js";
 import { createTrail } from "../../render/effects.js";
 import { createRace, step, steer, finalOrder } from "./physics.js";
@@ -23,12 +25,15 @@ const PLACE_SAY = [
 export function raceReward(race) {
   const place = race.place || 4;
   const bonus = (1 + 0.25 * (race.level - 1)) * race.track.coinBonus;
+  const bossWin = !!race.boss && place === 1;
   return {
-    coins: race.player.coins + Math.round(RACE.placeCoins[place - 1] * bonus),
-    xp: RACE.xpBase + RACE.xpPerLevel * race.level + (place === 1 ? 10 : 0),
-    extra: { track: race.track.id, level: race.level, place },
+    coins: race.player.coins + Math.round(RACE.placeCoins[place - 1] * bonus) + (bossWin ? 80 : 0),
+    xp: RACE.xpBase + RACE.xpPerLevel * race.level + (place === 1 ? 10 : 0) + (bossWin ? 30 : 0),
+    extra: { track: race.track.id, level: race.level, place, boss: race.boss?.id || null, bossWin },
   };
 }
+
+const BOSS_SAY = ["Hurá! Porazil si bossa!", "Boss bol tentoraz rýchlejší. Skús to znova!"];
 
 let cleanup = [];
 
@@ -43,18 +48,42 @@ export default {
     let level = Math.max(1, Math.min(RACE.levels, parseInt(ctx.params[1], 10) || 1));
     if (!isLevelUnlocked(track.id, level)) level = 1;
 
+    const boss = ctx.params[2] === "boss" && isBossReady(track.id) ? BOSSES.find((b) => b.track === track.id) : null;
+
     const canvas = h("canvas", { class: "race-canvas", "data-testid": "race-canvas" });
-    const wrap = h("section", { class: `screen game race theme-${track.id}`, "data-testid": "screen-game-race", "data-track": track.id, "data-level": String(level) }, canvas);
+    const wrap = h("section", { class: `screen game race theme-${track.id}${boss ? " boss" : ""}`, "data-testid": "screen-game-race", "data-track": track.id, "data-level": String(level), "data-boss": boss?.id || "" }, canvas);
     view.append(wrap);
     const g = canvas.getContext("2d");
 
-    const race = createRace({ track, level, effects: raceEffects(carStats()), rng: ctx.rng, short: !!ctx.state().cheats.shortRaces });
+    const abilities = carAbilities();
+    const race = createRace({ track, level, effects: raceEffects(carStats(), abilities), rng: ctx.rng, short: !!ctx.state().cheats.shortRaces, abilities, boss });
     const hud = createHud(wrap, race, { onExit: ctx.exit });
-    // The car looks exactly like in the showroom: kind, paint, wheels, roof… plus neon and trail.
-    const look = getLook();
+    // The car looks exactly like in the showroom (plus the look of a complete set):
+    // kind, paint, wheels, roof… and neon and trail.
+    const look = { ...getLook(), ...setLook() };
     const looks = resolveLook(look);
-    const fx = { look, neon: looks.neon, trail: createTrail(looks.trail) };
+    const fx = { look, neon: looks.neon, trail: createTrail(looks.trail), sparkle: abilities.size > 0, popups: [] };
     race.look = look;
+
+    // boss music: a short bass loop while the boss race runs
+    let musicTimer = null;
+    const startMusic = () => {
+      if (!boss || musicTimer) return;
+      const bar = boss.music.reduce((t, [, d]) => t + d + 0.02, 0);
+      const play = () => ctx.audio.playNotes(boss.music.map(([f, d]) => [f, d, "triangle"]));
+      play();
+      musicTimer = setInterval(play, bar * 1000);
+    };
+    const stopMusic = () => {
+      clearInterval(musicTimer);
+      musicTimer = null;
+    };
+    const flash = (cls, ...children) => {
+      const el = h("div", { class: cls, "aria-hidden": "true" }, ...children);
+      wrap.append(el);
+      setTimeout(() => el.remove(), 3200);
+    };
+    if (boss) flash("race-boss-banner", h("span", { class: "boss-face" }, boss.icon), "👑");
 
     let L = makeLayout(360, 640);
     let weather = null;
@@ -88,6 +117,7 @@ export default {
       () => window.removeEventListener("keydown", onKey),
       () => window.removeEventListener("resize", resize),
       () => hud.remove(),
+      stopMusic,
     ];
 
     const { sfx, tone } = ctx.audio;
@@ -107,6 +137,18 @@ export default {
         else if (ev.type === "go") {
           tone(880, 0.35, { type: "square", volume: 0.14 });
           ctx.speak("Štart!");
+          startMusic();
+        } else if (ev.type === "ability") {
+          const def = LEGENDARIES.find((l) => l.id === ev.id);
+          if (def) {
+            ctx.audio.playNotes(def.notes);
+            fx.popups.push({ icon: def.icon, t: 0 });
+            flash("race-ability", def.icon);
+            sayOnce(`ab-${def.id}`, def.say);
+          }
+        } else if (ev.type === "bossThrow") {
+          tone(500, 0.3, { type: "sine", to: 200, volume: 0.1 });
+          sayOnce("bossThrow", "Pozor! Boss hádže. Uhni sa z červeného terča.");
         } else if (ev.type === "coin" && race.time - lastCoinSound > 0.06) {
           lastCoinSound = race.time;
           sfx.coin();
@@ -137,9 +179,10 @@ export default {
       finishing = true;
       const result = raceReward(race);
       const unlocks = previewUnlocks(result.extra);
+      stopMusic();
       ctx.audio.playNotes(looks.horn.notes);
       setTimeout(() => sfx.win(), 500);
-      ctx.speak(PLACE_SAY[race.place - 1]);
+      ctx.speak(boss ? BOSS_SAY[race.place === 1 ? 0 : 1] : PLACE_SAY[race.place - 1]);
       await new Promise((r) => setTimeout(r, 900));
       if (!wrap.isConnected) return;
       await showPodium(wrap, finalOrder(race), { place: race.place, unlocks, look });
@@ -167,13 +210,13 @@ export default {
         drawObjects(g, L, race, time);
         drawPlayer(g, L, race, time, fx, lastDt);
         drawSpeedLines(g, L, race, time);
-        if (night) drawNight(g, L, night, race);
+        if (night) drawNight(g, L, night, race, race.effects.lightRange);
         drawWeather(g, L, weather, 1 / 60, race.player.speed);
       },
       partial: () => ({ coins: race.player.coins, xp: 5 }),
     });
     loop.start();
-    ctx.speak(`${track.name}. Ťukaj vľavo a vpravo a vyhýbaj sa prekážkam!`);
+    ctx.speak(boss ? `${boss.name}! Predbehni ho a vyhýbaj sa tomu, čo hádže!` : `${track.name}. Ťukaj vľavo a vpravo a vyhýbaj sa prekážkam!`);
     window.__game && (window.__game.race = race); // test hook
   },
 

@@ -166,3 +166,38 @@
 @keyframes rise { from { opacity: 0; transform: translateY(60px); } }
 @keyframes blink { 50% { opacity: .35; } }
 @keyframes nudge { 50% { transform: translateY(-6px); } }
+
+.rh-dot.boss { z-index: 1; display: grid; place-items: center; width: 34px; height: 34px; font-size: 1.2rem; border-width: 3px; }
+.pd-crown.boss { animation: none; }
+.race-boss-banner {
+  position: absolute;
+  top: 30%;
+  left: 50%;
+  display: grid;
+  justify-items: center;
+  padding: 14px 26px;
+  border-radius: 26px;
+  background: rgba(20, 20, 40, .85);
+  color: #fff;
+  font-size: 1.4rem;
+  font-weight: 700;
+  transform: translate(-50%, -50%);
+  animation: pop .5s ease-out, fade-out .6s ease-in 2.4s forwards;
+  pointer-events: none;
+}
+.race-boss-banner .boss-face { font-size: 4.5rem; line-height: 1; animation: bounce 1s ease-in-out infinite; }
+.race-ability {
+  position: absolute;
+  left: 50%;
+  top: 18%;
+  padding: 6px 18px;
+  border-radius: 999px;
+  background: var(--rarity-legendary);
+  color: #fff;
+  font-size: 1.6rem;
+  box-shadow: 0 0 20px var(--rarity-legendary);
+  transform: translateX(-50%);
+  animation: pop .4s ease-out, fade-out .5s ease-in 1.2s forwards;
+  pointer-events: none;
+}
+@keyframes fade-out { to { opacity: 0; } }

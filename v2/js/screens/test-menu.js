@@ -5,8 +5,10 @@ import { h, modal, closeModal, toast } from "../core/ui.js";
 import { sfx, tone } from "../core/audio.js";
 import { getState, update, CURRENT_VERSION } from "../core/state.js";
 import { addCoins } from "../systems/economy.js";
-import { addXp, xpToNext, MAX_LEVEL, unlockAllTracks } from "../systems/progress.js";
+import { addXp, xpToNext, MAX_LEVEL, unlockAllTracks, readyAllBosses } from "../systems/progress.js";
 import { starterParts, testParts, generatePart, rollRarity } from "../systems/loot.js";
+import { LEGENDARIES } from "../data/legendaries.js";
+import { SETS } from "../data/sets.js";
 import { addParts } from "../systems/garage.js";
 import { ownAll } from "../systems/tuning.js";
 import * as rng from "../core/rng.js";
@@ -49,6 +51,10 @@ const CHEATS = [
   { id: "carSuper", label: "🏎️ Super auto", color: "plum", run: () => setCar(testParts(100, "epic")) },
   { id: "parts10", label: "🧰 +10 dielov", color: "sky", run: () => giveParts(10) },
   { id: "epic", label: "🟣 Epický diel", color: "sky", run: () => giveParts(1, "epic") },
+  { id: "legend", label: "🟠 Legendárny diel", color: "sky", run: () => addParts([generatePart({ rarity: "legendary", budget: 60, rng, legendary: rng.pick(LEGENDARIES).id })]) },
+  { id: "allLegends", label: "🟠 Všetky legendárne", color: "sky", run: () => addParts(LEGENDARIES.map((l) => generatePart({ rarity: "legendary", budget: 60, rng, legendary: l.id }))) },
+  { id: "sets", label: "📖 Všetky sety", color: "sky", run: () => addParts(SETS.flatMap((st) => Object.keys(st.pieces).map((slot) => generatePart({ rarity: "epic", budget: 60, rng, slot, set: st.id })))) },
+  { id: "bosses", label: "👑 Bossovia pripravení", color: "tomato", run: readyAllBosses },
   { id: "scrap", label: "+500 🔩", color: "sun", run: () => update((s) => (s.scrap += 500)) },
   { id: "looks", label: "🎨 Celý vzhľad", color: "plum", run: ownAll },
   { id: "tracks", label: "🛣️ Všetky trate a úrovne", color: "grass", run: unlockAllTracks },

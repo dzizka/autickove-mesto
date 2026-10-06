@@ -20,7 +20,8 @@ import tuning from "./screens/tuning.js";
 import { presentReward } from "./screens/chest.js";
 import { grantRaceLoot } from "./systems/garage.js";
 import raceGame from "./games/race/index.js";
-import { recordRace } from "./systems/progress.js";
+import { recordRace, recordBoss } from "./systems/progress.js";
+import { BOSSES } from "./data/bosses.js";
 import { demoGame, demoCrashGame } from "./games/demo/index.js";
 
 state.load();
@@ -49,7 +50,17 @@ router.registerGame(demoCrashGame);
 router.addRewardHandler((gameId, result) => {
   if (gameId !== "race" || !result.extra) return null;
   const unlocks = recordRace(result.extra);
-  return { unlocks, loot: grantRaceLoot(result.extra) };
+  let egg = null;
+  if (result.extra.boss) {
+    recordBoss(result.extra);
+    // a beaten boss also leaves an egg with a crew buddy (hatches in part 5)
+    if (result.extra.bossWin) {
+      egg = { id: `egg${Date.now().toString(36)}`, from: result.extra.boss, races: 0, at: Date.now() };
+      state.update((s) => s.eggs.push(egg));
+    }
+  }
+  const boss = BOSSES.find((b) => b.id === result.extra.boss) || null;
+  return { unlocks, loot: grantRaceLoot(result.extra), egg, boss };
 });
 router.setRewardPresenter(presentReward);
 
