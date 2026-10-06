@@ -29,4 +29,4 @@ Stačí otvoriť `v1/index.html` v prehliadači. Písmo sa načítava z Google F
 
 ## Plán
 
-Verzia 2 bude v priečinku `v2/`. Návrh je v [DESIGN-v2.md](DESIGN-v2.md), keď vznikne.
+Verzia 2 bude v priečinku `v2/`. Zadanie je v [DESIGN-v2.md](DESIGN-v2.md): korisť so štatistikami do áut, Garáž, bossovia, nová Omaľovánka s maľovaním podľa čísel a kód rozdelený do súborov.
