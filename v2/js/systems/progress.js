@@ -2,6 +2,7 @@
 
 import { update, getState } from "../core/state.js";
 import { emit } from "../core/events.js";
+import { TRACKS } from "../data/tracks.js";
 
 export const MAX_LEVEL = 50;
 const LOG_DAYS = 30;
@@ -71,4 +72,72 @@ export function startPlayClock(intervalSec = 15) {
   setInterval(() => {
     if (!document.hidden) addPlaySeconds(intervalSec);
   }, intervalSec * 1000);
+}
+
+// ---------- race progress (DESIGN-v2 §4.1) ----------
+
+const TRACK_ORDER = TRACKS.map((t) => t.id);
+export const CHALLENGE_RACES = 3; // races on a track that fill the boss challenge bar
+
+export function trackProgress(trackId, s = getState()) {
+  const t = s.races.tracks[trackId] || {};
+  return { unlocked: t.unlocked || 1, best: t.best || {}, challenge: t.challenge || 0, races: t.races || 0 };
+}
+
+/** Best place ever on the track (any level), or null. */
+function bestPlace(trackId, s) {
+  const places = Object.values(trackProgress(trackId, s).best).filter(Number.isFinite);
+  return places.length ? Math.min(...places) : null;
+}
+
+/** A track opens after a medal (top 3) on the previous one. */
+export function isTrackUnlocked(trackId, s = getState()) {
+  const i = TRACK_ORDER.indexOf(trackId);
+  if (i <= 0) return i === 0;
+  const prev = bestPlace(TRACK_ORDER[i - 1], s);
+  return prev !== null && prev <= 3;
+}
+
+export function isLevelUnlocked(trackId, level, s = getState()) {
+  return isTrackUnlocked(trackId, s) && level >= 1 && level <= trackProgress(trackId, s).unlocked;
+}
+
+/** What a result would unlock, without changing anything (used by the podium). */
+export function previewUnlocks({ track, level, place }, s = getState()) {
+  const p = trackProgress(track, s);
+  const out = { level: null, track: null };
+  if (place === 1 && level === p.unlocked && level < 5) out.level = level + 1;
+  const i = TRACK_ORDER.indexOf(track);
+  const next = TRACK_ORDER[i + 1];
+  if (next && place <= 3 && !isTrackUnlocked(next, s)) out.track = next;
+  return out;
+}
+
+/** Store a finished race. Returns what got unlocked. */
+export function recordRace({ track, level, place }) {
+  if (!TRACK_ORDER.includes(track) || !(level >= 1 && level <= 5) || !(place >= 1 && place <= 4)) return { level: null, track: null };
+  const unlocks = previewUnlocks({ track, level, place });
+  update((s) => {
+    const p = trackProgress(track, s);
+    p.races += 1;
+    p.challenge = Math.min(CHALLENGE_RACES, p.challenge + 1);
+    p.best = { ...p.best, [level]: Math.min(p.best[level] ?? 9, place) };
+    if (unlocks.level) p.unlocked = unlocks.level;
+    s.races.tracks[track] = p;
+    s.races.total += 1;
+    if (place === 1) s.races.wins += 1;
+  });
+  return unlocks;
+}
+
+/** Test menu: open every track and level. */
+export function unlockAllTracks() {
+  update((s) => {
+    for (const id of TRACK_ORDER) {
+      const p = trackProgress(id, s);
+      p.unlocked = 5;
+      p.best = { ...p.best, 1: Math.min(p.best[1] ?? 3, 3) };
+      s.races.tracks[id] = p;
+    }
+  });
 }

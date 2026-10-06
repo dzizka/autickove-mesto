@@ -1,0 +1,43 @@
+// Car stats and part slots (DESIGN-v2 §4.3). Data only.
+
+/**
+ * bars: stat value at which the 1st..5th segment of the stat bar lights up.
+ * Values come from parts; the starter car has 8 in each main stat.
+ */
+export const STATS = {
+  speed: { icon: "⚡", name: "Rýchlosť", color: "#ffc93c", bars: [1, 20, 45, 75, 110] },
+  handling: { icon: "🌀", name: "Ovládanie", color: "#2ab7ca", bars: [1, 20, 45, 75, 110] },
+  armor: { icon: "🛡️", name: "Odolnosť", color: "#8f5bd8", bars: [1, 20, 45, 75, 110] },
+  fuel: { icon: "⛽", name: "Benzín", color: "#ff8c42", bars: [1, 20, 45, 75, 110] },
+  magnet: { icon: "🧲", name: "Magnet", color: "#ff5a5f", bars: [1, 20, 45, 75, 110] },
+  luck: { icon: "🍀", name: "Šťastie", color: "#3ebd4a", bars: [1, 20, 45, 75, 110] },
+};
+
+export const STAT_IDS = Object.keys(STATS);
+
+export const SLOTS = [
+  { id: "engine", icon: "🔥", name: "Motor", main: "speed" },
+  { id: "tires", icon: "🛞", name: "Pneumatiky", main: "handling" },
+  { id: "bumper", icon: "🛡️", name: "Nárazník", main: "armor" },
+  { id: "tank", icon: "⛽", name: "Nádrž", main: "fuel" },
+  { id: "magnet", icon: "🧲", name: "Magnet", main: "magnet" },
+  { id: "mascot", icon: "🧸", name: "Maskot", main: "luck" },
+];
+
+/** The starter car: a grey (common) part in every slot (DESIGN-v2 §4.8). */
+export const STARTER_MAIN_VALUE = 8;
+
+/**
+ * How stats turn into race effects (used by systems/stats.js).
+ * Each value is "per stat point"; the comments show starter (8) vs strong (100).
+ */
+export const EFFECTS = {
+  speedPerPoint: 1 / 200, // top speed ×1.04 → ×1.5
+  handlingPerPoint: 1 / 40, // lane-change spring stiffness ×1.2 → ×3.5
+  shieldEvery: 25, // one start shield per 25 armor (0 → 4)
+  maxShields: 4,
+  armorSlowPerPoint: 1 / 50, // slowdown after a hit 1.6 s / (1 + armor/50)
+  fuelPerPoint: 1 / 40, // fuel lasts ×1.2 → ×3.5
+  magnetLanesPerPoint: 1 / 40, // pulls coins from 0.2 → 2.5 lanes away
+  luckPerPoint: 1 / 100, // loot quality (part 2)
+};

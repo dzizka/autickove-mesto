@@ -46,8 +46,8 @@ export function goHome() {
   go("home");
 }
 
-export function startGame(id) {
-  go(`game/${id}`);
+export function startGame(id, ...params) {
+  go(["game", id, ...params].join("/"));
 }
 
 function parseHash() {
@@ -81,7 +81,7 @@ function show() {
 
   if (first === "game") {
     const game = games.get(params[0]);
-    if (game && isUnlocked(game)) return runGame(game);
+    if (game && isUnlocked(game)) return runGame(game, params.slice(1));
     return goHome();
   }
   const screen = screens.get(first);
@@ -98,7 +98,7 @@ function show() {
   emit("screenShown", { id: screen.id });
 }
 
-function runGame(game) {
+function runGame(game, params = []) {
   document.body.dataset.mode = "game";
   document.body.dataset.screen = `game-${game.id}`;
   const entry = { kind: "game", id: game.id, mod: game, loops: [] };
@@ -123,6 +123,7 @@ function runGame(game) {
     audio,
     ui,
     state: getState,
+    params, // extra hash parts, e.g. #/game/race/snow/3 → ["snow", "3"]
     speak: audio.speak,
     /** Guarded loop; `partial()` returns the reward earned so far (used after a crash). */
     createLoop({ update, draw, partial } = {}) {

@@ -5,13 +5,20 @@ import { h, modal, closeModal, toast } from "../core/ui.js";
 import { sfx, tone } from "../core/audio.js";
 import { getState, update, CURRENT_VERSION } from "../core/state.js";
 import { addCoins } from "../systems/economy.js";
-import { addXp, xpToNext, MAX_LEVEL } from "../systems/progress.js";
+import { addXp, xpToNext, MAX_LEVEL, unlockAllTracks } from "../systems/progress.js";
+import { starterParts, testParts } from "../systems/loot.js";
 import { go } from "../core/router.js";
 
 function setLevel(level) {
   update((s) => {
     s.level = Math.min(MAX_LEVEL, level);
     s.xp = 0;
+  });
+}
+
+function setCar(parts) {
+  update((s) => {
+    s.car.equipped = parts;
   });
 }
 
@@ -28,6 +35,10 @@ const CHEATS = [
     run: () => update((s) => (s.cheats.shortRaces = !s.cheats.shortRaces)),
     reopen: true,
   },
+  { id: "carStarter", label: "🚗 Začiatočné auto", color: "ghost", run: () => setCar(starterParts()) },
+  { id: "carStrong", label: "🚙 Silné auto", color: "plum", run: () => setCar(testParts(50, "rare")) },
+  { id: "carSuper", label: "🏎️ Super auto", color: "plum", run: () => setCar(testParts(100, "epic")) },
+  { id: "tracks", label: "🛣️ Všetky trate a úrovne", color: "grass", run: unlockAllTracks },
   { id: "demo", label: "🚗 Skúšobná jazda", color: "sky", run: () => go("game/demo"), close: true },
   { id: "demoCrash", label: "💥 Test zaseknutia slučky", color: "tomato", run: () => go("game/demo-crash"), close: true },
 ];

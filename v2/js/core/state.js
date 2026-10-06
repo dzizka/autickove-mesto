@@ -2,9 +2,10 @@
 // Rule: every schema change bumps CURRENT_VERSION and adds a step to MIGRATIONS.
 
 import { emit } from "./events.js";
+import { starterParts } from "../systems/loot.js";
 
 export const STORAGE_KEY = "autickove-mesto-v2";
-export const CURRENT_VERSION = 1;
+export const CURRENT_VERSION = 2;
 
 export function defaultState() {
   return {
@@ -18,6 +19,11 @@ export function defaultState() {
     playLog: {},
     // Hidden test-menu switches.
     cheats: { shortRaces: false },
+    // v2: the car's parts (slot → part) and the parts bag (part 2).
+    car: { equipped: starterParts() },
+    inventory: [],
+    // v2: race progress per track: { city: { unlocked: 1, best: { 1: 2 }, challenge: 0, races: 0 } }
+    races: { tracks: {}, total: 0, wins: 0 },
   };
 }
 
@@ -36,6 +42,8 @@ const MIGRATIONS = {
     }
     return out;
   },
+  // v1 → v2: car parts and race progress (filled from defaults: starter car, no races yet).
+  1: (s) => ({ ...s, version: 2 }),
 };
 
 const isPlainObject = (v) => v !== null && typeof v === "object" && !Array.isArray(v);

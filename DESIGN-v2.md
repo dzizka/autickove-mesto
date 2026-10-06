@@ -55,12 +55,13 @@ v2/
 │   │   └── ui.js           # modal, toast, letiace mince, konfety
 │   ├── data/               # LEN DÁTA, žiadna logika
 │   │   ├── menu.js         # štyri piliere hry (tlačidlá Domov a navigácie)
+│   │   ├── stats.js        # štatistiky, sloty, začiatočné auto, účinky štatistík v pretekoch
 │   │   ├── cars.js  tuning.js  tracks.js  bosses.js
 │   │   ├── loot-bases.js  affixes.js  legendaries.js  sets.js
 │   │   ├── crew.js  trophies.js
 │   │   └── coloring/       # obrázky na voľné maľovanie a podľa čísel
 │   ├── systems/            # logika bez kreslenia
-│   │   ├── economy.js  progress.js  quests.js  trophies.js
+│   │   ├── economy.js  progress.js  quests.js  trophies.js   # progress.js: level, čas hrania, postup na tratiach
 │   │   ├── loot.js         # generovanie dielov, vzácnosť, sila
 │   │   ├── garage.js       # nasadenie, porovnanie, rozoberanie, vylepšenie
 │   │   ├── stats.js        # súčet štatistík auta (diely + sety + kamarát)
@@ -70,6 +71,7 @@ v2/
 │   │   └── car-top.js      # auto zhora (canvas)
 │   ├── screens/            # home.js garage.js tuning.js crew.js gallery.js parents.js
 │   │                       # settings.js test-menu.js topbar.js soon.js („ešte sa stavia“)
+│   │                       # races.js (výber trate a úrovne), stat-panel.js (pruhy štatistík, sila auta)
 │   └── games/
 │       ├── demo/           # skúšobná jazda len z testovacieho menu (overuje slučku a odmeny)
 │       ├── race/           # index.js  track.js  spawner.js  physics.js  draw.js  hud.js  boss.js

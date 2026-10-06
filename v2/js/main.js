@@ -14,6 +14,9 @@ import { mountTopbar } from "./screens/topbar.js";
 import { makeSoonScreen } from "./screens/soon.js";
 import home from "./screens/home.js";
 import settings from "./screens/settings.js";
+import races from "./screens/races.js";
+import raceGame from "./games/race/index.js";
+import { recordRace } from "./systems/progress.js";
 import { demoGame, demoCrashGame } from "./games/demo/index.js";
 
 state.load();
@@ -31,9 +34,17 @@ mountTopbar(document.querySelector("[data-topbar]"), document.querySelector("[da
 
 router.registerScreen(home);
 router.registerScreen(settings);
-for (const p of PILLARS) router.registerScreen(makeSoonScreen(p));
+// Pillars that are built get their real screen; the rest say "being built".
+const built = { races };
+for (const p of PILLARS) router.registerScreen(built[p.id] || makeSoonScreen(p));
+router.registerGame(raceGame);
 router.registerGame(demoGame);
 router.registerGame(demoCrashGame);
+
+// Race results update track progress (medals, unlocked levels and tracks, boss bar).
+events.on("gameFinished", ({ gameId, result }) => {
+  if (gameId === "race" && result.extra) recordRace(result.extra);
+});
 
 startPlayClock();
 router.startRouter(document.querySelector("main"));
