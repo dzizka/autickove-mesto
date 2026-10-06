@@ -5,6 +5,8 @@ import { h } from "../../core/ui.js";
 import { RACE } from "../../data/tracks.js";
 import { carStats, raceEffects, getTrack } from "../../systems/stats.js";
 import { isLevelUnlocked, previewUnlocks } from "../../systems/progress.js";
+import { getLook, resolveLook } from "../../systems/tuning.js";
+import { createTrail } from "../../render/effects.js";
 import { createRace, step, steer, finalOrder } from "./physics.js";
 import { makeLayout, drawBackground, createWeather, drawWeather } from "./track.js";
 import { drawObjects, drawPlayer, drawSpeedLines, createNight, drawNight } from "./draw.js";
@@ -48,6 +50,11 @@ export default {
 
     const race = createRace({ track, level, effects: raceEffects(carStats()), rng: ctx.rng, short: !!ctx.state().cheats.shortRaces });
     const hud = createHud(wrap, race, { onExit: ctx.exit });
+    // The car looks exactly like in the showroom: kind, paint, wheels, roof… plus neon and trail.
+    const look = getLook();
+    const looks = resolveLook(look);
+    const fx = { look, neon: looks.neon, trail: createTrail(looks.trail) };
+    race.look = look;
 
     let L = makeLayout(360, 640);
     let weather = null;
@@ -91,6 +98,7 @@ export default {
       ctx.speak(text, { interrupt: false });
     };
     let lastCoinSound = 0;
+    let lastDt = 1 / 60;
     let finishing = false;
 
     function handleEvents() {
@@ -129,11 +137,12 @@ export default {
       finishing = true;
       const result = raceReward(race);
       const unlocks = previewUnlocks(result.extra);
-      sfx.win();
+      ctx.audio.playNotes(looks.horn.notes);
+      setTimeout(() => sfx.win(), 500);
       ctx.speak(PLACE_SAY[race.place - 1]);
       await new Promise((r) => setTimeout(r, 900));
       if (!wrap.isConnected) return;
-      await showPodium(wrap, finalOrder(race), { place: race.place, unlocks });
+      await showPodium(wrap, finalOrder(race), { place: race.place, unlocks, look });
       if (unlocks.level) ctx.speak("Odomkol si ďalšiu úroveň!", { interrupt: false });
       else if (unlocks.track) ctx.speak("Odomkol si novú trať!", { interrupt: false });
       ctx.finish(result);
@@ -141,6 +150,7 @@ export default {
 
     const loop = ctx.createLoop({
       update(dt) {
+        lastDt = dt;
         // Tests may speed time up; the simulation always uses small steps.
         const scale = Math.max(1, Math.min(20, Number(window.__game?.testTimeScale) || 1));
         let left = dt * scale;
@@ -155,7 +165,7 @@ export default {
       draw(time) {
         drawBackground(g, L, track, race.player.d, time);
         drawObjects(g, L, race, time);
-        drawPlayer(g, L, race, time);
+        drawPlayer(g, L, race, time, fx, lastDt);
         drawSpeedLines(g, L, race, time);
         if (night) drawNight(g, L, night, race);
         drawWeather(g, L, weather, 1 / 60, race.player.speed);

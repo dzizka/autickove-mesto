@@ -160,12 +160,12 @@ test("a full bag turns extra parts into scrap", async () => {
   await page.context().close();
 });
 
-test("version-2 saves migrate to version 3 with garage fields", async () => {
+test("version-2 saves migrate to the current schema with garage fields", async () => {
   const page = await openGame(env.browser, env.server.url, {
     storage: { version: 2, coins: 10, car: { equipped: { engine: { uid: "x1", slot: "engine", rarity: "common", main: { stat: "speed", value: 9 }, subs: [], plus: 0 } } }, inventory: [] },
   });
   const s = await page.evaluate(() => window.__game.state.getState());
-  assert.equal(s.version, 3);
+  assert.equal(s.version, await page.evaluate(() => window.__game.state.CURRENT_VERSION));
   assert.equal(s.scrap, 0);
   assert.equal(s.bagSize, 30);
   assert.deepEqual(s.loot, { races: 0, gotGood: false, gotRare: false, sinceLegendary: 0 });

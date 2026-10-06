@@ -77,11 +77,11 @@ export function createHud(root, race, { onExit }) {
  * Podium with the four cars; the player's car wears a crown when first.
  * Resolves after the celebration so the host can show the reward.
  */
-export function showPodium(root, order, { place, unlocks }) {
+export function showPodium(root, order, { place, unlocks, look }) {
   const steps = [1, 0, 2].map((i) => {
     const row = order[i];
     if (!row) return h("div");
-    const car = carSide({ color: row.isPlayer ? PLAYER_COLOR : row.color });
+    const car = carSide(row.isPlayer ? look || {} : { colorHex: row.color });
     return h(
       "div",
       { class: `pd-step pd-${i + 1}${row.isPlayer ? " me" : ""}` },
@@ -98,7 +98,7 @@ export function showPodium(root, order, { place, unlocks }) {
     "div",
     { class: "podium", "data-testid": "podium", "data-place": String(place) },
     h("div", { class: "pd-stage" }, steps),
-    fourth && h("div", { class: `pd-fourth${fourth.isPlayer ? " me" : ""}` }, h("div", { class: "pd-car small" }, carSide({ color: fourth.isPlayer ? PLAYER_COLOR : fourth.color })), "🏁"),
+    fourth && h("div", { class: `pd-fourth${fourth.isPlayer ? " me" : ""}` }, h("div", { class: "pd-car small" }, carSide(fourth.isPlayer ? look || {} : { colorHex: fourth.color })), "🏁"),
     extras,
   );
   root.append(el);

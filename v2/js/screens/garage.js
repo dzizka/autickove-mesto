@@ -9,6 +9,7 @@ import { carStats, carPower } from "../systems/stats.js";
 import { partPower, compareToEquipped, equipBest, dismantleableLow, dismantleLow, bagPrice, expandBag } from "../systems/garage.js";
 import { canAfford } from "../systems/economy.js";
 import { carSide } from "../render/car-side.js";
+import { getLook } from "../systems/tuning.js";
 import { partCard, openPartDetail } from "./part-card.js";
 import { statPanel, powerBadge } from "./stat-panel.js";
 
@@ -49,7 +50,7 @@ export default {
         "div",
         { class: "lift card" },
         h("div", { class: "lift-slots left" }, SLOTS.slice(0, 3).map(slotBtn)),
-        h("div", { class: "lift-car" }, carSide({}), h("div", { class: "lift-post", "aria-hidden": "true" })),
+        h("div", { class: "lift-car" }, carSide(getLook()), h("div", { class: "lift-post", "aria-hidden": "true" })),
         h("div", { class: "lift-slots right" }, SLOTS.slice(3).map(slotBtn)),
       );
 

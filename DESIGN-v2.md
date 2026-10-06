@@ -65,10 +65,13 @@ v2/
 │   │   ├── loot.js         # generovanie dielov, vzácnosť, sila
 │   │   ├── garage.js       # nasadenie, porovnanie, rozoberanie, vylepšenie
 │   │   ├── stats.js        # súčet štatistík auta (diely + sety + kamarát)
+│   │   ├── tuning.js       # vzhľad: vlastnené veci, kúpa, náhodný vzhľad
 │   │   └── crew.js         # kamaráti: vajíčka, levely, vývoj
 │   ├── render/
 │   │   ├── car-side.js     # auto z boku (SVG)
-│   │   └── car-top.js      # auto zhora (canvas)
+│   │   ├── car-top.js      # auto zhora (canvas)
+│   │   ├── effects.js      # neón a stopa v pretekoch
+│   │   └── emoji.js        # emoji kreslené do malého plátna (rýchle na tablete)
 │   ├── screens/            # home.js garage.js tuning.js crew.js gallery.js parents.js
 │   │                       # settings.js test-menu.js topbar.js soon.js („ešte sa stavia“)
 │   │                       # races.js (výber trate a úrovne), stat-panel.js (pruhy štatistík, sila auta)

@@ -16,6 +16,7 @@ import home from "./screens/home.js";
 import settings from "./screens/settings.js";
 import races from "./screens/races.js";
 import garage from "./screens/garage.js";
+import tuning from "./screens/tuning.js";
 import { presentReward } from "./screens/chest.js";
 import { grantRaceLoot } from "./systems/garage.js";
 import raceGame from "./games/race/index.js";
@@ -38,7 +39,7 @@ mountTopbar(document.querySelector("[data-topbar]"), document.querySelector("[da
 router.registerScreen(home);
 router.registerScreen(settings);
 // Pillars that are built get their real screen; the rest say "being built".
-const built = { races, garage };
+const built = { races, garage, tuning };
 for (const p of PILLARS) router.registerScreen(built[p.id] || makeSoonScreen(p));
 router.registerGame(raceGame);
 router.registerGame(demoGame);

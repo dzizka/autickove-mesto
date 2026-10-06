@@ -1,0 +1,122 @@
+/* Showroom (Vzhľad). */
+.tuning { display: grid; gap: 14px; }
+.tune-top { display: grid; gap: 10px; justify-items: center; }
+
+.showroom {
+  position: relative;
+  width: min(100%, 460px);
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  border-radius: 26px;
+  background: radial-gradient(ellipse at 50% 0%, #4a4f7a, #23263f 70%);
+  box-shadow: var(--shadow);
+}
+.spotlight {
+  position: absolute;
+  top: -10%;
+  left: 50%;
+  width: 70%;
+  height: 110%;
+  transform: translateX(-50%);
+  background: linear-gradient(180deg, rgba(255, 246, 190, .55), rgba(255, 246, 190, .08) 80%, transparent);
+  clip-path: polygon(42% 0, 58% 0, 100% 100%, 0 100%);
+}
+.turntable {
+  position: absolute;
+  left: 10%;
+  right: 10%;
+  bottom: 6%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  transform: scaleY(.2);
+  transform-origin: 50% 100%;
+  background: #6f7590;
+  box-shadow: 0 0 60px rgba(255, 246, 190, .6);
+}
+.turntable::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 6% 0;
+  border-radius: 50%;
+  background: repeating-conic-gradient(#d7dbe8 0 15deg, #b9bfd2 15deg 30deg);
+  animation: spin 8s linear infinite;
+}
+.show-car {
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  bottom: 14%;
+  animation: show-turn 8s ease-in-out infinite;
+}
+.show-car .car-side { width: 100%; height: auto; overflow: visible; }
+.show-buttons { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+
+.buy-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px 8px 18px;
+  border-radius: 999px;
+  background: #fff;
+  box-shadow: var(--shadow);
+  animation: pop .35s ease-out;
+}
+.buy-price { font-size: 1.5rem; font-weight: 700; }
+.buy-bar.poor .buy-price { color: var(--tomato-dark); }
+
+.tune-panel { width: 100%; max-width: none; margin: 0; display: grid; gap: 12px; }
+.tune-tabs { display: flex; flex-wrap: wrap; gap: 6px; }
+.tune-tabs .chip { flex: 0 0 auto; }
+.tune-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 10px; }
+.tile {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: 84px;
+  padding: 6px;
+  border: 4px solid transparent;
+  border-radius: 18px;
+  background: var(--paper-soft);
+  font: inherit;
+  cursor: pointer;
+}
+.tile.on { border-color: var(--grass); background: #eefbea; }
+.tile.previewing { border-color: var(--sun); background: #fff8dc; }
+.tile.locked .tile-car, .tile.locked .tile-icon, .tile.locked .swatch { filter: saturate(.6); opacity: .8; }
+.tile-car { width: 100%; }
+.tile-car .car-side { width: 100%; height: auto; overflow: visible; }
+.tile-icon { font-size: 2.2rem; }
+.swatch { width: 52px; height: 52px; border-radius: 50%; border: 3px solid #fff; box-shadow: 0 2px 6px rgba(0, 0, 0, .25); }
+.tile-check {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--grass);
+  color: #fff;
+  font-weight: 700;
+}
+.tile-price {
+  position: absolute;
+  bottom: -8px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--sun);
+  font-size: .75rem;
+  font-weight: 700;
+}
+
+@media (min-width: 900px) {
+  .tuning { grid-template-columns: 1fr 1fr; align-items: start; }
+  .tune-top { position: sticky; top: calc(var(--topbar-h) + 10px); }
+}
+
+@keyframes show-turn {
+  0%, 40% { transform: scaleX(1); }
+  48%, 52% { transform: scaleX(0.05); }
+  60%, 100% { transform: scaleX(-1); }
+}

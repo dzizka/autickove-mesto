@@ -8,6 +8,7 @@ import { addCoins } from "../systems/economy.js";
 import { addXp, xpToNext, MAX_LEVEL, unlockAllTracks } from "../systems/progress.js";
 import { starterParts, testParts, generatePart, rollRarity } from "../systems/loot.js";
 import { addParts } from "../systems/garage.js";
+import { ownAll } from "../systems/tuning.js";
 import * as rng from "../core/rng.js";
 import { go } from "../core/router.js";
 
@@ -49,6 +50,7 @@ const CHEATS = [
   { id: "parts10", label: "🧰 +10 dielov", color: "sky", run: () => giveParts(10) },
   { id: "epic", label: "🟣 Epický diel", color: "sky", run: () => giveParts(1, "epic") },
   { id: "scrap", label: "+500 🔩", color: "sun", run: () => update((s) => (s.scrap += 500)) },
+  { id: "looks", label: "🎨 Celý vzhľad", color: "plum", run: ownAll },
   { id: "tracks", label: "🛣️ Všetky trate a úrovne", color: "grass", run: unlockAllTracks },
   { id: "demo", label: "🚗 Skúšobná jazda", color: "sky", run: () => go("game/demo"), close: true },
   { id: "demoCrash", label: "💥 Test zaseknutia slučky", color: "tomato", run: () => go("game/demo-crash"), close: true },

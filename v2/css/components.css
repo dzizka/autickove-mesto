@@ -156,3 +156,17 @@
 .power-badge.tier-4 { background: var(--rarity-epic); }
 .power-badge.tier-5 { background: var(--rarity-legendary); box-shadow: 0 0 18px var(--rarity-legendary), var(--shadow); }
 .power-icon { font-size: 1.6rem; }
+
+/* ---------- car look animations (render/car-side.js) ---------- */
+.car-side .neon-rainbow { animation: hue 2s linear infinite; }
+.car-side .neon-fire, .car-side .flicker { animation: flicker .25s steps(2) infinite; }
+.car-side .blink-a { animation: blink-a .5s steps(1) infinite; }
+.car-side .blink-b { animation: blink-a .5s steps(1) infinite reverse; }
+.car-side .neon-rim { filter: drop-shadow(0 0 3px #7df9ff); }
+.car-side .trail-puff { animation: puff 1.05s ease-out infinite; opacity: 0; }
+.car-side .trail-rainbow { animation: wave 1s ease-in-out infinite; transform-origin: right center; }
+@keyframes hue { to { filter: hue-rotate(360deg); } }
+@keyframes flicker { 50% { opacity: .55; } }
+@keyframes blink-a { 50% { opacity: .25; } }
+@keyframes puff { 0% { opacity: .9; transform: translateX(0); } 100% { opacity: 0; transform: translateX(-26px) translateY(-6px); } }
+@keyframes wave { 50% { transform: scaleY(.85) translateY(2px); } }

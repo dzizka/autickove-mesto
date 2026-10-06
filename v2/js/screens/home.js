@@ -1,9 +1,11 @@
 // Home screen: the child's car on a stage and big buttons for the four pillars.
 
 import { h, bigButton } from "../core/ui.js";
-import { speak, sfx } from "../core/audio.js";
+import { speak } from "../core/audio.js";
 import { go } from "../core/router.js";
 import { carSide } from "../render/car-side.js";
+import { getLook, resolveLook } from "../systems/tuning.js";
+import { playNotes } from "../core/audio.js";
 import { PILLARS } from "../data/menu.js";
 
 let greeted = false;
@@ -12,7 +14,8 @@ export default {
   id: "home",
   title: "Domov",
   render(view) {
-    const car = carSide({});
+    const look = getLook();
+    const car = carSide(look, { trail: look.trail !== "none" });
     const stage = h(
       "button",
       {
@@ -20,7 +23,7 @@ export default {
         "data-testid": "home-car",
         "aria-label": "Tvoje auto, trúbiť",
         onclick: () => {
-          sfx.horn();
+          playNotes(resolveLook(look).horn.notes);
           stage.classList.remove("hop");
           void stage.offsetWidth; // restart the hop animation
           stage.classList.add("hop");

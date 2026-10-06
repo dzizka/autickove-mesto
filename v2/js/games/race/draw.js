@@ -2,9 +2,8 @@
 // (shield bubbles, turbo flames, magnet aura, jump), plus night lighting.
 
 import { drawCarTop, safeColor } from "../../render/car-top.js";
+import { drawNeon, updateTrail, drawTrail } from "../../render/effects.js";
 import { drawEmoji, laneToX, distToY } from "./track.js";
-
-const PLAYER_COLOR = "#ff5a5f";
 const finite = (v, f = 0) => (Number.isFinite(v) ? v : f);
 
 function visible(L, y, margin = 80) {
@@ -68,7 +67,7 @@ export function drawObjects(g, L, race, time) {
     } else if (o.kind === "traffic") {
       const fly = o.hit ? Math.min(1, o.fly / 0.6) : 0;
       if (fly >= 1) continue;
-      drawCarTop(g, safeColor(o.color, "#cccccc"), x + o.spin * fly * L.laneW, y - fly * 40, L.laneW * 0.5, { kind: "truck", angle: o.spin * fly * 1.5 });
+      drawCarTop(g, { traffic: true, colorHex: safeColor(o.color, "#cccccc") }, x + o.spin * fly * L.laneW, y - fly * 40, L.laneW * 0.5, { angle: o.spin * fly * 1.5 });
     } else {
       const fly = o.hit ? Math.min(1, o.fly / 0.6) : 0;
       if (fly >= 1) continue;
@@ -84,11 +83,15 @@ export function drawObjects(g, L, race, time) {
   for (const r of race.rivals) {
     const y = distToY(L, r.d, pd);
     if (!visible(L, y)) continue;
-    drawCarTop(g, r.color, laneToX(L, r.x), y, L.laneW * 0.46, { angle: (r.lane - r.x) * 0.25 });
+    drawCarTop(g, { colorHex: safeColor(r.color, "#2f80ed") }, laneToX(L, r.x), y, L.laneW * 0.46, { angle: (r.lane - r.x) * 0.25 });
   }
 }
 
-export function drawPlayer(g, L, race, time) {
+/**
+ * The player's car with its look (DESIGN-v2 §5: everything bought is visible in races).
+ * fx = { look, neon, trail } prepared by the game; dt for the trail particles.
+ */
+export function drawPlayer(g, L, race, time, fx = {}, dt = 1 / 60) {
   const p = race.player;
   const x = laneToX(L, p.x);
   const y = L.playerY;
@@ -117,7 +120,12 @@ export function drawPlayer(g, L, race, time) {
     g.stroke();
   }
 
-  drawCarTop(g, PLAYER_COLOR, x, y - air * 20, w, { angle: tilt + wobble });
+  if (fx.trail) {
+    updateTrail(fx.trail, dt, x, y + w * 0.95, Math.max(0, p.speed) * L.pxPerM * 0.7, w);
+    drawTrail(g, fx.trail);
+  }
+  if (fx.neon) drawNeon(g, fx.neon, x, y - air * 20, w * 0.85, w * 1.2, time);
+  drawCarTop(g, fx.look || "#ff5a5f", x, y - air * 20, w, { angle: tilt + wobble });
 
   // Odolnosť is visible: one bubble ring per shield around the car.
   for (let i = 0; i < Math.min(6, p.shields); i++) {

@@ -3,9 +3,10 @@
 
 import { emit } from "./events.js";
 import { starterParts, emptyLootHistory } from "../systems/loot.js";
+import { defaultLook, defaultOwned } from "../systems/tuning.js";
 
 export const STORAGE_KEY = "autickove-mesto-v2";
-export const CURRENT_VERSION = 3;
+export const CURRENT_VERSION = 4;
 
 export function defaultState() {
   return {
@@ -28,6 +29,9 @@ export function defaultState() {
     scrap: 0,
     bagSize: 30,
     loot: emptyLootHistory(),
+    // v4: appearance — chosen look (category → item id) and owned items per category.
+    look: defaultLook(),
+    owned: defaultOwned(),
   };
 }
 
@@ -54,6 +58,8 @@ const MIGRATIONS = {
     const equipped = Object.fromEntries(Object.entries(s.car?.equipped || {}).map(([k, p]) => [k, fix(p)]));
     return { ...s, version: 3, car: { ...(s.car || {}), equipped }, inventory: (s.inventory || []).map(fix) };
   },
+  // v3 → v4: appearance (filled from defaults: the red starter car, free items owned).
+  3: (s) => ({ ...s, version: 4 }),
 };
 
 const isPlainObject = (v) => v !== null && typeof v === "object" && !Array.isArray(v);

@@ -63,6 +63,15 @@ export const sfx = {
   },
 };
 
+/** Play [frequency, seconds, wave] notes one after another (car horns). */
+export function playNotes(notes = [[440, 0.3, "square"]]) {
+  let t = 0;
+  for (const [f, d, type] of notes) {
+    tone(Number(f) || 440, Number(d) || 0.2, { type: type || "square", volume: 0.12, delay: t });
+    t += (Number(d) || 0.2) + 0.03;
+  }
+}
+
 function pickVoice() {
   const synth = window.speechSynthesis;
   if (!synth) return;
