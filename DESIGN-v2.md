@@ -72,6 +72,7 @@ v2/
 │   ├── screens/            # home.js garage.js tuning.js crew.js gallery.js parents.js
 │   │                       # settings.js test-menu.js topbar.js soon.js („ešte sa stavia“)
 │   │                       # races.js (výber trate a úrovne), stat-panel.js (pruhy štatistík, sila auta)
+│   │                       # part-card.js (karta dielu, detail s porovnaním), chest.js (truhlica po pretekoch)
 │   └── games/
 │       ├── demo/           # skúšobná jazda len z testovacieho menu (overuje slučku a odmeny)
 │       ├── race/           # index.js  track.js  spawner.js  physics.js  draw.js  hud.js  boss.js
@@ -108,7 +109,7 @@ Vo v1 sa našli tri chyby (sú opravené vo v1). Vo v2 im treba predísť od za�
 ### 4.1 Preteky
 
 - **Ovládanie:** pohľad zhora, auto ide samo dopredu a dieťa ťukaním vľavo a vpravo mení pruhy.
-- **Na ceste:** súperi, premávka, prekážky, mince, power-upy, rampy a benzín.
+- **Na ceste:** súperi, premávka, prekážky, mince, power-upy, rampy a benzín. Súperi nie sú pevná prekážka: keď ich dieťa dobieha v rovnakom pruhu, uhnú mu (narážanie do nich len hnevalo).
 - **Trate:** 6 tratí s vlastným vzhľadom a počasím: Mesto, Les, Púšť, Sneh, Noc a Vesmír.
 - **Úrovne trate:** každá trať má úrovne 1 až 5 (ako úrovne sveta v Diable). Úroveň sa odomkne víťazstvom na nižšej. Vyššia úroveň znamená rýchlejších súperov, viac prekážok a lepšie diely.
 - **Výber trate:** pri každej úrovni je odporúčaná sila auta 🟢 zvládneš, 🟡 bude ťažké, 🔴 ešte nie. Ďalej sú tam medaily a pruh výziev k bossovi.

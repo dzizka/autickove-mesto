@@ -12,6 +12,18 @@ import { addCoins } from "../systems/economy.js";
 import { addXp, countGamePlayed } from "../systems/progress.js";
 
 const screens = new Map();
+const rewardHandlers = [];
+let rewardPresenter = (granted, opts) => ui.rewardModal(granted, opts);
+
+/** Extra rewards for finished games (e.g. race loot). fn(gameId, result) → fields merged into the reward. */
+export function addRewardHandler(fn) {
+  rewardHandlers.push(fn);
+}
+
+/** Replace the end-of-game reward dialog (the chest shows parts, then coins). */
+export function setRewardPresenter(fn) {
+  rewardPresenter = fn;
+}
 const games = new Map();
 let view = null;
 let current = null; // { kind: "screen" | "game", id, mod, loops? }
@@ -139,7 +151,7 @@ function runGame(game, params = []) {
       const granted = grant(game, result);
       emit("gameFinished", { gameId: game.id, result: granted });
       if (showReward) {
-        ui.rewardModal(granted, {
+        rewardPresenter(granted, {
           onHome: goHome,
           onAgain: () => show(), // same hash: re-run the game from scratch
         });
@@ -171,7 +183,15 @@ function grant(game, result) {
   const coins = addCoins(result.coins);
   addXp(result.xp);
   countGamePlayed(game.id);
-  return { ...result, coins, xp: Math.max(0, Math.round(result.xp || 0)) };
+  const granted = { ...result, coins, xp: Math.max(0, Math.round(result.xp || 0)) };
+  for (const fn of rewardHandlers) {
+    try {
+      Object.assign(granted, fn(game.id, granted) || {});
+    } catch (err) {
+      console.error("[router] reward handler failed", err);
+    }
+  }
+  return granted;
 }
 
 export function startRouter(viewEl) {

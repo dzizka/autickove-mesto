@@ -131,10 +131,10 @@ test("stats are visible in the race: a strong car starts with shields and is fas
   await page.context().close();
 });
 
-test("version-1 saves migrate to version 2 with the starter car", async () => {
+test("version-1 saves migrate to the current schema with the starter car", async () => {
   const page = await openGame(env.browser, env.server.url, { storage: { version: 1, coins: 70, settings: { sound: true, voice: false } } });
   const s = await page.evaluate(() => window.__game.state.getState());
-  assert.equal(s.version, 2);
+  assert.equal(s.version, await page.evaluate(() => window.__game.state.CURRENT_VERSION));
   assert.equal(s.coins, 70);
   assert.equal(Object.keys(s.car.equipped).length, 6);
   for (const part of Object.values(s.car.equipped)) assert.ok(part.main && part.main.value > 0);

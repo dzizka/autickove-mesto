@@ -2,10 +2,10 @@
 // Rule: every schema change bumps CURRENT_VERSION and adds a step to MIGRATIONS.
 
 import { emit } from "./events.js";
-import { starterParts } from "../systems/loot.js";
+import { starterParts, emptyLootHistory } from "../systems/loot.js";
 
 export const STORAGE_KEY = "autickove-mesto-v2";
-export const CURRENT_VERSION = 2;
+export const CURRENT_VERSION = 3;
 
 export function defaultState() {
   return {
@@ -24,6 +24,10 @@ export function defaultState() {
     inventory: [],
     // v2: race progress per track: { city: { unlocked: 1, best: { 1: 2 }, challenge: 0, races: 0 } }
     races: { tracks: {}, total: 0, wins: 0 },
+    // v3: garage — scrap 🔩, bag size, loot guarantees and the bad-luck counter.
+    scrap: 0,
+    bagSize: 30,
+    loot: emptyLootHistory(),
   };
 }
 
@@ -44,6 +48,12 @@ const MIGRATIONS = {
   },
   // v1 → v2: car parts and race progress (filled from defaults: starter car, no races yet).
   1: (s) => ({ ...s, version: 2 }),
+  // v2 → v3: garage fields; parts get icon/budget/isNew where missing.
+  2: (s) => {
+    const fix = (p) => (p && typeof p === "object" ? { icon: null, budget: p.main?.value || 1, legendary: null, isNew: false, locked: false, ...p } : p);
+    const equipped = Object.fromEntries(Object.entries(s.car?.equipped || {}).map(([k, p]) => [k, fix(p)]));
+    return { ...s, version: 3, car: { ...(s.car || {}), equipped }, inventory: (s.inventory || []).map(fix) };
+  },
 };
 
 const isPlainObject = (v) => v !== null && typeof v === "object" && !Array.isArray(v);

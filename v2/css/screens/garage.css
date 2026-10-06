@@ -1,0 +1,182 @@
+/* Garage, part cards, part detail and the reward chest. */
+
+/* ---------- part card ---------- */
+.part-card {
+  --rarity: #9aa0a6;
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 72px;
+  height: 72px;
+  border: 4px solid var(--rarity);
+  border-radius: 18px;
+  background: radial-gradient(circle at 50% 35%, #fff 0 45%, color-mix(in srgb, var(--rarity) 22%, #fff));
+  box-shadow: 0 4px 0 color-mix(in srgb, var(--rarity) 70%, #000), 0 6px 14px rgba(0, 0, 0, .12);
+  font: inherit;
+  cursor: pointer;
+}
+.part-card:active { transform: translateY(3px); box-shadow: 0 1px 0 color-mix(in srgb, var(--rarity) 70%, #000); }
+.part-card.rarity-epic { background: radial-gradient(circle at 50% 35%, #fff 0 40%, #e6d4fb); }
+.part-card.rarity-legendary { animation: legend-glow 1.6s ease-in-out infinite; }
+.part-card.empty { --rarity: #d5dbe4; font-size: 1.6rem; opacity: .5; cursor: default; }
+.pc-icon { font-size: 2.3rem; line-height: 1; }
+.pc-stars { position: absolute; bottom: -2px; left: 0; right: 0; font-size: .62rem; text-align: center; letter-spacing: -1px; }
+.pc-arrow {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 700;
+}
+.pc-arrow.up { background: var(--grass); animation: bounce 1s ease-in-out infinite; }
+.pc-arrow.down { background: var(--tomato); }
+.pc-new {
+  position: absolute;
+  top: -10px;
+  left: -8px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--sun);
+  font-size: .62rem;
+  font-weight: 700;
+  box-shadow: 0 0 0 2px #fff;
+}
+.pc-new::before { content: "✨"; }
+.pc-lock { position: absolute; bottom: -8px; right: -8px; font-size: 1.1rem; }
+.pc-spark { position: absolute; top: 2px; left: 4px; font-size: .9rem; }
+@keyframes legend-glow { 50% { box-shadow: 0 0 18px var(--rarity), 0 4px 0 #b35c00; } }
+
+/* ---------- garage ---------- */
+.garage { display: grid; gap: 14px; }
+.garage .card { max-width: none; }
+.lift { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 8px; width: 100%; margin: 0; padding: 12px 10px; }
+.lift-slots { display: grid; gap: 14px; }
+.slot { position: relative; }
+.slot-icon {
+  position: absolute;
+  bottom: -6px;
+  left: -6px;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: #fff;
+  font-size: .9rem;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, .2);
+}
+.slot-better {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--grass);
+  color: #fff;
+  font-weight: 700;
+  animation: bounce 1s ease-in-out infinite;
+}
+.lift-car { position: relative; padding-bottom: 24px; }
+.lift-car .car-side { position: relative; z-index: 1; }
+.lift-post {
+  position: absolute;
+  left: 20%;
+  right: 20%;
+  bottom: 0;
+  height: 30px;
+  border-radius: 6px 6px 0 0;
+  background: repeating-linear-gradient(45deg, #ffd23f 0 10px, #2b2d33 10px 20px);
+}
+
+.garage-stats, .garage-tools-card { width: 100%; margin: 0; display: grid; gap: 12px; }
+.garage-tools-card { padding: 10px; }
+.garage-tools { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 10px; }
+.garage-tools .power-badge.pop { animation: pop .4s ease-out; }
+.scrap { padding: 8px 14px; border-radius: 999px; background: var(--paper-soft); font-size: 1.3rem; font-weight: 700; }
+.btn.pulse { animation: pulse 1.2s ease-in-out infinite; }
+.btn:disabled { filter: grayscale(.8); opacity: .6; cursor: default; }
+
+.bag { width: 100%; margin: 0; display: grid; gap: 12px; }
+.bag-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.bag-meter { display: flex; align-items: center; gap: 6px; flex: 1; min-width: 140px; font-size: 1.5rem; }
+.bag-meter small { font-size: .75rem; color: var(--ink-soft); }
+.bag-bar { flex: 1; height: 16px; overflow: hidden; border-radius: 8px; background: #e4e9f0; }
+.bag-bar i { display: block; height: 100%; background: var(--sky); }
+.bag-bar i.full { background: var(--tomato); }
+.dot { display: inline-block; width: 14px; height: 14px; margin-left: 2px; border-radius: 50%; }
+.dot.grey { background: var(--rarity-common); }
+.dot.green { background: var(--rarity-good); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip {
+  min-width: var(--tap);
+  height: var(--tap);
+  border: 3px solid transparent;
+  border-radius: 999px;
+  background: var(--paper-soft);
+  font-size: 1.4rem;
+  cursor: pointer;
+}
+.chip.active { border-color: var(--sky); background: #e3f7fa; }
+.bag-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(76px, 1fr)); gap: 16px 10px; justify-items: center; padding-top: 8px; }
+.bag-empty { text-align: center; font-size: 2rem; opacity: .6; }
+
+@media (min-width: 900px) {
+  .garage { grid-template-columns: 1.4fr 1fr; grid-template-areas: "lift tools" "lift stats" "bag bag"; align-items: stretch; }
+  .garage .lift { grid-area: lift; }
+  .garage .garage-tools-card { grid-area: tools; }
+  .garage .garage-stats { grid-area: stats; }
+  .garage .bag { grid-area: bag; }
+  .part-card { width: 80px; height: 80px; }
+}
+
+/* ---------- part detail ---------- */
+.part-modal { text-align: left; }
+.pd-head { --rarity: #9aa0a6; position: relative; display: flex; align-items: center; gap: 14px; padding: 10px; border: 4px solid var(--rarity); border-radius: 20px; background: color-mix(in srgb, var(--rarity) 14%, #fff); }
+.pd-icon { font-size: 3.4rem; }
+.pd-rarity { font-weight: 700; color: color-mix(in srgb, var(--rarity) 75%, #000); }
+.pd-stars { font-size: .9rem; min-height: 1.1em; }
+.pd-power { font-size: 1.3rem; font-weight: 700; }
+.pd-vs { color: var(--ink-soft); font-size: 1rem; }
+.pd-arrow { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); display: grid; place-items: center; width: 52px; height: 52px; border-radius: 50%; color: #fff; font-size: 1.8rem; font-weight: 700; }
+.pd-arrow.up { background: var(--grass); }
+.pd-arrow.down { background: var(--tomato); }
+.cmp-legend { margin: 10px 0 2px; text-align: center; font-size: 1.4rem; }
+.leg-old { opacity: .5; }
+.cmp { display: grid; gap: 8px; margin: 10px 0; }
+.cmp-row { display: flex; align-items: center; gap: 8px; }
+.cmp-bars { position: relative; flex: 1; display: grid; gap: 3px; }
+.cmp-bars i { display: block; height: 12px; min-width: 3px; border-radius: 6px; }
+.cmp-old { background: #c9d1dc; }
+.cmp-arrow { width: 24px; font-weight: 700; text-align: center; }
+.cmp-arrow.up { color: var(--grass-dark); }
+.cmp-arrow.down { color: var(--tomato-dark); }
+.pd-actions { display: grid; gap: 10px; }
+.pd-actions .btn { width: 100%; }
+.cost { font-size: .8rem; font-weight: 600; opacity: .85; }
+
+/* ---------- chest ---------- */
+.chest-modal { text-align: center; }
+.chest { --glow: #ffd23f; display: block; width: 150px; margin: 0 auto; padding: 0; border: 0; background: none; cursor: pointer; animation: wiggle .8s ease-in-out infinite; }
+.chest-svg { display: block; width: 100%; overflow: visible; filter: drop-shadow(0 6px 0 rgba(0, 0, 0, .15)); }
+.chest-lid { transform-origin: 12px 42px; transition: transform .4s cubic-bezier(.3, 1.6, .5, 1); }
+.chest.open { animation: none; filter: drop-shadow(0 0 22px var(--glow)); }
+.chest.open .chest-lid { transform: rotate(-38deg) translate(-6px, -6px); }
+.chest-parts { display: flex; flex-wrap: wrap; justify-content: center; gap: 16px; min-height: 20px; margin: 12px 0 6px; }
+.chest-parts .part-card { animation: pop-in .5s cubic-bezier(.2, 1.5, .4, 1) both; }
+.chest-after { opacity: 0; transition: opacity .4s; }
+.chest-after.show { opacity: 1; }
+.reward-row.scrap { margin-left: 8px; background: #e4e9f0; }
+
+@keyframes wiggle { 25% { transform: rotate(-4deg); } 75% { transform: rotate(4deg); } }
+@keyframes pop-in { from { opacity: 0; transform: translateY(-50px) scale(.3); } }
+@keyframes pulse { 50% { box-shadow: 0 5px 0 var(--c-dark), 0 0 22px 6px var(--c); filter: brightness(1.12); } }

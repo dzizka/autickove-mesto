@@ -15,6 +15,9 @@ import { makeSoonScreen } from "./screens/soon.js";
 import home from "./screens/home.js";
 import settings from "./screens/settings.js";
 import races from "./screens/races.js";
+import garage from "./screens/garage.js";
+import { presentReward } from "./screens/chest.js";
+import { grantRaceLoot } from "./systems/garage.js";
 import raceGame from "./games/race/index.js";
 import { recordRace } from "./systems/progress.js";
 import { demoGame, demoCrashGame } from "./games/demo/index.js";
@@ -35,16 +38,19 @@ mountTopbar(document.querySelector("[data-topbar]"), document.querySelector("[da
 router.registerScreen(home);
 router.registerScreen(settings);
 // Pillars that are built get their real screen; the rest say "being built".
-const built = { races };
+const built = { races, garage };
 for (const p of PILLARS) router.registerScreen(built[p.id] || makeSoonScreen(p));
 router.registerGame(raceGame);
 router.registerGame(demoGame);
 router.registerGame(demoCrashGame);
 
-// Race results update track progress (medals, unlocked levels and tracks, boss bar).
-events.on("gameFinished", ({ gameId, result }) => {
-  if (gameId === "race" && result.extra) recordRace(result.extra);
+// Race results: track progress (medals, unlocks, boss bar), then the chest with parts.
+router.addRewardHandler((gameId, result) => {
+  if (gameId !== "race" || !result.extra) return null;
+  const unlocks = recordRace(result.extra);
+  return { unlocks, loot: grantRaceLoot(result.extra) };
 });
+router.setRewardPresenter(presentReward);
 
 startPlayClock();
 router.startRouter(document.querySelector("main"));
