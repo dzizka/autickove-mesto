@@ -1,0 +1,337 @@
+/* pet & trophies */
+.petpick {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: 12px;
+}
+.pp {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: var(--card);
+  border-radius: 22px;
+  padding: 12px;
+  border-bottom: 6px solid var(--edge);
+}
+.pp span {
+  font-family: var(--emo);
+  font-size: 3.6rem;
+  line-height: 1.1;
+}
+.room {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  background: linear-gradient(180deg, #fff7e8 0 68%, #f1d6ae 68%);
+  border-radius: 26px;
+  padding: 16px 14px 14px;
+  margin-top: 8px;
+  border-bottom: 6px solid #d9b98a;
+}
+.room .hint {
+  color: var(--muted);
+}
+.mood {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #fff;
+  border-radius: 16px;
+  padding: 4px 12px;
+  font-weight: 800;
+  box-shadow: 0 3px 0 var(--edge);
+}
+.mood span {
+  font-family: var(--emo);
+  font-size: 1.5rem;
+}
+.petbtn {
+  position: relative;
+  padding: 6px 20px;
+}
+.pet {
+  position: relative;
+  display: inline-block;
+  line-height: 1;
+}
+.pet .pb {
+  font-family: var(--emo);
+  font-size: 2.6rem;
+  display: block;
+}
+.pet.big .pb {
+  font-size: 7.5rem;
+}
+.pet .pw {
+  position: absolute;
+  font-family: var(--emo);
+  left: 50%;
+  transform: translateX(-50%);
+}
+.pet .hat {
+  top: -34%;
+  font-size: 55%;
+}
+.pet .face {
+  top: 24%;
+  font-size: 45%;
+}
+.pet .item {
+  left: auto;
+  right: -38%;
+  bottom: -2%;
+  transform: none;
+  font-size: 42%;
+}
+.pet.big .hat {
+  font-size: 3.6rem;
+  top: -28%;
+}
+.pet.big .face {
+  font-size: 3rem;
+  top: 22%;
+}
+.pet.big .item {
+  font-size: 3.2rem;
+}
+.pet.jump {
+  animation: petjump 0.5s;
+}
+@keyframes petjump {
+  30% {
+    transform: translateY(-22px) scale(1.06, 0.94);
+  }
+  60% {
+    transform: translateY(0) scale(0.95, 1.05);
+  }
+}
+.heart {
+  position: absolute;
+  top: 10%;
+  font-family: var(--emo);
+  font-size: 1.8rem;
+  pointer-events: none;
+  animation: rise 1s forwards;
+}
+.pname {
+  text-align: center;
+}
+.pname b {
+  font-size: 1.4rem;
+  display: block;
+}
+.pname small {
+  color: var(--muted);
+  font-weight: 800;
+}
+.bars {
+  display: grid;
+  gap: 6px;
+  width: min(360px, 100%);
+}
+.bars > div {
+  display: grid;
+  grid-template-columns: 125px 1fr;
+  align-items: center;
+  gap: 8px;
+  font-weight: 800;
+  font-size: 0.95rem;
+}
+.bars .prog {
+  margin: 0;
+  height: 14px;
+}
+.mycar {
+  position: relative;
+}
+.hpet .pet .pb {
+  font-size: 1.8rem;
+}
+.hpet {
+  position: absolute;
+  right: -10px;
+  bottom: -10px;
+  width: 48px;
+  height: 48px;
+  box-shadow: 0 3px 0 var(--edge);
+  border-radius: 50%;
+  background: #fff7e8;
+  display: grid;
+  place-items: center;
+}
+.hpet i {
+  position: absolute;
+  right: -4px;
+  top: -4px;
+  font-style: normal;
+  font-family: var(--emo);
+  font-size: 1.1rem;
+}
+.trophies {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 10px;
+}
+.tro {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 2px;
+  background: rgba(255, 255, 255, 0.65);
+  border-radius: 18px;
+  padding: 10px 6px;
+  border: 3px dashed var(--edgeD);
+}
+.tro span {
+  font-family: var(--emo);
+  font-size: 2.2rem;
+  line-height: 1.2;
+  filter: grayscale(1);
+  opacity: 0.6;
+}
+.tro small {
+  color: var(--muted);
+  font-weight: 700;
+  font-size: 0.8rem;
+  line-height: 1.15;
+}
+.tro em {
+  font-style: normal;
+  font-weight: 800;
+  font-size: 0.8rem;
+  color: var(--sunD);
+}
+.tro.on {
+  background: var(--gold);
+  border: 3px solid var(--sunD);
+  border-bottom-width: 6px;
+}
+.tro.on span {
+  filter: none;
+  opacity: 1;
+}
+.trophyToast {
+  position: fixed;
+  left: 50%;
+  top: calc(env(safe-area-inset-top, 0px) + 12px);
+  transform: translateX(-50%);
+  z-index: 45;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--gold);
+  border: 3px solid var(--sunD);
+  border-radius: 20px;
+  padding: 8px 16px;
+  box-shadow: 0 6px 0 var(--sunD);
+  animation: drop 0.5s cubic-bezier(0.3, 1.6, 0.6, 1);
+  max-width: calc(100% - 32px);
+}
+.trophyToast span {
+  font-family: var(--emo);
+  font-size: 2.2rem;
+}
+.trophyToast b {
+  display: block;
+}
+.trophyToast small {
+  font-weight: 800;
+  color: var(--sunD);
+}
+@keyframes drop {
+  from {
+    transform: translate(-50%, -120%);
+  }
+}
+.pstat {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 10px 0;
+}
+.pstat div {
+  background: var(--sky2);
+  border-radius: 14px;
+  padding: 8px 4px;
+}
+.pstat b {
+  display: block;
+  font-size: 1.25rem;
+  font-variant-numeric: tabular-nums;
+}
+.pstat small {
+  color: var(--muted);
+  font-weight: 700;
+  font-size: 0.78rem;
+  line-height: 1.1;
+  display: block;
+}
+.pchart {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+  height: 130px;
+  align-items: end;
+  margin: 8px 0 4px;
+}
+.pchart div {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  height: 100%;
+  gap: 2px;
+}
+.pchart i {
+  display: block;
+  width: 70%;
+  min-height: 3px;
+  background: var(--plum);
+  border-radius: 6px 6px 2px 2px;
+}
+.pchart b {
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+}
+.pchart small {
+  font-size: 0.75rem;
+  color: var(--muted);
+  font-weight: 800;
+}
+.ph3 {
+  margin: 14px 0 6px;
+  font-size: 1.1rem;
+  text-align: left;
+}
+.plist {
+  display: grid;
+  gap: 4px;
+  text-align: left;
+}
+.plist div {
+  display: grid;
+  grid-template-columns: 140px 1fr 32px;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+.plist i {
+  display: block;
+  height: 10px;
+  border-radius: 99px;
+  background: var(--sun);
+}
+.plist b {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.nav button span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}

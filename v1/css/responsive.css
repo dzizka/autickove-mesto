@@ -1,0 +1,42 @@
+@media (max-width: 420px) {
+  .seg button {
+    font-size: 0.8rem;
+    padding: 8px 2px;
+  }
+  .logo span {
+    font-size: 1.6rem;
+  }
+  .logo b {
+    font-size: 1.9rem;
+  }
+  .logo i {
+    font-size: 1.4rem;
+  }
+  .nav button span {
+    font-size: 0.72rem;
+  }
+  .plist div {
+    grid-template-columns: 110px 1fr 28px;
+  }
+  body {
+    font-size: 16px;
+  }
+  .pill {
+    padding: 5px 9px;
+  }
+
+  .city,
+  .grid,
+  .games {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  h2 {
+    flex-wrap: wrap;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
