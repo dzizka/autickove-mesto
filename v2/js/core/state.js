@@ -1,0 +1,147 @@
+// Game state: defaults, load/save to localStorage, schema version + migrations.
+// Rule: every schema change bumps CURRENT_VERSION and adds a step to MIGRATIONS.
+
+import { emit } from "./events.js";
+
+export const STORAGE_KEY = "autickove-mesto-v2";
+export const CURRENT_VERSION = 1;
+
+export function defaultState() {
+  return {
+    version: CURRENT_VERSION,
+    createdAt: Date.now(),
+    coins: 0,
+    xp: 0,
+    level: 1,
+    settings: { sound: true, voice: true },
+    // Per-day play log for the parents' overview: { "2026-10-06": { seconds, games: { race: 3 } } }
+    playLog: {},
+    // Hidden test-menu switches.
+    cheats: { shortRaces: false },
+  };
+}
+
+/**
+ * Migration steps: MIGRATIONS[n] turns a version-n object into version n+1.
+ * Version 0 = an object without `version` (pre-release saves / hand-made test data).
+ */
+const MIGRATIONS = {
+  0: (s) => {
+    const out = { ...s, version: 1 };
+    // v0 kept sound/voice at the top level.
+    if (!out.settings && ("sound" in s || "voice" in s)) {
+      out.settings = { sound: s.sound !== false, voice: s.voice !== false };
+      delete out.sound;
+      delete out.voice;
+    }
+    return out;
+  },
+};
+
+const isPlainObject = (v) => v !== null && typeof v === "object" && !Array.isArray(v);
+
+/** Fill keys missing in `data` from `defaults` (recursively for plain objects). */
+function fillDefaults(data, defaults) {
+  const out = { ...data };
+  for (const [key, def] of Object.entries(defaults)) {
+    if (!(key in out) || out[key] === undefined || out[key] === null) {
+      out[key] = structuredClone(def);
+    } else if (isPlainObject(def) && isPlainObject(out[key])) {
+      out[key] = fillDefaults(out[key], def);
+    }
+  }
+  return out;
+}
+
+/** Bring any saved object up to CURRENT_VERSION. Throws on non-object input. */
+export function migrate(raw) {
+  if (!isPlainObject(raw)) throw new Error("Save data is not an object");
+  let s = { ...raw };
+  let v = Number.isInteger(s.version) ? s.version : 0;
+  if (v > CURRENT_VERSION) throw new Error(`Save is from a newer game (version ${v})`);
+  while (v < CURRENT_VERSION) {
+    const step = MIGRATIONS[v];
+    if (!step) throw new Error(`Missing migration from version ${v}`);
+    s = step(s);
+    v = s.version;
+  }
+  s = fillDefaults(s, defaultState());
+  // Sanitize numbers that the UI relies on.
+  for (const key of ["coins", "xp"]) {
+    if (!Number.isFinite(s[key]) || s[key] < 0) s[key] = 0;
+  }
+  if (!Number.isInteger(s.level) || s.level < 1) s.level = 1;
+  return s;
+}
+
+let state = defaultState();
+let saveTimer = null;
+let storageOk = true;
+
+export function getState() {
+  return state;
+}
+
+/** Load from localStorage (or start fresh). A broken save is kept aside, never lost. */
+export function load() {
+  let raw = null;
+  try {
+    raw = localStorage.getItem(STORAGE_KEY);
+  } catch {
+    storageOk = false;
+  }
+  if (!raw) {
+    state = defaultState();
+    return state;
+  }
+  try {
+    state = migrate(JSON.parse(raw));
+  } catch (err) {
+    console.error("[state] save could not be loaded, starting fresh", err);
+    try {
+      localStorage.setItem(`${STORAGE_KEY}-broken-${Date.now()}`, raw);
+    } catch {
+      /* ignore */
+    }
+    state = defaultState();
+  }
+  return state;
+}
+
+export function saveNow() {
+  clearTimeout(saveTimer);
+  saveTimer = null;
+  if (!storageOk) return false;
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    return true;
+  } catch (err) {
+    console.warn("[state] save failed", err);
+    return false;
+  }
+}
+
+export function scheduleSave() {
+  if (saveTimer) return;
+  saveTimer = setTimeout(saveNow, 400);
+}
+
+/** Mutate state through a function, then save and notify the UI. */
+export function update(fn) {
+  fn(state);
+  scheduleSave();
+  emit("stateChanged", state);
+  return state;
+}
+
+/** Replace the whole state (import / reset). Data is migrated first. */
+export function replace(data) {
+  state = migrate(data);
+  saveNow();
+  emit("stateChanged", state);
+  return state;
+}
+
+export function reset() {
+  return replace(defaultState());
+}

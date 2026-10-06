@@ -38,6 +38,12 @@ v1/
 
 Stačí otvoriť `v1/index.html` v prehliadači alebo spustiť `python3 -m http.server` v koreni repozitára a otvoriť http://localhost:8000/. Písmo sa načítava z Google Fonts. Bez internetu hra použije náhradné písmo.
 
+## Verzia 2 (priečinok `v2/`, rozpracovaná)
+
+Hrá sa na https://dzizka.github.io/autickove-mesto/v2/. Hotová je **časť 0 (kostra)**: domovská obrazovka, uloženie postupu, prenos kódom `AM2:`, nastavenia (zvuk, hlas, začať odznova) a skryté testovacie menu (podržať ⚙️ 3 sekundy). Piliere hry zatiaľ ukazujú „ešte sa stavia“.
+
+**Testy:** `cd v2/tests && npm install && npm test` (Node 20+, Playwright stiahne prehliadač cez `npx playwright install chromium`). Obrázky obrazoviek v šírke 390 px a 1280 px sa uložia do `v2/tests/screenshots/`.
+
 ## Plán
 
 Verzia 2 bude v priečinku `v2/` ako **nová hra**: preteky s korisťou do áut (ako Diablo), Garáž, tuning vzhľadu, bossovia, kamaráti a nová Omaľovánka s maľovaním podľa čísel. Zadanie je v [DESIGN-v2.md](DESIGN-v2.md).

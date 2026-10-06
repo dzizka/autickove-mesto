@@ -1,0 +1,45 @@
+/* Design tokens: colours, type, sizes. */
+:root {
+  --font: "Fredoka", "Trebuchet MS", "Segoe UI", system-ui, sans-serif;
+
+  /* bright, friendly palette */
+  --tomato: #ff5a5f;
+  --tomato-dark: #d93a40;
+  --sun: #ffc93c;
+  --sun-dark: #e0a400;
+  --grass: #3ebd4a;
+  --grass-dark: #2a9435;
+  --sky: #2ab7ca;
+  --sky-dark: #1a8c9c;
+  --plum: #8f5bd8;
+  --plum-dark: #6c3db3;
+  --orange: #ff8c42;
+
+  /* rarity (used from part 2) */
+  --rarity-common: #9aa0a6;
+  --rarity-good: #3ebd4a;
+  --rarity-rare: #2f80ed;
+  --rarity-epic: #9b51e0;
+  --rarity-legendary: #ff8c1a;
+
+  --ink: #23324a;
+  --ink-soft: #5b6b82;
+  --paper: #ffffff;
+  --paper-soft: #f4f8fc;
+  --bg-top: #9be3f0;
+  --bg-bottom: #e8fbff;
+  --line: rgba(35, 50, 74, 0.12);
+
+  --tap: 56px;           /* minimum touch target (DESIGN-v2 §1) */
+  --tap-big: 96px;
+  --radius: 20px;
+  --radius-sm: 12px;
+  --gap: 12px;
+  --shadow: 0 6px 0 rgba(35, 50, 74, 0.18), 0 10px 24px rgba(35, 50, 74, 0.12);
+  --shadow-press: 0 2px 0 rgba(35, 50, 74, 0.18);
+
+  --topbar-h: 68px;
+  --nav-h: 76px;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}

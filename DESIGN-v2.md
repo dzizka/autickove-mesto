@@ -54,6 +54,7 @@ v2/
 │   │   ├── rng.js          # náhoda (dá sa nastaviť semienko kvôli testom)
 │   │   └── ui.js           # modal, toast, letiace mince, konfety
 │   ├── data/               # LEN DÁTA, žiadna logika
+│   │   ├── menu.js         # štyri piliere hry (tlačidlá Domov a navigácie)
 │   │   ├── cars.js  tuning.js  tracks.js  bosses.js
 │   │   ├── loot-bases.js  affixes.js  legendaries.js  sets.js
 │   │   ├── crew.js  trophies.js
@@ -68,10 +69,12 @@ v2/
 │   │   ├── car-side.js     # auto z boku (SVG)
 │   │   └── car-top.js      # auto zhora (canvas)
 │   ├── screens/            # home.js garage.js tuning.js crew.js gallery.js parents.js
+│   │                       # settings.js test-menu.js topbar.js soon.js („ešte sa stavia“)
 │   └── games/
+│       ├── demo/           # skúšobná jazda len z testovacieho menu (overuje slučku a odmeny)
 │       ├── race/           # index.js  track.js  spawner.js  physics.js  draw.js  hud.js  boss.js
 │       └── coloring/       # index.js  free-paint.js  by-number.js  brush.js
-└── tests/                  # Playwright testy (bod 10)
+└── tests/                  # Playwright testy (bod 10): node --test, package.json, helpers.mjs
 ```
 
 **Pravidlá:**

@@ -1,0 +1,12 @@
+{
+  "name": "autickove-mesto-v2-tests",
+  "private": true,
+  "type": "module",
+  "description": "Browser tests for Autíčkové mesto 2 (node:test + Playwright).",
+  "scripts": {
+    "test": "node --test --test-concurrency=1 *.test.mjs"
+  },
+  "devDependencies": {
+    "playwright": "^1.56.0"
+  }
+}

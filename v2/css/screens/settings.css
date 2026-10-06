@@ -1,0 +1,4 @@
+/* Settings screen. */
+.settings { display: grid; gap: 4px; padding-top: 6px; }
+.settings .btn.big { justify-self: center; min-width: 160px; margin-top: 8px; }
+.settings .card .btn { width: 100%; }

@@ -1,0 +1,106 @@
+/* Top bar, bottom navigation, screen frame. */
+body {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+}
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: calc(var(--topbar-h) + var(--safe-top));
+  padding: calc(6px + var(--safe-top)) 12px 6px;
+}
+.topbar .spacer { flex: 1; }
+.topbar .icon-btn { width: 52px; height: 52px; font-size: 1.5rem; }
+body[data-screen="home"] .home-btn { visibility: hidden; }
+
+.level-badge {
+  --progress: 0%;
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: conic-gradient(var(--grass) var(--progress), rgba(255, 255, 255, .7) 0);
+  box-shadow: var(--shadow);
+}
+.level-badge::before {
+  content: "";
+  position: absolute;
+  inset: 6px;
+  border-radius: 50%;
+  background: var(--sun);
+}
+.level-star { position: absolute; font-size: 1.9rem; opacity: .45; }
+.level-num { position: relative; font-size: 1.3rem; font-weight: 700; }
+
+.coins {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 48px;
+  padding: 0 16px 0 10px;
+  border-radius: 999px;
+  background: var(--paper);
+  box-shadow: var(--shadow);
+  font-size: 1.3rem;
+  font-weight: 700;
+}
+.coins.pop { animation: pop .35s ease-out; }
+
+.gear.holding { animation: spin 3s linear; background: var(--sun); }
+
+.view {
+  flex: 1;
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 8px 16px calc(var(--nav-h) + 24px + var(--safe-bottom));
+}
+body[data-screen="home"] .view { padding-bottom: calc(24px + var(--safe-bottom)); }
+
+.screen { animation: screen-in .25s ease-out; }
+.screen-title { font-size: 1.8rem; text-align: center; }
+
+.bottom-nav {
+  position: fixed;
+  left: 50%;
+  bottom: calc(10px + var(--safe-bottom));
+  z-index: 20;
+  display: flex;
+  gap: 8px;
+  padding: 8px;
+  transform: translateX(-50%);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .92);
+  box-shadow: var(--shadow);
+}
+body[data-screen="home"] .bottom-nav,
+body[data-mode="game"] .bottom-nav { display: none; }
+.nav-btn {
+  display: grid;
+  place-items: center;
+  width: var(--tap);
+  height: var(--tap);
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  font-size: 1.8rem;
+  cursor: pointer;
+}
+.nav-btn.active { background: var(--sun); }
+.nav-btn:active { transform: scale(.92); }
+
+/* Games take the whole screen; they bring their own exit button. */
+body[data-mode="game"] .topbar { display: none; }
+body[data-mode="game"] .view { max-width: none; padding: 0; height: 100dvh; }
+
+@keyframes pop { 50% { transform: scale(1.18); } }
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes screen-in { from { opacity: 0; transform: translateY(8px); } }

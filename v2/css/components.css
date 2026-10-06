@@ -1,0 +1,127 @@
+/* Cards, modals, toasts, flying coins, confetti, switches. */
+.card {
+  margin: 0 auto 16px;
+  padding: 16px;
+  max-width: 560px;
+  border-radius: var(--radius);
+  background: var(--paper);
+  box-shadow: var(--shadow);
+}
+.card.stack { display: grid; gap: 14px; }
+
+/* ---------- modal ---------- */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgba(20, 30, 50, .45);
+  animation: fade-in .2s;
+}
+.modal {
+  width: min(100%, 420px);
+  max-height: calc(100dvh - 32px);
+  overflow: auto;
+  padding: 22px 18px 18px;
+  border-radius: 26px;
+  background: var(--paper);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, .3);
+  text-align: center;
+  animation: modal-in .28s cubic-bezier(.2, 1.4, .4, 1);
+}
+.modal.wide { width: min(100%, 560px); text-align: left; }
+.modal.wide h2 { text-align: center; }
+.modal h3 { margin-top: 14px; font-size: 1.05rem; }
+.modal-icon { font-size: 4rem; line-height: 1.1; margin-bottom: 6px; }
+.modal-icon.bounce { animation: bounce 1s ease-in-out infinite; }
+.modal-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 16px;
+}
+.modal-row .btn { min-width: 110px; font-size: 1.6rem; }
+.modal-row .btn.ghost, .modal.wide .modal-row .btn { font-size: 1.1rem; }
+.reward-row {
+  display: inline-block;
+  margin: 6px 0;
+  padding: 8px 22px;
+  border-radius: 999px;
+  background: var(--sun);
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+.code-box {
+  width: 100%;
+  min-height: 84px;
+  margin: 4px 0 8px;
+  padding: 10px;
+  border: 2px solid var(--line);
+  border-radius: var(--radius-sm);
+  font-family: ui-monospace, monospace;
+  font-size: .8rem;
+  word-break: break-all;
+  resize: vertical;
+}
+.transfer-msg p { margin-top: 8px; }
+.gate-input {
+  width: 160px;
+  height: var(--tap);
+  border: 3px solid var(--line);
+  border-radius: var(--radius-sm);
+  font-size: 1.6rem;
+  text-align: center;
+}
+.cheat-grid { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 10px; }
+
+/* ---------- toast ---------- */
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(var(--nav-h) + 30px + var(--safe-bottom));
+  z-index: 120;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  max-width: calc(100% - 32px);
+  padding: 12px 20px;
+  border-radius: 999px;
+  background: var(--ink);
+  color: #fff;
+  font-weight: 600;
+  transform: translateX(-50%);
+  animation: toast-in .3s ease-out;
+}
+
+/* ---------- switch ---------- */
+.setting-row { display: flex; align-items: center; gap: 12px; padding: 6px 0; }
+.setting-icon { font-size: 2rem; }
+.setting-label { flex: 1; font-size: 1.2rem; font-weight: 600; }
+.switch {
+  width: 92px;
+  height: var(--tap);
+  border: 0;
+  border-radius: 999px;
+  background: #d5dbe4;
+  color: #fff;
+  font: inherit;
+  font-size: 1.5rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background .2s;
+}
+.switch[aria-checked="true"] { background: var(--grass); }
+
+/* ---------- effects ---------- */
+.fly-coin { position: fixed; z-index: 150; font-size: 2rem; pointer-events: none; }
+.confetti { position: fixed; inset: 0; z-index: 140; overflow: hidden; pointer-events: none; }
+.confetti i { position: absolute; top: 0; width: 10px; height: 16px; border-radius: 3px; }
+
+@keyframes fade-in { from { opacity: 0; } }
+@keyframes modal-in { from { opacity: 0; transform: scale(.85); } }
+@keyframes toast-in { from { opacity: 0; transform: translate(-50%, 20px); } }
+@keyframes bounce { 50% { transform: translateY(-10px) rotate(-5deg); } }
