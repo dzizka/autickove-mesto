@@ -7,7 +7,18 @@ Hrá sa ťukaním na telefóne, tablete aj počítači a pokyny hra predčítava
 
 ## Verzia 1 (priečinok `v1/`)
 
-Celá hra je jeden súbor `v1/index.html` bez inštalácie a bez servera.
+Bez inštalácie a bez kompilácie. Kód je rozdelený do súborov:
+
+```
+v1/
+├── index.html        # kostra stránky, načíta CSS a skripty v správnom poradí
+├── css/              # vzhľad: základ, obrazovky, hry, responzívne úpravy
+└── js/
+    ├── util.js  data.js  state.js  core.js  actions.js  cheats.js  save-transfer.js  main.js
+    ├── render/       # kreslenie áut (z boku a zhora)
+    ├── screens/      # obrazovky: mesto, obchod, album, kamaráti, trofeje, prehľad pre rodičov
+    └── games/        # každá hra vo vlastnom súbore
+```
 
 - **Minihry (12):** Preteky (6 tratí so súpermi, power-upmi a benzínom), Pexeso, Umyváreň, Počítanie, Skladačka, Parkovisko, Omaľovánka, Servis, Bludisko, Písmenká, Hudobná garáž, Križovatka.
 - **Mince a levely:** za hry dieťa dostane mince, hviezdy a body. Novými levelmi sa odomykajú hry, budovy, trate a stránky albumu.
@@ -25,8 +36,8 @@ Celá hra je jeden súbor `v1/index.html` bez inštalácie a bez servera.
 
 ## Ako spustiť lokálne
 
-Stačí otvoriť `v1/index.html` v prehliadači. Písmo sa načítava z Google Fonts. Bez internetu hra použije náhradné písmo.
+Stačí otvoriť `v1/index.html` v prehliadači alebo spustiť `python3 -m http.server` v koreni repozitára a otvoriť http://localhost:8000/. Písmo sa načítava z Google Fonts. Bez internetu hra použije náhradné písmo.
 
 ## Plán
 
-Verzia 2 bude v priečinku `v2/`. Zadanie je v [DESIGN-v2.md](DESIGN-v2.md): korisť so štatistikami do áut, Garáž, bossovia, nová Omaľovánka s maľovaním podľa čísel a kód rozdelený do súborov.
+Verzia 2 bude v priečinku `v2/` ako **nová hra**: preteky s korisťou do áut (ako Diablo), Garáž, tuning vzhľadu, bossovia, kamaráti a nová Omaľovánka s maľovaním podľa čísel. Zadanie je v [DESIGN-v2.md](DESIGN-v2.md).

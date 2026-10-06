@@ -2,8 +2,8 @@
 
 Detská hra v prehliadači pre 6-ročné dieťa, ktoré ešte nevie čítať. Hosting: GitHub Pages (https://dzizka.github.io/autickove-mesto/).
 
-- `v1/index.html`: hotová verzia 1, jeden súbor. **Neupravovať**, okrem opravy chyby, o ktorú rodič požiada.
-- `v2/`: verzia 2. Zadanie je v `DESIGN-v2.md` a je záväzné. Pri odchýlke najprv upraviť zadanie.
+- `v1/`: hotová verzia 1. Upravuje sa **len oprava chyby**, o ktorú rodič požiada. Kód je rozdelený do `v1/css/` a `v1/js/`: sú to klasické skripty (nie moduly) so spoločnými globálnymi premennými a **musia sa načítať v poradí z `v1/index.html`**.
+- `v2/`: verzia 2 je **nová hra od začiatku**. Z v1 sa nekopíruje obsah ani kód. Zadanie je v `DESIGN-v2.md` a je záväzné. Pri odchýlke najprv upraviť zadanie.
 
 ## Pravidlá pre v2
 - **Bez kompilácie:** čisté HTML, CSS a ES moduly, ktoré bežia priamo na GitHub Pages. Žiadny framework.
@@ -14,6 +14,6 @@ Detská hra v prehliadači pre 6-ročné dieťa, ktoré ešte nevie čítať. Ho
 - **Uloženie:** `localStorage` kľúč `autickove-mesto-v2`. Zmena schémy znamená zvýšiť `version` a pridať migráciu.
 
 ## Postup práce
-- **Po častiach** podľa `DESIGN-v2.md`, bod 8. Po každej časti nahrať zmeny na `main` a krátko po slovensky zhrnúť, čo pribudlo.
+- **Po častiach** podľa `DESIGN-v2.md`, bod 9. Po každej časti nahrať zmeny na `main` a krátko po slovensky zhrnúť, čo pribudlo.
 - **Pred nahraním** spustiť testy v `v2/tests/` a pozrieť sa na obrazovky v šírke 390 px a 1280 px.
 - **Lokálne spustenie:** `python3 -m http.server` v koreni repozitára a otvoriť `/v2/`. Cez `file://` ES moduly nefungujú.
