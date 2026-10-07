@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
 <title>Náhľad: mesto zhora</title>
 <style>
-  html, body { margin: 0; height: 100%; overflow: hidden; background: #7cc8ff; font-family: system-ui, sans-serif; user-select: none; -webkit-user-select: none; }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #7ccf5a; font-family: system-ui, sans-serif; user-select: none; -webkit-user-select: none; }
   #stage { position: fixed; inset: 0; touch-action: none; }
   .bar { position: fixed; top: 8px; left: 8px; right: 8px; display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; pointer-events: none; }
   .bar button, .bar a, .bar span { pointer-events: auto; min-width: 56px; height: 56px; padding: 0 12px; display: grid; place-items: center; border: 0; border-radius: 18px;
@@ -25,24 +25,35 @@
 <div class="bar" id="bar"></div>
 <div class="pad" id="pad"></div>
 <script type="module">
-// Town preview (DESIGN-v2 §14, part 16, the parent's idea): the town seen from above or from a
-// slight angle, streets in a grid, the child drives up, down, left and right and picks up the
-// coins its buildings made. Buildings are simple low-poly blocks (City Kit models can replace them).
+// Town preview (DESIGN-v2 §14, part 16): seen from above, streets in a grid, the child drives up,
+// down, left and right and picks up the coins its buildings made. Everything is Kenney (CC0):
+// City Kit Roads, Suburban and Commercial, the car from the Car Kit.
 import "../js/core/state.js";
 import * as THREE from "three";
 import { GLTFLoader } from "./vendor/addons/loaders/GLTFLoader.js";
 import { BUILDINGS } from "../js/data/city.js";
 
 const N = 4; // blocks per side
-const BLOCK = 4; // block size
-const ROAD = 1.6; // road width
-const STEP = BLOCK + ROAD; // distance between crossings
-const ORIGIN = -((N * STEP) / 2) + ROAD / 2; // first crossing
-const node = (i) => ORIGIN + i * STEP; // crossing i → world coordinate
-const LEVELS = [2, 3, 1, 1, 2, 0, 1, 0, 0, 0, -1, -1, 0, 1, -1, 0]; // sample town (-1 locked, 0 for sale)
+const B = 3; // block size in road tiles
+const STEP = B + 1; // a road tile between blocks
+const TILES = N * STEP + 1;
+const HALF = (TILES - 1) / 2;
+const node = (i) => i * STEP - HALF; // crossing i → world coordinate (1 unit = 1 road tile)
+// sample town: level per building (-1 locked, 0 for sale)
+const LEVELS = { kiosk: 2, gas: 3, wash: 1, arcade: 1, toys: 2, shop: 0, service: 1, parking: 0, garden: 0, school: 0, musicHall: -1, police: -1 };
+// what a building looks like on level 1, 2 and 3: it grows from a small shop to a tower
+const LOOKS = [
+  ["commercial/building-c", "commercial/building-f", "commercial/building-skyscraper-a"],
+  ["commercial/building-e", "commercial/building-i", "commercial/building-skyscraper-b"],
+  ["commercial/building-a", "commercial/building-g", "commercial/building-skyscraper-c"],
+  ["commercial/building-b", "commercial/building-l", "commercial/building-skyscraper-e"],
+  ["commercial/building-d", "commercial/building-j", "commercial/building-m"],
+];
+const TINTS = ["#ffb3b3", "#b3d4ff", "#ffe08a", "#b8f0b0", "#e0c2ff", "#ffcf9e"];
+const HOUSES = ["suburban/building-type-a", "suburban/building-type-b", "suburban/building-type-d", "suburban/building-type-n", "suburban/building-type-s"];
 
 let night = new Date().getHours() >= 19 || new Date().getHours() < 7;
-let view = "angle";
+let view = "top";
 let coins = 0;
 
 // ---------- scene ----------
@@ -54,227 +65,195 @@ renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 stage.append(renderer.domElement);
 const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 200);
-const hemi = new THREE.HemisphereLight("#e6eeff", "#5a7a4a", 1.6);
+const camera = new THREE.PerspectiveCamera(22, 1, 0.1, 300); // narrow lens: tall buildings lean less
+const hemi = new THREE.HemisphereLight("#f0f4ff", "#6a8a5a", 1.7);
 scene.add(hemi);
-const sun = new THREE.DirectionalLight("#ffffff", 2.2);
-sun.position.set(10, 20, 8);
+const sun = new THREE.DirectionalLight("#ffffff", 2.3);
+sun.position.set(6, 14, 4);
 sun.castShadow = true;
 sun.shadow.mapSize.set(2048, 2048);
-Object.assign(sun.shadow.camera, { left: -16, right: 16, top: 16, bottom: -16, far: 60 });
+Object.assign(sun.shadow.camera, { left: -12, right: 12, top: 12, bottom: -12, far: 40 });
 scene.add(sun);
-
-const mat = (color, extra = {}) => new THREE.MeshStandardMaterial({ color, roughness: 0.8, ...extra });
-const size = N * STEP + ROAD;
-const grass = new THREE.Mesh(new THREE.PlaneGeometry(size + 20, size + 20), mat("#7ccf5a"));
+const grass = new THREE.Mesh(new THREE.PlaneGeometry(TILES + 30, TILES + 30), new THREE.MeshStandardMaterial({ color: "#7ccf5a" }));
 grass.rotation.x = -Math.PI / 2;
+grass.position.y = -0.01;
 grass.receiveShadow = true;
 scene.add(grass);
-// roads with dashed middle lines
-const roadMat = mat("#5e636c");
-const lineMat = mat("#ffffff");
-for (let i = 0; i <= N; i++) {
-  for (const along of ["x", "z"]) {
-    const r = new THREE.Mesh(new THREE.PlaneGeometry(along === "x" ? size : ROAD, along === "x" ? ROAD : size), roadMat);
-    r.rotation.x = -Math.PI / 2;
-    r.position.set(along === "x" ? 0 : node(i), 0.01, along === "x" ? node(i) : 0);
-    r.receiveShadow = true;
-    scene.add(r);
-    for (let d = -size / 2 + 0.6; d < size / 2; d += 1.2) {
-      if (Array.from({ length: N + 1 }, (_, k) => node(k)).some((c) => Math.abs(c - d) < ROAD / 2 + 0.2)) continue;
-      const l = new THREE.Mesh(new THREE.PlaneGeometry(along === "x" ? 0.5 : 0.08, along === "x" ? 0.08 : 0.5), lineMat);
-      l.rotation.x = -Math.PI / 2;
-      l.position.set(along === "x" ? d : node(i), 0.02, along === "x" ? node(i) : d);
-      scene.add(l);
-    }
-  }
-}
 
-function emojiTex(char, bg = null) {
+// ---------- models ----------
+const loader = new GLTFLoader();
+const cache = new Map();
+const model = (path) => {
+  const url = path.startsWith("carkit/") ? `./models/${path}.glb` : `./models/city/${path}.glb`;
+  if (!cache.has(path)) cache.set(path, loader.loadAsync(url).then((g) => g.scene));
+  return cache.get(path);
+};
+async function place(path, x, z, { rot = 0, scale = 1, y = 0, tint = null } = {}) {
+  const m = (await model(path)).clone(true);
+  m.position.set(x, y, z);
+  m.rotation.y = rot;
+  m.scale.setScalar(scale);
+  m.traverse((o) => {
+    if (o.isMesh) {
+      o.castShadow = true;
+      o.receiveShadow = true;
+      // the commercial kit is grey: a pastel tint on its texture makes each building its own colour
+      if (tint) o.material = Object.assign(o.material.clone(), { color: new THREE.Color(tint), emissive: new THREE.Color(tint), emissiveIntensity: 0.18 });
+    }
+  });
+  scene.add(m);
+  return m;
+}
+function emojiSprite(char, size = 0.9, bg = "#ffffff") {
   const cv = document.createElement("canvas");
   cv.width = cv.height = 128;
   const g = cv.getContext("2d");
   if (bg) {
     g.fillStyle = bg;
     g.beginPath();
-    g.roundRect(4, 4, 120, 120, 24);
+    g.roundRect(6, 6, 116, 116, 28);
     g.fill();
   }
-  g.font = '92px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif';
+  g.font = '86px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif';
   g.textAlign = "center";
   g.textBaseline = "middle";
   g.fillText(char, 64, 70);
   const t = new THREE.CanvasTexture(cv);
   t.colorSpace = THREE.SRGBColorSpace;
-  return t;
+  const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: t }));
+  s.scale.set(size, size, 1);
+  return s;
 }
 
-// ---------- buildings ----------
-const lit = [];
-const plots = [];
-const coinMeshes = [];
-const coinGeo = new THREE.CylinderGeometry(0.32, 0.32, 0.08, 24);
-const coinMat = mat("#ffc93c", { metalness: 0.6, roughness: 0.3, emissive: "#6b4a00", emissiveIntensity: 0.3 });
-function building(b, level, cx, cz) {
-  const g = new THREE.Group();
-  g.position.set(cx, 0, cz);
-  scene.add(g);
-  if (level < 0) {
-    const pad = new THREE.Mesh(new THREE.BoxGeometry(3, 0.1, 3), mat("#b9c0c9"));
-    pad.position.y = 0.05;
-    g.add(pad);
-    const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: emojiTex("🔒") }));
-    s.scale.set(1.2, 1.2, 1);
-    s.position.y = 1;
-    g.add(s);
-    return g;
-  }
-  if (level === 0) {
-    const pad = new THREE.Mesh(new THREE.BoxGeometry(3.2, 0.12, 3.2), mat("#d9b98a"));
-    pad.position.y = 0.06;
-    g.add(pad);
-    for (const [x, z, w, d] of [[0, -1.6, 3.2, 0.08], [0, 1.6, 3.2, 0.08], [-1.6, 0, 0.08, 3.2], [1.6, 0, 0.08, 3.2]]) {
-      const f = new THREE.Mesh(new THREE.BoxGeometry(w, 0.5, d), mat("#ffd23f"));
-      f.position.set(x, 0.3, z);
-      g.add(f);
-    }
-    const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: emojiTex(b.icon, "rgba(255,255,255,.85)") }));
-    s.scale.set(1.3, 1.3, 1);
-    s.position.y = 1.2;
-    g.add(s);
-    return g;
-  }
-  const h = 1.2 + level * 0.9;
-  const body = new THREE.Mesh(new THREE.BoxGeometry(2.8, h, 2.8), mat(b.color));
-  body.position.y = h / 2;
-  body.castShadow = body.receiveShadow = true;
-  g.add(body);
-  const roof = new THREE.Mesh(new THREE.ConeGeometry(2.2, 1, 4), mat(new THREE.Color(b.color).multiplyScalar(0.55)));
-  roof.position.y = h + 0.5;
-  roof.rotation.y = Math.PI / 4;
-  roof.castShadow = true;
-  g.add(roof);
-  // windows on all four sides (lit at night)
-  for (let side = 0; side < 4; side++) {
-    for (let fl = 0; fl < level + 1; fl++) {
-      for (const k of [-0.7, 0.7]) {
-        const wmat = new THREE.MeshStandardMaterial({ color: "#dff3ff", emissive: "#ffd86b", emissiveIntensity: 0 });
-        lit.push(wmat);
-        const w = new THREE.Mesh(new THREE.PlaneGeometry(0.5, 0.45), wmat);
-        const a = (side * Math.PI) / 2;
-        w.position.set(Math.sin(a) * 1.41 + Math.cos(a) * k, 0.7 + fl * 0.85, Math.cos(a) * 1.41 - Math.sin(a) * k);
-        w.rotation.y = a;
-        g.add(w);
-      }
-    }
-  }
-  const sign = new THREE.Sprite(new THREE.SpriteMaterial({ map: emojiTex(b.icon, "#ffffff") }));
-  sign.scale.set(1.1, 1.1, 1);
-  sign.position.y = h + 1.5;
-  g.add(sign);
-  return g;
-}
-// blocks nearest to the middle get the first (cheapest) buildings; the rest are little parks
-const blocks = Array.from({ length: N * N }, (_, k) => [k % N, Math.floor(k / N)]).sort((a, b) => Math.hypot(a[0] - 1.5, a[1] - 1.5) - Math.hypot(b[0] - 1.5, b[1] - 1.5));
-blocks.slice(BUILDINGS.length).forEach(([bx, bz]) => {
+// ---------- roads: pieces turned to fit their neighbours ----------
+// sides: 0 = north (-z), 1 = east (+x), 2 = south (+z), 3 = west (-x); a quarter turn moves every side one step back
+const BASE = { "roads/road-straight": [1, 3], "roads/road-intersection": [1, 2, 3], "roads/road-bend": [2, 3], "roads/road-crossroad": [0, 1, 2, 3] };
+function fit(piece, need) {
   for (let k = 0; k < 4; k++) {
-    const t = new THREE.Group();
-    const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.15, 0.6), mat("#7a5230"));
-    trunk.position.y = 0.3;
-    const crown = new THREE.Mesh(new THREE.IcosahedronGeometry(0.6, 0), mat(k % 2 ? "#3aa04a" : "#58c466", { flatShading: true }));
-    crown.position.y = 1;
-    t.add(trunk, crown);
-    t.position.set(node(bx) + STEP / 2 + (k % 2 ? 0.9 : -0.9), 0, node(bz) + STEP / 2 + (k < 2 ? 0.9 : -0.9));
-    t.traverse((m) => m.isMesh && (m.castShadow = true));
-    scene.add(t);
+    const sides = BASE[piece].map((s) => (s - k + 4) % 4).sort();
+    if (sides.join() === [...need].sort().join()) return (k * Math.PI) / 2;
   }
-});
-BUILDINGS.slice(0, N * N).forEach((b, i) => {
-  const [bx, bz] = blocks[i];
+  return 0;
+}
+const isRoad = (tx, tz) => tx >= 0 && tz >= 0 && tx < TILES && tz < TILES && (tx % STEP === 0 || tz % STEP === 0);
+for (let tx = 0; tx < TILES; tx++) {
+  for (let tz = 0; tz < TILES; tz++) {
+    if (!isRoad(tx, tz)) continue;
+    const need = [[0, tx, tz - 1], [1, tx + 1, tz], [2, tx, tz + 1], [3, tx - 1, tz]].filter(([, x, z]) => isRoad(x, z)).map(([s]) => s);
+    const piece = need.length === 4 ? "roads/road-crossroad" : need.length === 3 ? "roads/road-intersection" : need.length === 2 && (need[0] + 2) % 4 !== need[1] ? "roads/road-bend" : "roads/road-straight";
+    place(piece, tx - HALF, tz - HALF, { rot: fit(piece, need) });
+    // street lamps at the crossings
+    if (need.length >= 3 && (tx + tz) % (STEP * 2) === 0) place("roads/light-square", tx - HALF + 0.45, tz - HALF + 0.45, { rot: Math.PI / 4 });
+  }
+}
+
+// ---------- blocks: the twelve buildings near the middle, houses and parks around ----------
+const blocks = Array.from({ length: N * N }, (_, k) => [k % N, Math.floor(k / N)]).sort((a, b) => Math.hypot(a[0] - 1.5, a[1] - 1.5) - Math.hypot(b[0] - 1.5, b[1] - 1.5));
+const coinMeshes = [];
+const coinGeo = new THREE.CylinderGeometry(0.16, 0.16, 0.04, 20);
+const coinMat = new THREE.MeshStandardMaterial({ color: "#ffc93c", metalness: 0.6, roughness: 0.3, emissive: "#6b4a00", emissiveIntensity: 0.4 });
+const signs = [];
+blocks.forEach(([bx, bz], i) => {
   const cx = node(bx) + STEP / 2;
   const cz = node(bz) + STEP / 2;
-  const level = LEVELS[i] ?? 0;
-  const g = building(b, level, cx, cz);
-  plots.push({ b, level, g, cx, cz });
-  if (level > 0) {
-    // the rent waits as coins on the road below the building
-    for (let k = 0; k < level + 1; k++) {
-      const c = new THREE.Mesh(coinGeo, coinMat);
-      c.rotation.x = Math.PI / 2;
-      c.position.set(cx - 1.2 + k * 0.8, 0.5, node(bz + 1));
-      c.castShadow = true;
-      scene.add(c);
-      coinMeshes.push(c);
-    }
+  const b = BUILDINGS[i];
+  const level = b ? LEVELS[b.id] ?? 0 : 1;
+  // a pavement edge around a lawn; a building site is bare earth
+  const ground = (size, color, y) => {
+    const m = new THREE.Mesh(new THREE.BoxGeometry(size, 0.02, size), new THREE.MeshStandardMaterial({ color }));
+    m.position.set(cx, y, cz);
+    m.receiveShadow = true;
+    scene.add(m);
+  };
+  ground(B, "#d9dde3", 0);
+  ground(B - 0.3, level === 0 ? "#c79a62" : "#86d46a", 0.01);
+  if (!b) {
+    // homes and a little park
+    if (i % 2) place(HOUSES[i % HOUSES.length], cx, cz, { scale: 1.6, rot: Math.PI });
+    else for (const [dx, dz] of [[-0.8, -0.8], [0.8, -0.7], [-0.7, 0.8], [0.8, 0.8], [0, 0]]) place(Math.abs(dx) > 0.5 ? "suburban/tree-large" : "suburban/planter", cx + dx, cz + dz, { scale: 1.5 });
+    return;
+  }
+  if (level < 0) {
+    const s = emojiSprite("🔒", 0.9, null);
+    s.position.set(cx, 0.6, cz);
+    scene.add(s);
+    return;
+  }
+  if (level === 0) {
+    // for sale: a building site marked by cones, with the icon of the future building
+    for (const [dx, dz] of [[-1, -1], [1, -1], [-1, 1], [1, 1], [0, -1.1], [0, 1.1], [-1.1, 0], [1.1, 0]]) place("roads/construction-cone", cx + dx, cz + dz, { scale: 3 });
+    const s = emojiSprite(b.icon, 0.9, "rgba(255,255,255,.75)");
+    s.position.set(cx, 0.8, cz);
+    scene.add(s);
+    return;
+  }
+  place(LOOKS[i % LOOKS.length][level - 1], cx, cz, { scale: 1.3, rot: Math.PI, tint: TINTS[i % TINTS.length] });
+  place("suburban/tree-small", cx - 1.15, cz + 1.15, { scale: 1.4 });
+  const sign = emojiSprite(b.icon, 0.85);
+  sign.position.set(cx + 1.05, 0.9, cz + 1.05);
+  scene.add(sign);
+  signs.push(sign);
+  const stars = emojiSprite("⭐".repeat(level), 0.6, null);
+  stars.scale.set(0.3 * level, 0.3, 1);
+  stars.position.set(cx + 1.05, 1.45, cz + 1.05);
+  scene.add(stars);
+  // the rent waits as coins on the street in front of the building
+  for (let k = 0; k <= level; k++) {
+    const c = new THREE.Mesh(coinGeo, coinMat);
+    c.rotation.x = Math.PI / 2;
+    c.position.set(cx - 0.9 + k * 0.6, 0.3, node(bz + 1) + 0.22);
+    c.castShadow = true;
+    scene.add(c);
+    coinMeshes.push(c);
   }
 });
-// trees on the free corners of the grass
-for (let i = 0; i < 30; i++) {
-  const x = (Math.random() - 0.5) * (size + 14);
-  const z = (Math.random() - 0.5) * (size + 14);
-  if (Math.abs(x) < size / 2 + 1 && Math.abs(z) < size / 2 + 1) continue;
-  const t = new THREE.Group();
-  const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.15, 0.6), mat("#7a5230"));
-  trunk.position.y = 0.3;
-  const crown = new THREE.Mesh(new THREE.IcosahedronGeometry(0.6, 0), mat("#3aa04a", { flatShading: true }));
-  crown.position.y = 1;
-  t.add(trunk, crown);
-  t.position.set(x, 0, z);
-  t.traverse((m) => m.isMesh && (m.castShadow = true));
-  scene.add(t);
-}
 
-// ---------- the car: drives on the street grid ----------
-const car = { gx: 2, gz: 2, x: node(2), z: node(2), dir: null, next: null, heading: 0, mesh: new THREE.Group() };
+// ---------- the car: drives along the street grid ----------
+const car = { gx: 2, gz: 2, x: node(2), z: node(2), dir: null, next: null, heading: Math.PI, mesh: new THREE.Group() };
 scene.add(car.mesh);
-new GLTFLoader().load("./models/carkit/sedan.glb", (gltf) => {
-  const m = gltf.scene;
-  const s = new THREE.Box3().setFromObject(m).getSize(new THREE.Vector3());
-  m.scale.setScalar(1.5 / Math.max(s.x, s.z));
-  m.traverse((o) => o.isMesh && (o.castShadow = true));
-  car.mesh.add(m);
+model("carkit/sedan").then((m) => {
+  const c = m.clone(true);
+  c.scale.setScalar(0.42);
+  c.traverse((o) => o.isMesh && (o.castShadow = true));
+  car.mesh.add(c);
 });
 const DIRS = { u: [0, -1], d: [0, 1], l: [-1, 0], r: [1, 0] };
-const canGo = (dir, gx = car.gx, gz = car.gz) => {
+const canGo = (dir) => {
   const [dx, dz] = DIRS[dir];
-  return gx + dx >= 0 && gx + dx <= N && gz + dz >= 0 && gz + dz <= N;
+  return car.gx + dx >= 0 && car.gx + dx <= N && car.gz + dz >= 0 && car.gz + dz <= N;
 };
+let hold = false;
 function press(dir) {
-  if (car.dir) car.next = dir; // remembered for the next crossing
+  if (car.dir) car.next = dir;
   else if (canGo(dir)) car.dir = dir;
 }
 function update(dt) {
-  const speed = 5.5;
   if (car.dir) {
     const [dx, dz] = DIRS[car.dir];
     const tx = node(car.gx + dx);
     const tz = node(car.gz + dz);
-    car.x += dx * speed * dt;
-    car.z += dz * speed * dt;
+    car.x += dx * 3.2 * dt;
+    car.z += dz * 3.2 * dt;
     car.heading = Math.atan2(dx, dz);
     if ((dx && (tx - car.x) * dx <= 0) || (dz && (tz - car.z) * dz <= 0)) {
       car.gx += dx;
       car.gz += dz;
       car.x = node(car.gx);
       car.z = node(car.gz);
-      // keep going straight, or turn as asked; stop at the edge or with nothing asked
       const want = car.next && canGo(car.next) ? car.next : null;
       car.next = null;
-      car.dir = want || (canGo(car.dir) && hold ? car.dir : null);
+      car.dir = want || (hold && canGo(car.dir) ? car.dir : null);
     }
   }
-  const lane = 0.4; // drive on the right side of the road
-  const [hx, hz] = car.dir ? DIRS[car.dir] : [Math.sin(car.heading), Math.cos(car.heading)];
-  car.mesh.position.set(car.x - hz * lane, 0, car.z + hx * lane);
-  const cur = car.mesh.rotation.y;
-  let d = car.heading - cur;
+  const [hx, hz] = [Math.sin(car.heading), Math.cos(car.heading)];
+  car.mesh.position.set(car.x - hz * 0.2, 0.02, car.z + hx * 0.2); // right-hand lane
+  let d = car.heading - car.mesh.rotation.y;
   d = Math.atan2(Math.sin(d), Math.cos(d));
-  car.mesh.rotation.y = cur + d * Math.min(1, dt * 10);
-  // coins
+  car.mesh.rotation.y += d * Math.min(1, dt * 10);
   for (const c of coinMeshes) {
     if (!c.visible) continue;
     c.rotation.z += dt * 3;
-    if (c.position.distanceTo(car.mesh.position) < 1) {
+    if (Math.hypot(c.position.x - car.mesh.position.x, c.position.z - car.mesh.position.z) < 0.45) {
       c.visible = false;
       coins++;
       ui();
@@ -293,8 +272,7 @@ function update(dt) {
   }
 }
 
-// ---------- camera, light, input ----------
-let hold = false;
+// ---------- camera, day and night, input ----------
 function resize() {
   renderer.setSize(innerWidth, innerHeight);
   camera.aspect = innerWidth / innerHeight;
@@ -302,18 +280,20 @@ function resize() {
 }
 addEventListener("resize", resize);
 resize();
+const focus = new THREE.Vector3(node(2), 0, node(2));
 function frameCamera(dt) {
-  const far = innerWidth < innerHeight ? 1.5 : 1;
-  const offs = view === "top" ? [0, 27, 5] : [0, 17, 13];
-  const target = new THREE.Vector3(car.mesh.position.x + offs[0] * far, offs[1] * far, car.mesh.position.z + offs[2] * far);
-  camera.position.lerp(target, Math.min(1, dt * 3));
-  camera.lookAt(car.mesh.position.x, 0, car.mesh.position.z - (view === "top" ? 0 : 1));
+  // the camera keeps its direction and glides after the car (no turning of the whole town)
+  const far = innerWidth < innerHeight ? 1.6 : 1;
+  const offs = view === "top" ? [0, 24, 8] : [0, 15, 14];
+  focus.lerp(car.mesh.position, Math.min(1, dt * 3));
+  camera.position.set(focus.x + offs[0] * far, offs[1] * far, focus.z + offs[2] * far);
+  camera.lookAt(focus.x, 0, focus.z);
 }
 function applyLight() {
   scene.background = new THREE.Color(night ? "#141838" : "#9be3f0");
-  hemi.intensity = night ? 0.45 : 1.6;
-  sun.intensity = night ? 0.25 : 2.2;
-  for (const m of lit) m.emissiveIntensity = night ? 1.2 : 0;
+  grass.material.color.set(night ? "#2f5a3a" : "#7ccf5a");
+  hemi.intensity = night ? 0.5 : 1.7;
+  sun.intensity = night ? 0.3 : 2.3;
 }
 applyLight();
 const pad = document.getElementById("pad");
@@ -327,10 +307,7 @@ for (const [dir, icon] of [["u", "⬆️"], ["l", "⬅️"], ["r", "➡️"], ["
 }
 addEventListener("keydown", (e) => {
   const dir = { ArrowUp: "u", ArrowDown: "d", ArrowLeft: "l", ArrowRight: "r" }[e.key];
-  if (dir) {
-    hold = true;
-    press(dir);
-  }
+  if (dir) ((hold = true), press(dir));
 });
 addEventListener("keyup", () => (hold = false));
 let swipe = null;
@@ -348,7 +325,7 @@ function ui() {
   const b = (label, on, fn, cls = "") => Object.assign(document.createElement("button"), { textContent: label, className: `${on ? "on " : ""}${cls}`, onclick: () => (fn(), ui()) });
   const home = Object.assign(document.createElement("a"), { href: "../", textContent: "🏠", className: "emo" });
   const c = Object.assign(document.createElement("span"), { textContent: `🪙 ${coins}`, className: "coins" });
-  bar.replaceChildren(home, b("Z uhla", view === "angle", () => (view = "angle")), b("Zhora", view === "top", () => (view = "top")), b(night ? "🌙" : "☀️", false, () => ((night = !night), applyLight()), "emo"), c);
+  bar.replaceChildren(home, b("Zhora", view === "top", () => (view = "top")), b("Z uhla", view === "angle", () => (view = "angle")), b(night ? "🌙" : "☀️", false, () => ((night = !night), applyLight()), "emo"), c);
 }
 ui();
 let last = performance.now();
