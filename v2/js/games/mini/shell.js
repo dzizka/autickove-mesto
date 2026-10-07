@@ -66,3 +66,32 @@ export function shake(el) {
   void el.offsetWidth;
   el.classList.add("shake");
 }
+
+/** n dots (counting help), in rows of five. */
+export function dotsEl(n, cls = "mini-dots") {
+  return h("span", { class: cls, "aria-hidden": "true" }, Array.from({ length: Math.max(0, n) }, () => h("i")));
+}
+
+/** Round-based quiz helper: counts first-try misses and moves the progress bar. */
+export function createRounds(sh, total, onDone) {
+  let round = 0;
+  let misses = 0;
+  let firstTry = true;
+  return {
+    get round() {
+      return round;
+    },
+    start() {
+      firstTry = true;
+    },
+    wrong() {
+      if (firstTry) misses++;
+      firstTry = false;
+    },
+    right(next, delay = 900) {
+      round++;
+      sh.progress(round / total);
+      sh.later(() => (round >= total ? onDone(misses) : next()), delay);
+    },
+  };
+}

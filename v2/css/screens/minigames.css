@@ -77,3 +77,74 @@
 .park-dots { display: flex; flex-wrap: wrap; justify-content: center; gap: 5px; max-width: 90px; margin: 0 auto; }
 .park-dots i { width: 14px; height: 14px; border-radius: 50%; background: #2b2d33; }
 .park-car .park-dots { position: absolute; top: -12px; left: 50%; padding: 4px 6px; border-radius: 12px; background: #fff; box-shadow: 0 2px 6px rgba(0, 0, 0, .2); transform: translateX(-50%); }
+
+/* ---------- count ---------- */
+.count-wrap { display: grid; gap: 22px; justify-items: center; width: min(100%, 860px); }
+.count-scene { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 14px; min-height: 160px; padding: 16px; border-radius: 24px; background: rgba(255, 255, 255, .75); }
+.count-group { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; max-width: 360px; }
+.count-item { width: 64px; height: 64px; border: 0; border-radius: 16px; background: none; font-size: 2.8rem; cursor: pointer; animation: pop-in .4s cubic-bezier(.2, 1.5, .4, 1) both; }
+.count-item.counted { background: #fff6b0; box-shadow: 0 0 0 3px var(--sun); }
+.count-plus { font-size: 3rem; font-weight: 900; color: var(--ink); }
+.count-answers { display: flex; flex-wrap: wrap; justify-content: center; gap: 14px; }
+.count-answer { display: grid; justify-items: center; gap: 6px; min-width: 104px; padding: 10px 14px; border: 0; border-radius: 22px; background: #fff; box-shadow: var(--shadow); color: var(--ink); cursor: pointer; }
+.count-answer b { font-size: 2.6rem; line-height: 1; }
+.count-answer.right { background: #eaffea; box-shadow: 0 0 0 4px var(--grass), var(--shadow); }
+.mini-dots { display: grid; grid-template-columns: repeat(5, 10px); gap: 4px; }
+.mini-dots i { width: 10px; height: 10px; border-radius: 50%; background: var(--sky-dark); }
+
+/* ---------- letters ---------- */
+.let-wrap { display: grid; gap: 22px; justify-items: center; width: min(100%, 760px); }
+.let-top { display: grid; justify-items: center; gap: 8px; min-height: 150px; }
+.let-train { display: flex; align-items: flex-end; gap: 4px; font-size: 4.5rem; animation: train-in 1s ease-out both; }
+.let-train .wagon { display: grid; place-items: center; width: 110px; height: 96px; border-radius: 16px; background: var(--tomato); color: #fff; font-size: 4rem; font-weight: 900; box-shadow: var(--shadow); }
+.let-top.solved .let-train { animation: train-out 1.4s ease-in forwards; }
+@keyframes train-in { from { transform: translateX(-120vw); } }
+@keyframes train-out { to { transform: translateX(120vw); } }
+.let-big { font-size: 6rem; line-height: 1; }
+.let-word { font-size: 2.4rem; font-weight: 800; letter-spacing: .12em; color: var(--ink); }
+.let-blank { display: inline-block; min-width: 1.1em; border-bottom: 5px solid var(--tomato); color: var(--tomato); text-align: center; }
+.let-top.solved .let-blank { border-color: var(--grass); color: var(--grass-dark); }
+.let-opts { display: flex; flex-wrap: wrap; justify-content: center; gap: 14px; }
+.let-opt { display: grid; place-items: center; width: 120px; height: 120px; border: 0; border-radius: 26px; background: #fff; box-shadow: var(--shadow); cursor: pointer; }
+.let-pic { font-size: 4rem; }
+.let-letter { font-size: 3.6rem; font-weight: 900; color: var(--ink); }
+.let-opt.right { background: #eaffea; box-shadow: 0 0 0 4px var(--grass), var(--shadow); }
+
+/* ---------- music ---------- */
+.mus-wrap { display: grid; gap: 26px; justify-items: center; width: min(100%, 900px); }
+.mus-sign { font-size: 4rem; line-height: 1; }
+.mus-cars { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; width: 100%; }
+@media (min-width: 760px) { .mus-cars { grid-template-columns: repeat(4, 1fr); } }
+.mus-car { --mc: #ff4d4d; position: relative; padding: 18px 8px 8px; border: 0; border-radius: 24px; background: color-mix(in srgb, var(--mc) 22%, #fff); box-shadow: var(--shadow); cursor: pointer; }
+.mus-car .car-side { width: 100%; pointer-events: none; }
+.mus-note { position: absolute; top: 4px; left: 50%; font-size: 1.6rem; opacity: 0; transform: translateX(-50%); }
+.mus-car.on { background: color-mix(in srgb, var(--mc) 60%, #fff); box-shadow: 0 0 0 5px var(--mc), 0 0 28px var(--mc); }
+.mus-car.on .car-side { animation: hop .3s; }
+.mus-car.on .mus-note { animation: float-up .6s ease-out; }
+
+/* ---------- puzzle ---------- */
+.pz-wrap { display: grid; gap: 18px; justify-items: center; width: 100%; touch-action: none; }
+@media (min-width: 900px) and (orientation: landscape) { .pz-wrap { grid-template-columns: auto 1fr; align-items: center; } }
+.pz-board { --n: 3; --ghost: .3; position: relative; display: grid; grid-template-columns: repeat(var(--n), 1fr); width: min(92vw, 56dvh, 520px); aspect-ratio: 1; border-radius: 16px; background: #fff; box-shadow: var(--shadow); overflow: hidden; }
+.pz-board::before { content: ""; position: absolute; inset: 0; background: var(--img) center / cover; opacity: var(--ghost); pointer-events: none; }
+.pz-cell { position: relative; border: 1px dashed rgba(0, 0, 0, .15); background: transparent var(--img) 0 0 / calc(var(--n) * 100%) no-repeat; background-image: none; cursor: pointer; }
+.pz-cell.full { border: 0; background-image: var(--img); background-size: calc(var(--n) * 100%) calc(var(--n) * 100%); animation: pop .35s; }
+.pz-board.done { box-shadow: 0 0 0 6px var(--sun), var(--shadow); }
+.pz-tray { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; max-width: 560px; }
+.pz-piece { --n: 3; width: clamp(64px, calc(min(92vw, 56dvh, 520px) / var(--n) * .8), 120px); aspect-ratio: 1; border: 3px solid #fff; border-radius: 10px; background-size: calc(var(--n) * 100%) calc(var(--n) * 100%); box-shadow: var(--shadow); cursor: grab; touch-action: none; }
+.pz-piece.sel { border-color: var(--sun); }
+.pz-piece.drag { z-index: 5; cursor: grabbing; }
+
+/* ---------- maze ---------- */
+.maze-wrap { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 18px; }
+.maze-canvas { border-radius: 16px; box-shadow: var(--shadow); touch-action: none; }
+.maze-pad { display: grid; grid-template-areas: ". u ." "l . r" ". d ."; grid-template-columns: repeat(3, 72px); grid-template-rows: repeat(3, 72px); gap: 6px; }
+.maze-btn { border: 0; border-radius: 20px; background: #fff; box-shadow: var(--shadow); font-size: 2.2rem; cursor: pointer; touch-action: none; }
+.maze-btn.d0 { grid-area: u; }
+.maze-btn.d1 { grid-area: r; }
+.maze-btn.d2 { grid-area: d; }
+.maze-btn.d3 { grid-area: l; }
+
+/* ---------- traffic ---------- */
+.mini-traffic .mini-stage { place-items: stretch; }
+.traffic-canvas { position: absolute; inset: 0; display: block; border-radius: 16px; touch-action: none; }

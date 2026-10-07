@@ -7,6 +7,7 @@ import { TRACKS } from "../data/tracks.js";
 import { SETS } from "../data/sets.js";
 import { PIXEL_PICTURES } from "../data/coloring/pixel.js";
 import { isTrackUnlocked, trackProgress } from "./progress.js";
+import { MINIGAMES } from "../data/minigames.js";
 
 const allParts = (s) => [...Object.values(s.car.equipped || {}), ...(s.inventory || [])].filter(Boolean);
 
@@ -44,7 +45,7 @@ export function isEarned(t, s = getState()) {
     case "quests":
       return (s.quests?.done || 0) >= c.n;
     case "miniPlayed":
-      return c.ids.every((id) => (s.minigames?.[id]?.plays || 0) > 0);
+      return MINIGAMES.every((g) => (s.minigames?.[g.id]?.plays || 0) > 0);
     case "miniLevel":
       return Object.values(s.minigames || {}).some((m) => (m.level || 1) >= c.n);
     case "level":

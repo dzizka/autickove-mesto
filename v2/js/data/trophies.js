@@ -24,7 +24,7 @@ export const TROPHIES = [
   { id: "bigPicture", icon: "🧩", name: "Veľký obrázok podľa čísel", check: { kind: "bigPicture" } },
   { id: "allGlitter", icon: "🌈", name: "Všetky trblietavé farby", check: { kind: "glitter", n: 4 } },
   { id: "quests10", icon: "📜", name: "Desať splnených úloh", check: { kind: "quests", n: 10 } },
-  { id: "miniAll", icon: "🎪", name: "Všetky hry v herni", check: { kind: "miniPlayed", ids: ["pexeso", "wash", "repair", "park"] } },
+  { id: "miniAll", icon: "🎪", name: "Všetky hry v herni", check: { kind: "miniPlayed" } },
   { id: "miniMaster", icon: "🌟", name: "Najťažšia úroveň v hre", check: { kind: "miniLevel", n: 3 } },
   { id: "level10", icon: "🎖️", name: "Level desať", check: { kind: "level", n: 10 } },
 ];

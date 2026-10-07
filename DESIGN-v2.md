@@ -88,7 +88,7 @@ v2/
 │       │                   # road.js (úseky cesty, projekcia, obloha)  scene.js (prekážky, autá, efekty)  weather.js
 │       ├── coloring/       # index.js  free-paint.js  by-number.js  brush.js  tools.js (panel nástrojov)
 │       ├── mini/shell.js   # spoločný rám hier v herni: 🏠, hviezdy obtiažnosti, pruh postupu, 🔊, koniec s hviezdami
-│       └── pexeso/  wash/  repair/  park/  …   # hry z v1 (bod 12), každá vo vlastnom priečinku
+│       └── pexeso/ wash/ repair/ park/ puzzle/ count/ maze/ letters/ music/ traffic/   # hry z v1 (bod 12)
 └── tests/                  # Playwright testy (bod 10): node --test, package.json, helpers.mjs,
                             # progress-sim.mjs (simulácia dlhého hrania na vyváženie)
 ```
@@ -386,6 +386,12 @@ Každá hra má 3 obtiažnosti, ktoré sa samy zvyšujú, a prehra neexistuje (c
 | 🧽 Umyváreň | viac blata, menšia špongia; najprv špongia (blato sa zmení na penu), potom sprcha | podľa času |
 | 🔧 Servis | 3, 4, 5 porúch a toľko nástrojov na výber; vlastné auto dieťaťa | podľa zlých nástrojov |
 | 🅿️ Parkovisko | 3, 4, 5 áut v kole, 3 kolá; na 3. stupni sa párujú aj bodky | podľa zlých miest |
+| 🧩 Skladačka (časť 11) | obrázok s vlastným autom dieťaťa na 4, 9, 16 dielikov; na ľahších stupňoch presvitá obrázok | podľa zlých miest |
+| 🔢 Počítanie | do 5, do 10, na 3. stupni aj „koľko spolu“; ťuknutím na vec ju hlas spočíta | podľa kôl, ktoré nevyšli na prvý raz |
+| 🗺️ Bludisko | 5×5, 7×7, 9×9; šípky, potiahnutie prstom alebo klávesnica | podľa zozbieraných mincí |
+| 🔤 Písmenká | 1. stupeň len ľahké písmená a „obrázok k písmenu“, potom aj „písmeno k obrázku“, na 3. stupni 4 možnosti | podľa kôl, ktoré nevyšli na prvý raz |
+| 🎵 Hudobná garáž | melódia od 2–3 tónov rastie do 5, 7, 9 tónov, rýchlejšie; chyba melódiu len zopakuje | podľa chýb |
+| 🚦 Križovatka | 8, 12, 16 áut, hustejšie a rýchlejšie; ťuknutie prepne semafor cez žltú; zrazené autá len zastanú a idú ďalej | podľa nárazov |
 
 ## 13. Mesto a album (časť 12)
 

@@ -56,7 +56,7 @@ for (const width of WIDTHS) {
     const page = await openGame(env.browser, env.server.url, { width, storage: quiet() });
     await page.getByTestId("home-games").click();
     await page.getByTestId("screen-games").waitFor();
-    assert.equal(await page.locator("[data-testid^=mini-][data-locked=false]").count(), 2);
+    assert.equal(await page.locator("[data-testid^=mini-][data-locked=false]").count(), MINIGAMES.filter((g) => g.unlockLevel <= 1).length);
     await screenshot(page, `${width}-games-room`);
     await page.getByTestId("mini-repair").click();
     await page.waitForTimeout(200);

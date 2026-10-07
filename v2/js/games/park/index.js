@@ -6,10 +6,10 @@ import { PARK } from "../../data/minigames.js";
 import { miniDef, starsFor } from "../../systems/minigames.js";
 import { colorLook } from "../../systems/tuning.js";
 import { carSide } from "../../render/car-side.js";
-import { createShell, shake } from "../mini/shell.js";
+import { createShell, shake, dotsEl } from "../mini/shell.js";
 
 const KINDS = ["sedan", "jeep", "taxi", "police"];
-const dots = (n) => h("span", { class: "park-dots", "aria-hidden": "true" }, Array.from({ length: n }, () => h("i")));
+const dots = (n) => dotsEl(n, "park-dots");
 
 let shell = null;
 let cleanup = [];

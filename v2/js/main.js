@@ -37,6 +37,12 @@ import pexeso from "./games/pexeso/index.js";
 import wash from "./games/wash/index.js";
 import repair from "./games/repair/index.js";
 import park from "./games/park/index.js";
+import puzzle from "./games/puzzle/index.js";
+import count from "./games/count/index.js";
+import maze from "./games/maze/index.js";
+import letters from "./games/letters/index.js";
+import music from "./games/music/index.js";
+import traffic from "./games/traffic/index.js";
 import { isMini, recordMini } from "./systems/minigames.js";
 
 state.load();
@@ -65,7 +71,7 @@ router.registerGame(coloringGame);
 router.registerGame(demoGame);
 router.registerGame(demoCrashGame);
 // 🎪 games room (DESIGN-v2 §12)
-for (const game of [pexeso, wash, repair, park]) router.registerGame(game);
+for (const game of [pexeso, wash, repair, park, puzzle, count, maze, letters, music, traffic]) router.registerGame(game);
 
 // Race results: track progress (medals, unlocks, boss bar), then the chest with parts.
 router.addRewardHandler((gameId, result) => {
