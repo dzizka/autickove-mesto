@@ -189,3 +189,4 @@
    The wrapper takes no space of its own, so layouts made for the 2D car stay the same. */
 .car-pic-wrap { display: contents; }
 img.car-pic { display: block; width: 100%; height: auto; -webkit-user-drag: none; user-select: none; pointer-events: none; }
+.car-side { display: block; width: 100%; height: auto; overflow: visible; }

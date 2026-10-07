@@ -78,6 +78,7 @@ v2/
 │   │   ├── car-back.js     # auto zozadu (canvas) v pretekoch
 │   │   ├── road-sprites.js # kreslené prekážky, krajina, mince a kanistre v pretekoch
 │   │   ├── effects.js      # neón a stopa v pretekoch
+│   │   ├── car-pics.js     # obrázky 3D auta zboku, zozadu, zhora (vyrobené raz, v pamäti)
 │   │   ├── car-view.js     # 3D auto (točňa, zdvihák) a 3D obrázky; bez WebGL ostane 2D auto
 │   │   ├── three/          # kit.js (modely) paint.js (farba, vzory) car3d.js (auto s tuningom)
 │   │   │                   # stage.js (scéna s autom) snapshot.js (obrázok auta)
@@ -87,10 +88,12 @@ v2/
 │   │                       # races.js (výber trate a úrovne), stat-panel.js (pruhy štatistík, sila auta)
 │   │                       # part-card.js (karta dielu, detail s porovnaním), chest.js (truhlica po pretekoch)
 │   │                       # set-book.js (kniha setov), games.js (🎪 herňa), city.js album.js daily.js
+│   │                       # home-road.js (pohyblivá cesta za tlačidlami domova)
 │   └── games/
 │       ├── demo/           # skúšobná jazda len z testovacieho menu (overuje slučku a odmeny)
 │       ├── race/           # index.js  spawner.js  physics.js  hud.js  boss.js  abilities.js (legendárne schopnosti)
 │       │                   # road.js (úseky cesty, projekcia, obloha)  scene.js (prekážky, autá, efekty)  weather.js
+│       │                   # drive-scene.js (auto na prázdnej ceste)  test-drive.js (🛣️ skúšobná jazda)
 │       ├── coloring/       # index.js  free-paint.js  by-number.js  brush.js  tools.js (panel nástrojov)
 │       ├── mini/shell.js   # spoločný rám hier v herni: 🏠, hviezdy obtiažnosti, pruh postupu, 🔊, koniec s hviezdami
 │       └── pexeso/ wash/ repair/ park/ puzzle/ count/ maze/ letters/ music/ traffic/   # hry z v1 (bod 12)
@@ -427,7 +430,7 @@ Každá hra má 3 obtiažnosti, ktoré si dieťa vyberá samo (od časti 13), a 
 
 **Pripomienky rodiča:** pseudo 3D z pretekov sa páči a má sa použiť aj inde, kde to dáva zmysel. Otáčanie plochého auta vo Vzhľade vyzerá zle. Domovská obrazovka má mať pohyblivé pozadie.
 
-- **Domov (časť 14):** za tlačidlami beží pseudo 3D cesta, po ktorej jazdí auto dieťaťa zozadu (so všetkým tuningom a kamarátom). Trate sa po chvíli striedajú, obloha sa riadi skutočným časom dňa. Ťuknutie na auto zatrúbi. Tlačidlá sú na polopriehľadných paneloch. Pozadie beží úspornejšie ako preteky a zastaví sa pri otvorenom okne. V nastaveniach pre rodičov je vypínač „Pohyblivé pozadie“.
+- **Domov (časť 14, hotové):** za tlačidlami beží pseudo 3D cesta, po ktorej jazdí auto dieťaťa zozadu (so všetkým tuningom a kamarátom) a samo občas mení pruh. Trate sa striedajú každých 25 s (cez deň Mesto, Les, Púšť, Sneh; od 19:00 do 7:00 Noc a Vesmír). Ťuknutie na auto zatrúbi a auto vyskočí. Tlačidlá sú na polopriehľadnom paneli. Pozadie kreslí 30 snímok za sekundu (preteky 60), zastaví sa pri otvorenom okne a skrytej karte. V Nastaveniach je vypínač „🎞️ Pohyblivé pozadie“ (uloženie v12, `settings.motion`); vypnuté alebo pri systémovom „obmedziť pohyb“ ostane jeden nehybný obrázok.
 - **3D auto (časť 15a):** skutočne otočné auto vo Vzhľade (samo sa pomaly otáča, dá sa točiť prstom, pri výbere sa natočí k tomu, čo sa mení) a na zdviháku v Garáži. Dlaždice vo Vzhľade ukazujú obrázky 3D auta. Bez WebGL ostane 2D auto. Tlačidlo „Skúšobná jazda“ (auto na ceste v pseudo 3D) príde v časti 15b spolu s obrázkom auta zozadu.
   - Rodič chce porovnať dve možnosti: vlastný model vytvorený z tvaru auta z boku, a hotový voľne dostupný model (Kenney, licencia CC0). Náhľad: `/v2/preview/car3d.html`.
   - **Rozhodnutie rodiča:** všetky autá v hre budú z balíka **Kenney Car Kit** (CC0), aby grafika bola jednotná. Raketa odpadne (kto ju vlastní, dostane raketové auto; migrácia uloženia v11). Ponechajú sa všetky autá z balíka, pri skúšaní sa niektoré odoberú alebo pridajú.

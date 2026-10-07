@@ -1,37 +1,20 @@
 /* Home screen. */
 .home { display: grid; gap: 18px; padding-top: 4px; }
 
+/* the moving road behind everything (screens/home-road.js) */
+.home-road { position: fixed; inset: 0; width: 100vw; height: 100dvh; z-index: 0; display: block; transition: opacity .6s; pointer-events: none; }
+.home-road.fade { opacity: 0; }
+body[data-screen="home"] .view { position: relative; z-index: 1; }
+
+/* clear area over the car: tap to honk and jump */
 .home-stage {
-  position: relative;
   display: block;
-  width: min(100%, 520px);
-  margin: 0 auto;
-  padding: 18px 10px 8px;
+  width: 100%;
+  height: clamp(190px, 34dvh, 340px);
   border: 0;
   background: none;
   cursor: pointer;
 }
-.home-stage::after { /* turntable */
-  content: "";
-  position: absolute;
-  left: 8%;
-  right: 8%;
-  bottom: 0;
-  height: 26px;
-  border-radius: 50%;
-  background: radial-gradient(ellipse at center, #fff 0 40%, #cfe9f2 70%);
-  box-shadow: 0 6px 0 #9ccbd9;
-  z-index: -1;
-}
-.stage-light {
-  position: absolute;
-  inset: -10px 18% 0;
-  z-index: -1;
-  background: radial-gradient(ellipse at 50% 100%, rgba(255, 246, 176, .9), transparent 70%);
-}
-.car-side { display: block; width: 100%; height: auto; overflow: visible; }
-.home-stage.hop .car-side { animation: hop .45s ease-out; }
-.home-stage .wheel { transform-box: fill-box; }
 
 .home-grid {
   display: grid;
@@ -47,16 +30,12 @@
 
 @media (min-width: 900px) {
   .home { grid-template-columns: 1fr 1fr; align-items: center; min-height: calc(100dvh - var(--topbar-h) - 60px); }
-  .home-stage { width: 100%; }
-}
-
-@keyframes hop {
-  30% { transform: translateY(-14px) rotate(-3deg); }
-  60% { transform: translateY(0) rotate(1deg); }
+  .home-stage { height: 100%; min-height: 420px; align-self: stretch; }
 }
 
 /* quests and trophies button */
-.home-side { display: grid; gap: 14px; width: min(100%, 520px); margin: 0 auto; }
+/* the buttons sit on a see-through panel over the road */
+.home-side { display: grid; gap: 14px; width: min(100%, 540px); margin: 0 auto; padding: 14px; border-radius: 30px; background: rgba(255, 255, 255, .45); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); box-shadow: 0 10px 30px rgba(20, 30, 50, .18); }
 .home-side .home-grid { width: 100%; }
 .home-quests { display: grid; grid-template-columns: repeat(3, 1fr) auto; gap: 10px; }
 .quest { display: grid; justify-items: center; gap: 6px; min-height: var(--tap); padding: 8px 6px; border: 3px solid transparent; border-radius: 18px; background: rgba(255, 255, 255, .92); box-shadow: var(--shadow); font: inherit; cursor: pointer; }

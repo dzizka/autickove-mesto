@@ -120,6 +120,7 @@ export default {
           { class: "card" },
           toggleRow({ key: "sound", icon: "🔔", label: "Zvuky", say: "Zvuky sú zapnuté." }),
           toggleRow({ key: "voice", icon: "🗣️", label: "Hlas", say: "Hlas je zapnutý." }),
+          toggleRow({ key: "motion", icon: "🎞️", label: "Pohyblivé pozadie", say: "Pozadie sa hýbe." }),
           !hasSlovakVoice() && h("p", { class: "small" }, "Tento prehliadač nemá slovenský hlas. Hra číta náhradným hlasom."),
         ),
         h(

@@ -162,7 +162,7 @@ for (const width of WIDTHS) {
     assert.equal(await garageCar.getAttribute("data-car"), "police");
     assert.equal(await garageCar.getAttribute("data-color"), "blue");
     await page.getByTestId("topbar-home").click();
-    assert.equal(await page.locator("[data-testid=home-car] .car-pic-wrap").getAttribute("data-neon"), "blue");
+    assert.equal(await page.locator("[data-testid=home-car]").getAttribute("data-neon"), "blue");
     await screenshot(page, `${width}-home-look`);
     assert.deepEqual(page.errors, []);
     await page.context().close();

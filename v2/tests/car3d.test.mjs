@@ -130,11 +130,17 @@ test("pictures: side, back and top views have sane anchors; props too", async ()
 });
 
 for (const width of WIDTHS) {
-  test(`${width}px: home, race and maze show the 3D car's pictures`, async () => {
+  test(`${width}px: home road, race and maze show the 3D car's pictures`, async () => {
     const look = { car: "pickup", color: "blue", wing: "big", roof: "crown" };
     const page = await openGame(env.browser, env.server.url, { width, storage: quiet({ look, level: 8 }) });
-    await page.locator('[data-testid=home-car] .car-pic-wrap[data-pic="3d"]').waitFor({ timeout: 30000 });
-    assert.equal(await page.locator("[data-testid=home-car] .car-pic-wrap").getAttribute("data-car"), "pickup");
+    assert.equal(await page.getByTestId("home-car").getAttribute("data-car"), "pickup");
+    // the moving home road shows the 3D car from behind
+    await page.waitForFunction(async () => {
+      const { carPic } = await import("./js/render/car-pics.js");
+      return carPic(window.__game.state.getState().look, "back").ready;
+    }, null, { timeout: 30000, polling: 500 });
+    await page.waitForTimeout(500);
+    await screenshot(page, `${width}-home-3d`);
     await page.goto(env.server.url + "#/game/race/city/1");
     await page.getByTestId("race-canvas").waitFor();
     await page.waitForFunction(async () => {
