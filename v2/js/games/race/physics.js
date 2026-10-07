@@ -25,10 +25,12 @@ const finite = (v, fallback = 0) => (Number.isFinite(v) ? v : fallback);
  * @param {boolean} [o.short] test-menu short race
  * @param {Set}     [o.abilities] legendary ability ids on the car
  * @param {object}  [o.boss] entry of BOSSES for a boss race (one big rival instead of three)
+ * @param {number}  [o.ease] 0…0.12: rivals this much slower after many tries (systems/progress.rivalEase)
  */
-export function createRace({ track, level, effects, rng, short = false, abilities = new Set(), boss = null }) {
+export function createRace({ track, level, effects, rng, short = false, abilities = new Set(), boss = null, ease = 0 }) {
   const length = short ? RACE.shortLength : RACE.length;
-  const rivalSpeed = (track.rivalBase + RACE.rivalLevelStep * (level - 1)) * RACE.baseSpeed;
+  const slow = 1 - Math.max(0, Math.min(RACE.easeMax, Number(ease) || 0)); // no-frustration help
+  const rivalSpeed = (track.rivalBase + RACE.rivalLevelStep * (level - 1)) * RACE.baseSpeed * slow;
   const grid = [
     { lane: 0, d: 8 },
     { lane: 2, d: 8 },
@@ -63,7 +65,7 @@ export function createRace({ track, level, effects, rng, short = false, abilitie
       hits: 0,
       finishTime: null,
     },
-    rivals: boss ? [createBossRival(boss, track, level, rng)] : RACE.rivals.map((r, i) => ({
+    rivals: boss ? [createBossRival(boss, track, level, rng, slow)] : RACE.rivals.map((r, i) => ({
       name: r.name,
       color: r.color,
       lane: grid[i].lane,

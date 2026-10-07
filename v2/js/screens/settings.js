@@ -5,7 +5,7 @@ import { h, modal, closeModal, confirm, toast } from "../core/ui.js";
 import { speak, sfx, hasSlovakVoice } from "../core/audio.js";
 import { getState, update, replace, reset } from "../core/state.js";
 import { exportCode, parseCode } from "../core/save-transfer.js";
-import { goHome } from "../core/router.js";
+import { goHome, go } from "../core/router.js";
 
 function toggleRow({ key, icon, label, say }) {
   const on = () => getState().settings[key] !== false;
@@ -126,6 +126,7 @@ export default {
           "div",
           { class: "card stack" },
           h("button", { class: "btn sky", "data-testid": "open-transfer", onclick: openTransfer }, "📤 Preniesť postup"),
+          h("button", { class: "btn plum", "data-testid": "open-parents", onclick: () => go("parents") }, "👪 Prehľad pre rodičov"),
           h("button", { class: "btn ghost", "data-testid": "start-over", onclick: startOver }, "🗑️ Začať odznova"),
         ),
         h("button", { class: "btn big sun", "data-testid": "back-home", "aria-label": "Domov", onclick: () => { sfx.back(); goHome(); } },

@@ -1,0 +1,61 @@
+// Trophies (DESIGN-v2 §8): checked against the saved state after rewards and on screen changes.
+
+import { getState, update } from "../core/state.js";
+import { emit } from "../core/events.js";
+import { TROPHIES } from "../data/trophies.js";
+import { TRACKS } from "../data/tracks.js";
+import { SETS } from "../data/sets.js";
+import { PIXEL_PICTURES } from "../data/coloring/pixel.js";
+import { isTrackUnlocked, trackProgress } from "./progress.js";
+
+const allParts = (s) => [...Object.values(s.car.equipped || {}), ...(s.inventory || [])].filter(Boolean);
+
+export function isEarned(t, s = getState()) {
+  const c = t.check;
+  switch (c.kind) {
+    case "wins":
+      return s.races.wins >= c.n;
+    case "races":
+      return s.races.total >= c.n;
+    case "allTracks":
+      return TRACKS.every((tr) => isTrackUnlocked(tr.id, s));
+    case "trackLevel":
+      return isTrackUnlocked(c.track, s) && trackProgress(c.track, s).unlocked >= c.n;
+    case "bosses":
+      return Object.values(s.bosses || {}).filter((n) => n > 0).length >= c.n;
+    case "rarity":
+      return allParts(s).some((p) => p.rarity === c.rarity || p.rarity === "legendary") || Object.keys(s.setsFound || {}).length > 0;
+    case "legendaries":
+      return (s.legendariesFound || []).length >= c.n;
+    case "fullSets":
+      return SETS.filter((st) => (s.setsFound?.[st.id] || []).length >= Object.keys(st.pieces).length).length >= c.n;
+    case "plus5":
+      return allParts(s).some((p) => (p.plus || 0) >= 5);
+    case "buddies":
+      return Object.keys(s.crew?.owned || {}).length >= c.n;
+    case "evolved":
+      return Object.values(s.crew?.owned || {}).some((b) => (b.stage || 0) >= c.stage);
+    case "pictures":
+      return (s.coloring?.finished || 0) >= c.n;
+    case "bigPicture":
+      return PIXEL_PICTURES.some((p) => p.size >= 24 && (s.coloring?.done?.[p.id] || 0) > 0);
+    case "glitter":
+      return (s.coloring?.glitter || []).length >= c.n;
+    case "quests":
+      return (s.quests?.done || 0) >= c.n;
+    case "level":
+      return s.level >= c.n;
+    default:
+      return false;
+  }
+}
+
+/** Award every trophy whose condition is met. Returns the newly earned ones. */
+export function checkTrophies() {
+  const s = getState();
+  const fresh = TROPHIES.filter((t) => !s.trophies[t.id] && isEarned(t, s));
+  if (!fresh.length) return [];
+  update((st) => fresh.forEach((t) => (st.trophies[t.id] = Date.now())));
+  for (const t of fresh) emit("trophyEarned", { id: t.id });
+  return fresh;
+}

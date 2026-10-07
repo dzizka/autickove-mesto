@@ -13,6 +13,7 @@ import { addParts } from "../systems/garage.js";
 import { ownAll } from "../systems/tuning.js";
 import { addEgg, hatchEggsNow, ownAllCrew, crewLevelUp } from "../systems/crew.js";
 import { unlockAllColoring } from "../systems/coloring.js";
+import { finishAllQuests } from "../systems/quests.js";
 import * as rng from "../core/rng.js";
 import { go } from "../core/router.js";
 
@@ -65,6 +66,7 @@ const CHEATS = [
   { id: "crewLvl", label: "⬆ Kamarát +5 levelov", color: "grass", run: () => crewLevelUp(5) },
   { id: "candy", label: "+50 🍬", color: "sun", run: () => update((s) => (s.crew.candy += 50)) },
   { id: "coloringAll", label: "🖍️ Všetky obrázky a farby", color: "plum", run: unlockAllColoring },
+  { id: "quests", label: "📜 Splniť úlohy", color: "grass", run: finishAllQuests },
   { id: "tracks", label: "🛣️ Všetky trate a úrovne", color: "grass", run: unlockAllTracks },
   { id: "demo", label: "🚗 Skúšobná jazda", color: "sky", run: () => go("game/demo"), close: true },
   { id: "demoCrash", label: "💥 Test zaseknutia slučky", color: "tomato", run: () => go("game/demo-crash"), close: true },

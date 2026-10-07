@@ -203,13 +203,18 @@ export function expandBag() {
  * Chest after a race (DESIGN-v2 §4.5): 3/2/1/1 parts by place, quality by track level
  * and luck, with the first-race guarantees and the bad-luck counter.
  */
+/** Stat budget of a part dropped on a track level (§4.8). */
+export function partBudget(track, level) {
+  return Math.max(LOOT.minBudget, (recommendedPower(track, level) + LOOT.budgetOffset) * LOOT.partBudgetShare);
+}
+
 export function grantRaceLoot({ track, level, place, bossWin = false }) {
   const trackIndex = Math.max(0, TRACKS.findIndex((t) => t.id === track));
   // a boss win: the sure epic (or legendary) prize plus two normal parts
   const count = bossWin ? 2 : LOOT.dropsByPlace[Math.max(0, Math.min(3, (place || 4) - 1))];
   const { parts, history } = generateDrops({
     count,
-    budget: recommendedPower(track, level) * LOOT.partBudgetShare,
+    budget: partBudget(track, level),
     level,
     trackIndex,
     luck: raceEffects(carStats()).luck,
@@ -218,7 +223,7 @@ export function grantRaceLoot({ track, level, place, bossWin = false }) {
   });
   let hist = history;
   if (bossWin) {
-    const prize = generateBossPrize({ budget: recommendedPower(track, level) * LOOT.partBudgetShare, rng, history: hist });
+    const prize = generateBossPrize({ budget: partBudget(track, level), rng, history: hist });
     hist = prize.history;
     parts.unshift(prize.part);
   }

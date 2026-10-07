@@ -1,0 +1,24 @@
+/* Trophies and the parents' overview. */
+.trophies { display: grid; gap: 14px; }
+.trophies .card { max-width: none; width: 100%; margin: 0; }
+.trophy-head { display: flex; align-items: center; gap: 14px; }
+.trophy-big { font-size: 2.6rem; }
+.trophy-segs i { height: 12px; }
+.trophy-segs i.on { background: var(--sun); }
+.trophy-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 12px; }
+.trophy { display: grid; place-items: center; aspect-ratio: 1; min-height: var(--tap); border: 4px solid #e4e9f0; border-radius: 22px; background: #eef1f5; cursor: pointer; }
+.trophy .trophy-icon { font-size: 2.6rem; filter: grayscale(1) brightness(.4); opacity: .3; }
+.trophy.earned { border-color: var(--sun); background: radial-gradient(circle at 50% 40%, #fff 0 40%, #fff3c4); box-shadow: var(--shadow); }
+.trophy.earned .trophy-icon { filter: none; opacity: 1; }
+
+.parents { display: grid; gap: 4px; }
+.parents .card { width: 100%; }
+.parents h2 { font-size: 1.15rem; }
+.pa-chart { display: grid; grid-template-columns: repeat(7, 1fr); align-items: end; gap: 8px; height: 170px; padding-top: 18px; }
+.pa-col { position: relative; display: grid; grid-template-rows: auto 1fr auto; align-items: end; justify-items: center; height: 100%; }
+.pa-bar { align-self: end; width: 70%; min-height: 3px; border-radius: 6px 6px 0 0; background: var(--sky); }
+.pa-val { font-size: .8rem; font-weight: 700; }
+.pa-day { padding-top: 4px; font-size: .85rem; color: var(--ink-soft); }
+.pa-row { display: flex; justify-content: space-between; gap: 12px; padding: 6px 0; border-bottom: 1px solid var(--line); }
+.pa-row:last-child { border-bottom: 0; }
+.parents .btn.big { justify-self: center; min-width: 160px; margin-top: 8px; }

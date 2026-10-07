@@ -4,7 +4,7 @@
 import { h } from "../../core/ui.js";
 import { RACE } from "../../data/tracks.js";
 import { carStats, raceEffects, getTrack, carAbilities, setLook } from "../../systems/stats.js";
-import { isLevelUnlocked, previewUnlocks, isBossReady } from "../../systems/progress.js";
+import { isLevelUnlocked, previewUnlocks, isBossReady, rivalEase } from "../../systems/progress.js";
 import { LEGENDARIES } from "../../data/legendaries.js";
 import { BOSSES } from "../../data/bosses.js";
 import { getLook, resolveLook } from "../../systems/tuning.js";
@@ -30,7 +30,7 @@ export function raceReward(race) {
   return {
     coins: race.player.coins + Math.round(RACE.placeCoins[place - 1] * bonus) + (bossWin ? 80 : 0),
     xp: RACE.xpBase + RACE.xpPerLevel * race.level + (place === 1 ? 10 : 0) + (bossWin ? 30 : 0),
-    extra: { track: race.track.id, level: race.level, place, boss: race.boss?.id || null, bossWin },
+    extra: { track: race.track.id, level: race.level, place, boss: race.boss?.id || null, bossWin, collected: race.player.coins },
   };
 }
 
@@ -57,7 +57,7 @@ export default {
     const g = canvas.getContext("2d");
 
     const abilities = carAbilities();
-    const race = createRace({ track, level, effects: raceEffects(carStats(), abilities, crewBonus()), rng: ctx.rng, short: !!ctx.state().cheats.shortRaces, abilities, boss });
+    const race = createRace({ track, level, effects: raceEffects(carStats(), abilities, crewBonus()), rng: ctx.rng, short: !!ctx.state().cheats.shortRaces, abilities, boss, ease: rivalEase(track.id, level) });
     const hud = createHud(wrap, race, { onExit: ctx.exit });
     // The car looks exactly like in the showroom (plus the look of a complete set):
     // kind, paint, wheels, roof… and neon and trail.
@@ -100,7 +100,9 @@ export default {
       g.setTransform(dpr, 0, 0, dpr, 0, 0);
       L = makeLayout(w, hh);
       weather = createWeather(track, L);
+      night?.cv.remove();
       night = track.dark ? createNight(L) : null;
+      if (night) canvas.after(night.cv);
     };
     resize();
 

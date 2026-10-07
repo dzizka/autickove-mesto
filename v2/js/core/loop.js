@@ -8,6 +8,9 @@ const MAX_DT = 0.05; // seconds; avoids huge jumps after a tab switch or a slow 
 /** Totals across all loops, read by tests via window.__game.loopStats. */
 export const loopStats = { caughtErrors: 0, crashes: 0 };
 
+/** Frame timing for performance tests (not part of loopStats, so tests comparing it stay simple). */
+export const frameTiming = { frames: 0, busyMs: 0, worstMs: 0, reset() { this.frames = 0; this.busyMs = 0; this.worstMs = 0; } };
+
 /**
  * @param {object} opts
  * @param {(dt:number, time:number) => void} [opts.update]  dt in seconds, clamped
@@ -30,10 +33,15 @@ export function createLoop({ update, draw, onCrash, pauseWhenHidden = true } = {
     if (!Number.isFinite(dt) || dt < 0) dt = 0;
     dt = Math.min(dt, MAX_DT);
     elapsed += dt;
+    const t0 = performance.now();
     try {
       update?.(dt, elapsed);
       draw?.(elapsed);
       consecutive = 0;
+      const busy = performance.now() - t0;
+      frameTiming.frames++;
+      frameTiming.busyMs += busy;
+      if (busy > frameTiming.worstMs) frameTiming.worstMs = busy;
     } catch (err) {
       consecutive++;
       loopStats.caughtErrors++;

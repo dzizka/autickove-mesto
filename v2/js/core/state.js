@@ -6,9 +6,10 @@ import { starterParts, emptyLootHistory } from "../systems/loot.js";
 import { defaultLook, defaultOwned } from "../systems/tuning.js";
 import { defaultCrew } from "../systems/crew.js";
 import { defaultColoring } from "../systems/coloring.js";
+import { defaultQuests } from "../systems/quests.js";
 
 export const STORAGE_KEY = "autickove-mesto-v2";
-export const CURRENT_VERSION = 7;
+export const CURRENT_VERSION = 8;
 
 export function defaultState() {
   return {
@@ -45,6 +46,9 @@ export function defaultState() {
     // v7: colouring book (finished count, bought pictures, glitter colours, unfinished work).
     // The gallery images live under their own key (systems/coloring.js).
     coloring: defaultColoring(),
+    // v8: quests (3 active + count of claimed ones) and trophies (id → time earned).
+    quests: defaultQuests(),
+    trophies: {},
   };
 }
 
@@ -79,6 +83,9 @@ const MIGRATIONS = {
   5: (s) => ({ ...s, version: 6, crew: { ...defaultCrew(), eggsEver: Array.isArray(s.eggs) ? s.eggs.length : 0 } }),
   // v6 → v7: colouring book (filled from defaults).
   6: (s) => ({ ...s, version: 7 }),
+  // v7 → v8: quests and trophies (filled from defaults; trophies for old progress are
+  // awarded on the next check).
+  7: (s) => ({ ...s, version: 8 }),
 };
 
 const isPlainObject = (v) => v !== null && typeof v === "object" && !Array.isArray(v);

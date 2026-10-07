@@ -58,10 +58,10 @@ v2/
 │   │   ├── stats.js        # štatistiky, sloty, začiatočné auto, účinky štatistík v pretekoch
 │   │   ├── cars.js  tuning.js  tracks.js  bosses.js
 │   │   ├── loot-bases.js  affixes.js  legendaries.js  sets.js
-│   │   ├── crew.js  trophies.js
+│   │   ├── crew.js  trophies.js  quests.js
 │   │   └── coloring/       # palette.js, free.js (24 obrázkov SVG), pixel.js (30 obrázkov podľa čísel)
 │   ├── systems/            # logika bez kreslenia
-│   │   ├── economy.js  progress.js  quests.js  trophies.js   # progress.js: level, čas hrania, postup na tratiach
+│   │   ├── economy.js  progress.js  quests.js  trophies.js   # progress.js: level, čas hrania, postup na tratiach, bossovia
 │   │   ├── loot.js         # generovanie dielov, vzácnosť, sila
 │   │   ├── garage.js       # nasadenie, porovnanie, rozoberanie, vylepšenie
 │   │   ├── stats.js        # súčet štatistík auta (diely + sety + kamarát)
@@ -74,7 +74,7 @@ v2/
 │   │   ├── effects.js      # neón a stopa v pretekoch
 │   │   └── emoji.js        # emoji kreslené do malého plátna (rýchle na tablete)
 │   ├── screens/            # home.js garage.js tuning.js crew.js gallery.js parents.js
-│   │                       # settings.js test-menu.js topbar.js coloring.js (výber obrázka)
+│   │                       # settings.js test-menu.js topbar.js coloring.js (výber obrázka) trophies.js
 │   │                       # races.js (výber trate a úrovne), stat-panel.js (pruhy štatistík, sila auta)
 │   │                       # part-card.js (karta dielu, detail s porovnaním), chest.js (truhlica po pretekoch)
 │   │                       # set-book.js (kniha setov)
@@ -82,7 +82,8 @@ v2/
 │       ├── demo/           # skúšobná jazda len z testovacieho menu (overuje slučku a odmeny)
 │       ├── race/           # index.js  track.js  spawner.js  physics.js  draw.js  hud.js  boss.js  abilities.js (legendárne schopnosti)
 │       └── coloring/       # index.js  free-paint.js  by-number.js  brush.js  tools.js (panel nástrojov)
-└── tests/                  # Playwright testy (bod 10): node --test, package.json, helpers.mjs
+└── tests/                  # Playwright testy (bod 10): node --test, package.json, helpers.mjs,
+                            # progress-sim.mjs (simulácia dlhého hrania na vyváženie)
 ```
 
 **Pravidlá:**
@@ -192,6 +193,15 @@ Sú 4 sety po 3 dieloch: **Policajný, Hasičský, Vesmírny, Džungľa**. Diel 
 - **Začiatok:** začiatočné auto má sivé diely v každom slote. Prvý zelený a modrý diel padne isto počas prvých 3 pretekov.
 - **Postup:** približne 10 hodín hrania od prvého epického dielu po kompletný set a 5. úroveň tratí. Legendárne diely sú vzácne, ale do 2 až 3 hodín hrania dieťa nejaký isto uvidí. Zaručí to „počítadlo smoly“, ktoré po každých pretekoch bez legendárneho dielu zvýši šancu naň.
 - **Bez frustrácie:** preteky sa nedajú prehrať. Aj 4. miesto dá diel a mince.
+- **Poistka proti zaseknutiu:** keď dieťa na najnovšej úrovni 6-krát po sebe nevyhrá, súperi na nej spomalia o 1,5 % za každý ďalší pokus, najviac o 12 %. Po víťazstve sa to vráti.
+- **Odporúčaná sila** zodpovedá skutočnej rýchlosti súperov: 🟢 znamená, že rovnomerne postavené auto má najvyššiu rýchlosť o 6 % vyššiu než najrýchlejší súper úrovne. 🟡 je od 80 % tejto sily. Hlas pri 🔴 hovorí, že skúsiť sa dá.
+- **Namerané v simulácii** (8 simulovaných detí, každé 600 pretekov s chybami ako dieťa, `v2/tests/progress-sim.mjs`):
+  - Vesmír 5 sa odomkne medzi 57. a 207. pretekmi (v strede okolo 110).
+  - Najdlhší úsek bez novej úrovne je najviac 78 pretekov.
+  - Prvý legendárny diel padne do 30 pretekov.
+  - Celý set sa nájde medzi 28. a 130. pretekmi.
+  - Pri 1,5 až 2 minútach na preteky aj s truhlicou a garážou to je približne 3 až 7 hodín pretekov. Spolu s bossmi, setmi, kamarátmi a omaľovánkou vyjde okolo 10 hodín.
+  - Čísla sa dajú doladiť v `data/loot-bases.js` (`partBudgetShare`, `budgetOffset`) a `data/tracks.js` (`ease…`) a overiť simuláciou.
 
 ---
 
@@ -260,8 +270,13 @@ Vo v1 ju malo dieťa rado, ale mala len 3 obrázky. Vo v2 bude mať dva režimy 
 
 - **Domovská obrazovka:** auto dieťaťa s kamarátom, veľké tlačidlá **Preteky**, **Garáž**, **Vzhľad**, **Kamaráti** a **Omaľovánka**.
 - **Úlohy:** 3 jednoduché úlohy naraz (napr. „vyhraj preteky“, „rozober 3 diely“, „vymaľuj obrázok“). Za splnenie je odmena.
+  - Úlohy sú na domovskej obrazovke pod tlačidlami ako ikona s pruhom. Ťuknutie úlohu prečíta. Splnená úloha sa zmení na 🎁 a ťuknutím sa vyberie odmena (mince, niekedy 🔩 alebo 🍬). Hneď pribudne nová úloha.
+  - Úlohy, ktoré by sa nedali splniť (pohladkať kamaráta bez kamaráta, poraziť bossa, keď žiadny nie je pripravený), sa neponúkajú.
 - **Trofeje:** za prvý legendárny diel, celý set, všetkých bossov, vylepšenie +5, vyvinutého kamaráta, obrázky a pod.
-- **Prehľad pre rodičov:** čas hrania za 7 dní, čo dieťa hrá najčastejšie a sila auta. Tu sú aj čísla.
+  - Je ich 23. Poličku trofejí otvára 🏆 na domovskej obrazovke, nezískané trofeje sú šedé tiene a ťuknutie prečíta názov.
+  - Nová trofej sa ohlási zvukom, hlasom a bublinou. Trofeje sa dopočítajú aj zo staršieho postupu.
+- **Prehľad pre rodičov:** čas hrania za 7 dní, čo dieťa hrá najčastejšie a sila auta. Tu sú aj čísla. Otvára sa v Nastaveniach (👪). Ukazuje stĺpce minút po dňoch, počty hier, štatistiky auta a postup (trate, bossovia, kamaráti, obrázky, trofeje, úlohy).
+- **Výkon:** test spomalí procesor 4× vo veľkosti tabletu a s najnáročnejším vzhľadom auta. Na každej trati drží okolo 60 snímok za sekundu a herný kód potrebuje do 2 ms na snímok. Noc sa kreslí na plátne s 1/4 rozlíšením, ktoré ako samostatnú vrstvu zväčšuje grafická karta.
 - **Nastavenia:** zvuk, hlas, prenos postupu (kód `AM2:`), začať odznova a skryté testovacie menu (podržať ⚙️ 3 sekundy a vyriešiť príklad).
 
 ---

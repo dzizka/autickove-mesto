@@ -40,4 +40,7 @@ export const EFFECTS = {
   fuelPerPoint: 1 / 40, // fuel lasts ×1.2 → ×3.5
   magnetLanesPerPoint: 1 / 40, // pulls coins from 0.2 → 2.5 lanes away
   luckPerPoint: 1 / 100, // loot quality (part 2)
+  upgradePerPlus: 0.08, // each +1 upgrade adds this share to a part's values (§4.6)
+  recommendMargin: 0.06, // recommended power: top speed 6 % above the fastest rival (🟢 = "you will manage")
+  recommendMin: 30, // … but never below this (the starter car has 48)
 };

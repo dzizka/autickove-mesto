@@ -7,7 +7,8 @@ import * as rng from "../js/core/rng.js";
 import { RARITIES, RARITY_IDS, LOOT } from "../js/data/loot-bases.js";
 import { SLOTS, STAT_IDS } from "../js/data/stats.js";
 import { generatePart, rollRarity, generateDrops, emptyLootHistory, rarityWeights, starterParts, legendaryChance } from "../js/systems/loot.js";
-import { partStats, carStats, carPower, recommendedPower } from "../js/systems/stats.js";
+import { partStats, carStats, carPower, recommendedPower, difficulty } from "../js/systems/stats.js";
+import { partBudget } from "../js/systems/garage.js";
 
 test("10 000 parts: every part has a main stat and the right number of side stats", () => {
   rng.setSeed(42);
@@ -100,15 +101,15 @@ test("bad-luck counter: the chance grows every race and a legendary is sure by r
   assert.ok(avg > 10 && avg < 45, `first legendary on average in race ${avg.toFixed(1)}: rare but not too rare`);
 });
 
-test("drops feel like progress: a car full of blue parts from a race beats its recommended power", () => {
+test("drops make progress possible: epic +5 parts from a level are at least 🟡 there (sets, buddy and easier rivals do the rest)", () => {
   rng.setSeed(11);
   for (const [track, level] of [["city", 3], ["snow", 2], ["space", 4]]) {
-    const budget = recommendedPower(track, level) * LOOT.partBudgetShare;
-    const equipped = Object.fromEntries(SLOTS.map((s) => [s.id, generatePart({ rarity: "rare", budget, rng, slot: s.id })]));
-    assert.ok(carPower(carStats(equipped)) >= recommendedPower(track, level), track);
+    const budget = partBudget(track, level);
+    const equipped = Object.fromEntries(SLOTS.map((s) => [s.id, { ...generatePart({ rarity: "epic", budget, rng, slot: s.id }), plus: 5 }]));
+    assert.notEqual(difficulty(carPower(carStats(equipped, false)), recommendedPower(track, level)), "red", track);
   }
-  const starter = carPower(carStats(starterParts()));
-  const cityGreen = generatePart({ rarity: "good", budget: recommendedPower("city", 1) * LOOT.partBudgetShare, rng });
+  const starter = carPower(carStats(starterParts(), false));
+  const cityGreen = generatePart({ rarity: "good", budget: partBudget("city", 1), rng });
   const total = Object.values(partStats(cityGreen)).reduce((a, b) => a + b, 0);
   assert.ok(total >= starter / 6, "a green part from City 1 is not worse than a starter part");
 });

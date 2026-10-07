@@ -273,10 +273,10 @@ test("gallery keeps at most 40 pictures and can delete one", async () => {
   await page.context().close();
 });
 
-test("version-6 saves migrate to version 7 with an empty colouring book", async () => {
+test("version-6 saves migrate to the current schema with an empty colouring book", async () => {
   const page = await openGame(env.browser, env.server.url, { storage: { version: 6, coins: 8 } });
   const s = await page.evaluate(() => window.__game.state.getState());
-  assert.equal(s.version, 7);
+  assert.equal(s.version, await page.evaluate(() => window.__game.state.CURRENT_VERSION));
   assert.deepEqual(s.coloring, { finished: 0, done: {}, bought: [], glitter: [], wip: {} });
   await page.context().close();
 });

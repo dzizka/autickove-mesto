@@ -13,7 +13,11 @@ export const RARITY_IDS = RARITIES.map((r) => r.id);
 
 export const LOOT = {
   dropsByPlace: [3, 2, 1, 1], // 1st place → 3 parts … 4th place → 1 part (§4.5)
-  partBudgetShare: 0.21, // a part's stat budget = recommended power of the race × this (a bit over 1/6, so drops feel like upgrades)
+  // a part's stat budget = (recommended power of the race + budgetOffset) × partBudgetShare;
+  // the offset makes early drops better than the starter parts (tuned with tests/progress-sim.mjs)
+  partBudgetShare: 0.08,
+  budgetOffset: 30,
+  minBudget: 10, // early drops are never weaker than a starter part (8)
   jitter: 0.12, // ± random spread of the budget
   trackBoost: 0.15, // extra rarity boost per track index (later tracks drop better)
   luckBoost: 1, // luck (0..~1.5 from stats) multiplies non-common weights by (1 + luck × this)

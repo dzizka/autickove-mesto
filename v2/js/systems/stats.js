@@ -9,8 +9,8 @@ import { crewBonus } from "./crew.js";
 
 const num = (v) => (Number.isFinite(v) ? v : 0);
 
-/** Upgrade bonus: each +1 adds 8 % to the part's values (part 2 uses it). */
-export const plusFactor = (plus) => 1 + 0.08 * Math.max(0, Math.min(5, num(plus)));
+/** Upgrade bonus: each +1 adds EFFECTS.upgradePerPlus to the part's values. */
+export const plusFactor = (plus) => 1 + EFFECTS.upgradePerPlus * Math.max(0, Math.min(5, num(plus)));
 
 export function partStats(part) {
   const out = Object.fromEntries(STAT_IDS.map((id) => [id, 0]));
@@ -122,9 +122,14 @@ export function rivalTopFactor(trackId, level) {
 }
 
 /** Recommended car power for a track level (DESIGN-v2 §4.1). */
+/**
+ * Recommended car power for a track level (DESIGN-v2 §4.1): the power of an evenly built car
+ * whose top speed beats the fastest rival by a small margin (for a child's mistakes).
+ * Power ≈ 6 × speed stat; top speed = base × (1 + speed × speedPerPoint).
+ */
 export function recommendedPower(trackId, level) {
-  const starter = 48;
-  return Math.round(starter + Math.max(0, rivalTopFactor(trackId, level) - 0.92) * 1200);
+  const needSpeed = (rivalTopFactor(trackId, level) * (1 + EFFECTS.recommendMargin) - 1) / EFFECTS.speedPerPoint;
+  return Math.max(EFFECTS.recommendMin, Math.round(STAT_IDS.length * needSpeed));
 }
 
 /** "green" = you'll manage, "yellow" = hard, "red" = not yet. */

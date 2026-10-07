@@ -8,9 +8,9 @@ import { makeObject } from "./spawner.js";
 const range = (rng, [a, b]) => a + rng.random() * (b - a);
 
 /** The boss as a rival: faster than the level's best rival only by its pace factor. */
-export function createBossRival(boss, track, level, rng) {
+export function createBossRival(boss, track, level, rng, slow = 1) {
   const best = Math.max(...RACE.rivals.map((r) => r.pace));
-  const top = (track.rivalBase + RACE.rivalLevelStep * (level - 1)) * best * (boss.pace || 1) * RACE.baseSpeed;
+  const top = (track.rivalBase + RACE.rivalLevelStep * (level - 1)) * best * (boss.pace || 1) * RACE.baseSpeed * slow;
   return {
     name: boss.name,
     color: boss.color,

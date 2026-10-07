@@ -6,7 +6,7 @@ import * as rng from "./core/rng.js";
 import * as audio from "./core/audio.js";
 import * as ui from "./core/ui.js";
 import * as router from "./core/router.js";
-import { loopStats } from "./core/loop.js";
+import { loopStats, frameTiming } from "./core/loop.js";
 import { exportCode, parseCode } from "./core/save-transfer.js";
 import { startPlayClock } from "./systems/progress.js";
 import { mountTopbar } from "./screens/topbar.js";
@@ -23,6 +23,11 @@ import { BOSSES } from "./data/bosses.js";
 import crew from "./screens/crew.js";
 import coloring from "./screens/coloring.js";
 import gallery from "./screens/gallery.js";
+import trophies from "./screens/trophies.js";
+import parents from "./screens/parents.js";
+import { ensureQuests, questEvent } from "./systems/quests.js";
+import { checkTrophies } from "./systems/trophies.js";
+import { TROPHIES } from "./data/trophies.js";
 import coloringGame from "./games/coloring/index.js";
 import { recordFinished, addToGallery } from "./systems/coloring.js";
 import { tickEggs, addEgg, rollChestEgg, giveCrewXp } from "./systems/crew.js";
@@ -44,6 +49,8 @@ mountTopbar(document.querySelector("[data-topbar]"), document.querySelector("[da
 router.registerScreen(home);
 router.registerScreen(settings);
 router.registerScreen(gallery);
+router.registerScreen(trophies);
+router.registerScreen(parents);
 // The four pillars (DESIGN-v2 §1) plus the garage.
 for (const screen of [races, garage, tuning, crew, coloring]) router.registerScreen(screen);
 router.registerGame(raceGame);
@@ -76,9 +83,46 @@ router.addRewardHandler((gameId, result) => {
 });
 router.setRewardPresenter(presentReward);
 
+// Quests (DESIGN-v2 §8): game events move the active quests forward.
+events.on("gameFinished", ({ gameId, result }) => {
+  const x = result.extra || {};
+  if (gameId === "race") {
+    questEvent("race");
+    if (x.place === 1) questEvent("win");
+    if (x.bossWin) questEvent("boss");
+    questEvent("collect", x.collected || 0);
+  }
+  if (gameId === "coloring" && x.coloring) questEvent("paint");
+});
+events.on("partsDismantled", ({ count }) => questEvent("dismantle", count));
+events.on("carChanged", ({ before, after }) => after > before && questEvent("equip"));
+events.on("partUpgraded", () => questEvent("upgrade"));
+events.on("itemBought", () => questEvent("buy"));
+events.on("buddyPetted", () => questEvent("pet"));
+events.on("buddyHatched", () => questEvent("hatch"));
+
+// Trophies (DESIGN-v2 §8): checked after rewards and screen changes, announced with a toast.
+const announce = [];
+events.on("trophyEarned", ({ id }) => announce.push(TROPHIES.find((t) => t.id === id)));
+const flushTrophies = () => {
+  if (!announce.length || document.body.dataset.mode === "game") return;
+  const t = announce.shift();
+  audio.sfx.levelUp();
+  ui.toast(`Nová trofej: ${t.name}`, { icon: `🏆${t.icon}`, ms: 3200 });
+  audio.speak(`Nová trofej! ${t.name}!`, { interrupt: false });
+  setTimeout(flushTrophies, 3400);
+};
+events.on("screenShown", () => {
+  checkTrophies();
+  ensureQuests(rng);
+  flushTrophies();
+});
+events.on("questClaimed", () => (checkTrophies(), flushTrophies()));
+events.on("gameFinished", () => checkTrophies());
+
 // The one allowed global: hooks for automated tests (DESIGN-v2 §2). Set before the router
 // starts, so a game opened straight from the URL can register its hooks too.
-window.__game = { state, events, rng, audio, ui, router, loopStats, exportCode, parseCode };
+window.__game = { state, events, rng, audio, ui, router, loopStats, frameTiming, exportCode, parseCode };
 
 startPlayClock();
 router.startRouter(document.querySelector("main"));

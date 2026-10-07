@@ -179,6 +179,7 @@ export function pet(id) {
     s.crew.owned[id].pets = (s.crew.owned[id].pets || 0) + 1;
     s.crew.pets += 1;
   });
+  emit("buddyPetted", { id });
   return getState().crew.owned[id].pets;
 }
 

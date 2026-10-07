@@ -13,6 +13,11 @@ export const RACE = {
     { name: "Fialový", color: "#9b51e0", pace: 0.92 },
   ],
   rivalLevelStep: 0.06, // rivals get this much faster per track level
+  // No frustration (§4.8): after this many races without a win on the newest level,
+  // its rivals get easeStep slower per extra race, at most easeMax.
+  easeAfter: 6,
+  easeStep: 0.015,
+  easeMax: 0.12,
   levels: 5,
   // Obstacles / traffic per 100 m at level 1 and the growth per level.
   obstaclesPer100: 1.1,

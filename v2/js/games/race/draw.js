@@ -186,14 +186,24 @@ export function drawSpeedLines(g, L, race, time) {
 }
 
 /**
- * Night: darkness with headlights, drawn on a canvas at 1/4 resolution
- * and scaled up (cheap on older tablets, DESIGN-v2 §4.1).
+ * Night: darkness with headlights, drawn on its own canvas at 1/4 resolution. The canvas lies
+ * over the race as a DOM layer, so the browser scales it up on the GPU (older tablets, §4.1).
  */
 export function createNight(L) {
   const cv = document.createElement("canvas");
   cv.width = Math.max(8, Math.ceil(L.w / 4));
   cv.height = Math.max(8, Math.ceil(L.h / 4));
-  return { cv, g: cv.getContext("2d"), scale: 0.25 };
+  // one soft light blob, drawn once and stamped for every light (no gradients per frame)
+  const blob = document.createElement("canvas");
+  blob.width = blob.height = 64;
+  const b = blob.getContext("2d");
+  const grad = b.createRadialGradient(32, 32, 0, 32, 32, 32);
+  grad.addColorStop(0, "rgba(0,0,0,1)");
+  grad.addColorStop(1, "rgba(0,0,0,0)");
+  b.fillStyle = grad;
+  b.fillRect(0, 0, 64, 64);
+  cv.className = "night-layer";
+  return { cv, g: cv.getContext("2d"), scale: 0.25, blob };
 }
 
 export function drawNight(g, L, night, race, lightRange = 1) {
@@ -207,13 +217,8 @@ export function drawNight(g, L, night, race, lightRange = 1) {
 
   const light = (x, y, r, a = 1) => {
     if (!Number.isFinite(x) || !Number.isFinite(y) || !(r > 0)) return; // never NaN (v1 night bug)
-    const grad = n.createRadialGradient(x * s, y * s, 0, x * s, y * s, r * s);
-    grad.addColorStop(0, `rgba(0,0,0,${a})`);
-    grad.addColorStop(1, "rgba(0,0,0,0)");
-    n.fillStyle = grad;
-    n.beginPath();
-    n.arc(x * s, y * s, r * s, 0, 6.29);
-    n.fill();
+    n.globalAlpha = a;
+    n.drawImage(night.blob, (x - r) * s, (y - r) * s, 2 * r * s, 2 * r * s);
   };
 
   const p = race.player;
@@ -230,5 +235,5 @@ export function drawNight(g, L, night, race, lightRange = 1) {
     const y = distToY(L, o.d, p.d);
     if (visible(L, y)) light(laneToX(L, o.x), y, L.laneW * 0.5, 0.6);
   }
-  g.drawImage(night.cv, 0, 0, L.w, L.h);
+  n.globalAlpha = 1;
 }

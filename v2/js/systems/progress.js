@@ -2,7 +2,7 @@
 
 import { update, getState } from "../core/state.js";
 import { emit } from "../core/events.js";
-import { TRACKS } from "../data/tracks.js";
+import { TRACKS, RACE } from "../data/tracks.js";
 
 export const MAX_LEVEL = 50;
 const LOG_DAYS = 30;
@@ -81,7 +81,14 @@ export const CHALLENGE_RACES = 3; // races on a track that fill the boss challen
 
 export function trackProgress(trackId, s = getState()) {
   const t = s.races.tracks[trackId] || {};
-  return { unlocked: t.unlocked || 1, best: t.best || {}, challenge: t.challenge || 0, races: t.races || 0 };
+  return { unlocked: t.unlocked || 1, best: t.best || {}, challenge: t.challenge || 0, races: t.races || 0, tries: t.tries || 0 };
+}
+
+/** How much slower the rivals are on a level after races without a win there (0 … easeMax). */
+export function rivalEase(trackId, level, s = getState()) {
+  const p = trackProgress(trackId, s);
+  if (level !== p.unlocked || p.best[level] === 1) return 0;
+  return Math.min(RACE.easeMax, Math.max(0, p.tries - RACE.easeAfter) * RACE.easeStep);
 }
 
 /** Best place ever on the track (any level), or null. */
@@ -121,8 +128,13 @@ export function recordRace({ track, level, place }) {
     const p = trackProgress(track, s);
     p.races += 1;
     p.challenge = Math.min(CHALLENGE_RACES, p.challenge + 1);
+    // tries without a win on the newest level (for rivalEase); a win or a new level resets it
+    if (level === p.unlocked) p.tries = place === 1 ? 0 : p.tries + 1;
     p.best = { ...p.best, [level]: Math.min(p.best[level] ?? 9, place) };
-    if (unlocks.level) p.unlocked = unlocks.level;
+    if (unlocks.level) {
+      p.unlocked = unlocks.level;
+      p.tries = 0;
+    }
     s.races.tracks[track] = p;
     s.races.total += 1;
     if (place === 1) s.races.wins += 1;

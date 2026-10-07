@@ -53,3 +53,17 @@
   30% { transform: translateY(-14px) rotate(-3deg); }
   60% { transform: translateY(0) rotate(1deg); }
 }
+
+/* quests and trophies button */
+.home-side { display: grid; gap: 14px; width: min(100%, 520px); margin: 0 auto; }
+.home-side .home-grid { width: 100%; }
+.home-quests { display: grid; grid-template-columns: repeat(3, 1fr) auto; gap: 10px; }
+.quest { display: grid; justify-items: center; gap: 6px; min-height: var(--tap); padding: 8px 6px; border: 3px solid transparent; border-radius: 18px; background: rgba(255, 255, 255, .92); box-shadow: var(--shadow); font: inherit; cursor: pointer; }
+.quest-icon { font-size: 1.9rem; line-height: 1; }
+.quest-segs { width: 100%; }
+.quest-segs i { height: 9px; }
+.quest-segs i.on { background: var(--grass); }
+.quest.done { border-color: var(--sun); animation: boss-glow-sun 1.2s ease-in-out infinite; }
+.quest.done .quest-icon { animation: wiggle .7s ease-in-out infinite; }
+.trophy-btn { width: 64px; align-content: center; background: var(--sun); }
+@keyframes boss-glow-sun { 50% { box-shadow: 0 0 18px 4px var(--sun); } }
