@@ -372,7 +372,7 @@ function ui() {
   home.textContent = "🏠";
   top.replaceChildren(
     home,
-    group(btn("A vlastný", own, () => ((look.mode = "own"), (look.car = "sedan")), "txt"), btn("B stiahnutý", !own, () => ((look.mode = "kenney"), (look.car = "truck")), "txt")),
+    group(btn("A vlastný", own, () => ((look.mode = "own"), (look.car = "sedan")), "txt"), btn("B stiahnutý ➜", false, () => (location.href = "carkit.html"), "txt")),
     group(...(own ? CARS.map((c) => btn(c.icon, look.car === c.id, () => (look.car = c.id))) : [btn("🚚", look.car === "truck", () => (look.car = "truck")), btn("🏍️", look.car === "motorcycle", () => (look.car = "motorcycle"))])),
   );
   const swatch = (id) => {

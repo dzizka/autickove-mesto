@@ -1,2 +1,0 @@
-3D models from Kenney (www.kenney.nl), "Starter Kit Racing" (github.com/KenneyNL/Starter-Kit-Racing).
-License: Creative Commons Zero, CC0 (public domain). Used here only for a preview.

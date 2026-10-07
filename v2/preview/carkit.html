@@ -1,0 +1,387 @@
+<!doctype html>
+<html lang="sk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Náhľad: autá Kenney</title>
+<style>
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #23263f; font-family: system-ui, sans-serif; user-select: none; -webkit-user-select: none; }
+  #stage { position: fixed; inset: 0; touch-action: none; }
+  .bar { position: fixed; left: 8px; right: 8px; display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; pointer-events: none; }
+  .bar.top { top: 8px; }
+  .bar.bottom { bottom: 8px; }
+  .bar button, .bar a { pointer-events: auto; min-width: 48px; height: 48px; padding: 0 8px; display: grid; place-items: center; border: 0; border-radius: 14px;
+    background: rgba(255, 255, 255, .88); font-size: 22px; text-decoration: none; color: #23324a; box-shadow: 0 3px 8px rgba(0, 0, 0, .3); cursor: pointer; }
+  .bar button.on { background: #ffd23f; outline: 3px solid #fff; }
+  .bar button img { width: 40px; height: 40px; object-fit: contain; }
+  .bar .sw i { display: block; width: 28px; height: 28px; border-radius: 50%; box-shadow: inset 0 0 0 3px rgba(0, 0, 0, .15); }
+  .bar .txt { font: 700 14px system-ui; }
+  .group { display: flex; flex-wrap: wrap; gap: 5px; padding: 4px; border-radius: 18px; background: rgba(0, 0, 0, .25); pointer-events: auto; max-width: 100%; justify-content: center; }
+  .views { position: fixed; right: 10px; top: 50%; transform: translateY(-50%); display: grid; gap: 8px; pointer-events: none; }
+  .views figure { margin: 0; padding: 6px; border-radius: 14px; background: rgba(255, 255, 255, .9); text-align: center; font: 700 12px system-ui; color: #23324a; }
+  .views canvas { display: block; width: 150px; height: 100px; }
+  @media (max-width: 700px) { .views { top: auto; bottom: 150px; right: 6px; } .views canvas { width: 96px; height: 64px; } .views figure { padding: 3px; } }
+</style>
+<script type="importmap">{ "imports": { "three": "./vendor/three.module.min.js" } }</script>
+</head>
+<body>
+<div id="stage"></div>
+<div class="bar top" id="top"></div>
+<div class="views" id="views"></div>
+<div class="bar bottom" id="bottom"></div>
+<script type="module">
+// Preview (DESIGN-v2 §14, part 15): the Kenney Car Kit (CC0) as the one look for every car in the
+// game. The 3D model takes the tuning (paint incl. rainbow/gold/galaxy, pattern, wheels, wing,
+// roof item, sticker, neon), and the same model is rendered into the 2D pictures the game needs:
+// from the side (home, games), from behind (races) and from the top (maze, crossing).
+import * as THREE from "three";
+import { GLTFLoader } from "./vendor/addons/loaders/GLTFLoader.js";
+
+const CARS = ["sedan", "suv", "taxi", "police", "firetruck", "race", "race-future", "truck", "van", "ambulance", "delivery", "garbage-truck", "sedan-sports", "hatchback-sports", "suv-luxury", "tractor", "kart-oobi"];
+const PAINTS = { red: "#ef4b4b", orange: "#ff8c42", yellow: "#ffd23f", green: "#3ebd4a", blue: "#2f80ed", purple: "#8f5bd8", pink: "#ff7eb6", white: "#f4f6f8", black: "#2b2d33", gold: "gold", rainbow: "rainbow", galaxy: "galaxy" };
+const PATTERNS = ["none", "stripes", "checker", "dots", "flames"];
+const WHEELS = { "wheel-default": "⚪", "wheel-dark": "⚫", "wheel-racing": "🏎️", "wheel-truck": "🚙" };
+const RIMS = { none: null, gold: "#e8b923", red: "#ff5a5f", neon: "#7df9ff" };
+const look = { car: "sedan", paint: "red", pattern: "none", wheel: "wheel-default", rim: "none", monster: false, wing: "none", roof: "none", sticker: "none", neon: false };
+const ROOFS = { none: "", crown: "👑", duck: "🦆", siren: "🚨", party: "🎉" };
+const STICKERS = { none: "", star: "⭐", fire: "🔥", unicorn: "🦄", bolt: "⚡" };
+
+// ---------- three ----------
+const stage = document.getElementById("stage");
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(Math.min(2, devicePixelRatio || 1));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+stage.append(renderer.domElement);
+const scene = new THREE.Scene();
+scene.background = new THREE.Color("#2b2f52");
+scene.fog = new THREE.Fog("#2b2f52", 12, 26);
+const camera = new THREE.PerspectiveCamera(32, 1, 0.1, 100);
+const lights = (sc) => {
+  sc.add(new THREE.HemisphereLight("#e6eeff", "#4a4560", 1.7));
+  const d = new THREE.DirectionalLight("#ffffff", 2.3);
+  d.position.set(4, 8, 6);
+  d.castShadow = true;
+  d.shadow.mapSize.set(1024, 1024);
+  Object.assign(d.shadow.camera, { left: -4, right: 4, top: 4, bottom: -4 });
+  sc.add(d);
+};
+lights(scene);
+const plate = new THREE.Group();
+scene.add(plate);
+const disc = new THREE.Mesh(new THREE.CylinderGeometry(3.3, 3.4, 0.2, 64), new THREE.MeshStandardMaterial({ color: "#c9cfe0", roughness: 0.6 }));
+disc.position.y = -0.1;
+disc.receiveShadow = true;
+plate.add(disc);
+const holder = new THREE.Group();
+plate.add(holder);
+
+// ---------- models ----------
+const loader = new GLTFLoader();
+const models = new Map();
+const load = async (name) => {
+  if (!models.has(name)) models.set(name, loader.loadAsync(`./models/carkit/${name}.glb`).then((g) => g.scene));
+  return models.get(name);
+};
+
+function emojiTex(char) {
+  const cv = document.createElement("canvas");
+  cv.width = cv.height = 128;
+  const g = cv.getContext("2d");
+  g.font = '100px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif';
+  g.textAlign = "center";
+  g.textBaseline = "middle";
+  g.fillText(char, 64, 70);
+  const t = new THREE.CanvasTexture(cv);
+  t.colorSpace = THREE.SRGBColorSpace;
+  return t;
+}
+
+/** The palette cell (8 × 4 grid) a triangle samples. */
+const cellOf = (u, v) => Math.min(7, Math.floor(u * 8)) + 8 * Math.min(3, Math.floor(v * 4));
+const PAINT_CELLS = new Set([9, 10, 11, 12, 13, 14, 15, 22]); // coloured cells + white (police, ambulance)
+
+/**
+ * Split a body mesh into the paint (the car's colour) and the rest. The paint is the most used
+ * coloured palette cell; it gets its own material with the chosen paint and pattern.
+ */
+function splitPaint(mesh) {
+  const geo = mesh.geometry.index ? mesh.geometry.toNonIndexed() : mesh.geometry.clone();
+  const uv = geo.attributes.uv;
+  const count = new Map();
+  for (let i = 0; i < uv.count; i += 3) {
+    const c = cellOf((uv.getX(i) + uv.getX(i + 1) + uv.getX(i + 2)) / 3, (uv.getY(i) + uv.getY(i + 1) + uv.getY(i + 2)) / 3);
+    if (PAINT_CELLS.has(c)) count.set(c, (count.get(c) || 0) + 1);
+  }
+  const coloured = [...count.entries()].filter(([c]) => c !== 22).sort((a, b) => b[1] - a[1])[0];
+  const paintCell = coloured && coloured[1] > uv.count / 3 / 12 ? coloured[0] : 22;
+  const keep = [];
+  const paint = [];
+  for (let i = 0; i < uv.count; i += 3) {
+    const c = cellOf((uv.getX(i) + uv.getX(i + 1) + uv.getX(i + 2)) / 3, (uv.getY(i) + uv.getY(i + 1) + uv.getY(i + 2)) / 3);
+    (c === paintCell ? paint : keep).push(i);
+  }
+  const pick = (list) => {
+    const g = new THREE.BufferGeometry();
+    for (const [name, attr] of Object.entries(geo.attributes)) {
+      const arr = new attr.array.constructor(list.length * 3 * attr.itemSize);
+      list.forEach((start, k) => {
+        for (let j = 0; j < 3; j++) for (let s = 0; s < attr.itemSize; s++) arr[(k * 3 + j) * attr.itemSize + s] = attr.array[(start + j) * attr.itemSize + s];
+      });
+      g.setAttribute(name, new THREE.BufferAttribute(arr, attr.itemSize));
+    }
+    return g;
+  };
+  return { keep: pick(keep), paint: pick(paint) };
+}
+
+/** Paint material: plain, gold, rainbow or galaxy, with a pattern drawn in model space. */
+function paintMaterial(box) {
+  const p = PAINTS[look.paint];
+  const special = ["gold", "rainbow", "galaxy"].includes(p) ? p : null;
+  const m = new THREE.MeshStandardMaterial({ color: special ? "#ffffff" : p, roughness: special === "gold" ? 0.3 : 0.45, metalness: special === "gold" ? 0.35 : 0.05 });
+  const pat = PATTERNS.indexOf(look.pattern);
+  m.onBeforeCompile = (sh) => {
+    sh.uniforms.uMin = { value: box.min };
+    sh.uniforms.uMax = { value: box.max };
+    sh.uniforms.uKind = { value: special === "rainbow" ? 1 : special === "galaxy" ? 2 : special === "gold" ? 3 : 0 };
+    sh.uniforms.uPat = { value: pat };
+    sh.vertexShader = sh.vertexShader.replace("#include <common>", "#include <common>\nvarying vec3 vObj;").replace("#include <begin_vertex>", "#include <begin_vertex>\nvObj = position;");
+    sh.fragmentShader = sh.fragmentShader
+      .replace("#include <common>", "#include <common>\nvarying vec3 vObj;\nuniform vec3 uMin; uniform vec3 uMax; uniform int uKind; uniform int uPat;\nvec3 hue(float h){ return clamp(abs(mod(h*6.0+vec3(0,4,2),6.0)-3.0)-1.0,0.0,1.0); }\nfloat hash(vec2 p){ return fract(sin(dot(p, vec2(12.9898,78.233)))*43758.5453); }")
+      .replace(
+        "#include <color_fragment>",
+        `#include <color_fragment>
+        vec3 n = (vObj - uMin) / max(uMax - uMin, vec3(1e-4)); // 0..1 across the body
+        float t = n.z;
+        if (uKind == 1) diffuseColor.rgb = hue(t);
+        if (uKind == 2) { diffuseColor.rgb = mix(vec3(0.08,0.06,0.2), vec3(0.45,0.36,1.0), 0.5+0.5*sin(t*9.0)); if (hash(floor(n.zy*vec2(60.0,30.0))) > 0.96) diffuseColor.rgb = vec3(1.0); }
+        if (uKind == 3) diffuseColor.rgb = mix(vec3(1.0,0.82,0.25), vec3(1.0,0.95,0.6), 0.5+0.5*sin(t*14.0+n.y*6.0));
+        vec3 ink = dot(diffuseColor.rgb, vec3(0.3,0.59,0.11)) > 0.6 ? vec3(0.1) : vec3(1.0);
+        float cx = abs(n.x - 0.5);
+        if (uPat == 1 && cx < 0.16 && cx > 0.06) diffuseColor.rgb = ink;
+        if (uPat == 2 && mod(floor(n.z*10.0)+floor(n.y*6.0)+floor(n.x*6.0), 2.0) < 1.0) diffuseColor.rgb = mix(diffuseColor.rgb, ink, 0.85);
+        if (uPat == 3 && length(fract(n.zy*vec2(9.0,5.0))-0.5) < 0.2) diffuseColor.rgb = ink;
+        float fl = 0.45 + 0.18*sin(n.z*40.0) * (1.0 - n.z);
+        if (uPat == 4 && n.y < fl && n.z > 0.35) diffuseColor.rgb = n.y < fl - 0.12 ? vec3(1.0,0.45,0.1) : vec3(1.0,0.85,0.2);`,
+      );
+  };
+  m.customProgramCacheKey = () => `${look.paint}|${look.pattern}`;
+  return m;
+}
+
+/** Build the car with the look: returns a group facing +z, standing on y = 0, about 2.4 long. */
+async function buildCar() {
+  const src = (await load(look.car)).clone(true);
+  const size0 = new THREE.Box3().setFromObject(src).getSize(new THREE.Vector3());
+  const k = 2.4 / Math.max(size0.x, size0.z);
+  src.scale.setScalar(k);
+  const wheelSrc = await load(look.wheel);
+  const tasks = [];
+  src.traverse((o) => {
+    if (!o.isMesh && !o.isGroup && !o.isObject3D) return;
+    if (o.name === "body" && o.isMesh) tasks.push(["body", o]);
+    else if (o.name.startsWith("wheel")) tasks.push(["wheel", o]);
+  });
+  for (const [kind, o] of tasks) {
+    if (kind === "body") {
+      const parts = splitPaint(o);
+      const rest = new THREE.Mesh(parts.keep, o.material);
+      o.geometry.computeBoundingBox();
+      const paint = new THREE.Mesh(parts.paint, paintMaterial(o.geometry.boundingBox.clone()));
+      for (const m of [rest, paint]) {
+        m.castShadow = true;
+        o.add(m);
+      }
+      o.geometry = new THREE.BufferGeometry();
+    } else {
+      // swap the wheel model, tint the rim, monster wheels are bigger
+      o.clear();
+      const w = wheelSrc.clone(true);
+      w.traverse((m) => {
+        if (!m.isMesh) return;
+        m.castShadow = true;
+        if (RIMS[look.rim]) {
+          m.material = m.material.clone();
+          m.material.color = new THREE.Color(RIMS[look.rim]).lerp(new THREE.Color("#ffffff"), 0.35);
+        }
+      });
+      if (o.isMesh) o.geometry = new THREE.BufferGeometry();
+      if (o.name.includes("left")) w.rotation.y = Math.PI;
+      if (look.monster) w.scale.setScalar(1.45);
+      o.add(w);
+    }
+  }
+  const car = new THREE.Group();
+  car.add(src);
+  if (look.monster) src.position.y += 0.12;
+  const box = new THREE.Box3().setFromObject(car);
+  const size = box.getSize(new THREE.Vector3());
+  car.position.set(-(box.min.x + box.max.x) / 2, -box.min.y, -(box.min.z + box.max.z) / 2);
+  const wrap = new THREE.Group();
+  wrap.add(car);
+  // wing (Kenney spoiler parts), roof item and stickers
+  if (look.wing !== "none") {
+    const sp = (await load(look.wing === "big" ? "debris-spoiler-b" : "debris-spoiler-a")).clone(true);
+    const sb = new THREE.Box3().setFromObject(sp).getSize(new THREE.Vector3());
+    sp.scale.setScalar((size.x * 0.9) / Math.max(sb.x, sb.z));
+    sp.position.set(0, size.y * 0.78, -size.z * 0.42);
+    sp.traverse((m) => m.isMesh && (m.castShadow = true));
+    wrap.add(sp);
+  }
+  if (ROOFS[look.roof]) {
+    const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: emojiTex(ROOFS[look.roof]) }));
+    s.scale.set(0.8, 0.8, 1);
+    s.position.set(0, size.y + 0.3, 0);
+    wrap.add(s);
+  }
+  if (STICKERS[look.sticker]) {
+    for (const side of [1, -1]) {
+      const m = new THREE.Mesh(new THREE.PlaneGeometry(0.45, 0.45), new THREE.MeshBasicMaterial({ map: emojiTex(STICKERS[look.sticker]), transparent: true }));
+      m.position.set(side * (size.x / 2 + 0.01), size.y * 0.42, -0.1);
+      m.rotation.y = side * Math.PI / 2;
+      wrap.add(m);
+    }
+  }
+  if (look.neon) {
+    const glow = new THREE.Mesh(new THREE.CircleGeometry(1, 32), new THREE.MeshBasicMaterial({ color: "#ff4fd8", transparent: true, opacity: 0.55 }));
+    glow.rotation.x = -Math.PI / 2;
+    glow.scale.set(size.x * 0.75, size.z * 0.6, 1);
+    glow.position.y = 0.01;
+    wrap.add(glow);
+    const l = new THREE.PointLight("#ff4fd8", 6, 3);
+    l.position.y = 0.2;
+    wrap.add(l);
+  }
+  return wrap;
+}
+
+// ---------- the same car as 2D pictures for the rest of the game ----------
+const snapR = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
+snapR.setSize(300, 200);
+snapR.outputColorSpace = THREE.SRGBColorSpace;
+const snapScene = new THREE.Scene();
+lights(snapScene);
+const VIEWS = [
+  { id: "side", icon: "🏠 🎪", pos: [6, 0.9, 0], fov: 20 },
+  { id: "back", icon: "🏁", pos: [0, 2.0, -7.5], fov: 22 },
+  { id: "top", icon: "🗺️ 🚦", pos: [0, 9, 0.001], fov: 18 },
+];
+const viewsEl = document.getElementById("views");
+const canvases = VIEWS.map((v) => {
+  const c = document.createElement("canvas");
+  c.width = 300;
+  c.height = 200;
+  const f = document.createElement("figure");
+  f.append(c, v.icon);
+  viewsEl.append(f);
+  return c;
+});
+function snapshots(car) {
+  const copy = car.clone(true);
+  snapScene.add(copy);
+  VIEWS.forEach((v, i) => {
+    const cam = new THREE.PerspectiveCamera(v.fov, 1.5, 0.1, 50);
+    cam.position.set(...v.pos);
+    cam.lookAt(0, v.id === "top" ? 0 : 0.6, 0);
+    snapR.render(snapScene, cam);
+    const g = canvases[i].getContext("2d");
+    g.clearRect(0, 0, 300, 200);
+    g.drawImage(snapR.domElement, 0, 0);
+  });
+  snapScene.remove(copy);
+}
+
+// ---------- rebuild, turning, buttons ----------
+let ticket = 0;
+async function rebuild() {
+  const me = ++ticket;
+  const car = await buildCar();
+  if (me !== ticket) return;
+  holder.clear();
+  holder.add(car);
+  snapshots(car);
+  ui();
+}
+let angle = 2.3;
+let vel = 0;
+let drag = null;
+let idle = 0;
+stage.addEventListener("pointerdown", (e) => (drag = { x: e.clientX, a: angle, id: e.pointerId }));
+addEventListener("pointermove", (e) => {
+  if (!drag || e.pointerId !== drag.id) return;
+  const na = drag.a + (e.clientX - drag.x) * 0.012;
+  vel = na - angle;
+  angle = na;
+  idle = 0;
+});
+addEventListener("pointerup", () => (drag = null));
+function resize() {
+  renderer.setSize(innerWidth, innerHeight);
+  camera.aspect = innerWidth / innerHeight;
+  camera.position.set(0, 2.5, innerWidth < innerHeight ? 9.5 : 6.2);
+  camera.lookAt(0, 0.55, 0);
+  camera.updateProjectionMatrix();
+}
+addEventListener("resize", resize);
+resize();
+let last = performance.now();
+renderer.setAnimationLoop((now) => {
+  const dt = Math.min(0.05, (now - last) / 1000);
+  last = now;
+  idle += dt;
+  if (!drag) {
+    vel *= 0.92;
+    angle += vel + (idle > 1.5 ? dt * 0.45 : 0);
+  }
+  plate.rotation.y = angle;
+  renderer.render(scene, camera);
+});
+
+const topBar = document.getElementById("top");
+const bottom = document.getElementById("bottom");
+function btn(content, on, fn, cls = "") {
+  const b = document.createElement("button");
+  b.className = `${on ? "on " : ""}${cls}`;
+  b.append(content);
+  b.onclick = () => {
+    fn();
+    rebuild();
+  };
+  return b;
+}
+function group(...items) {
+  const g = document.createElement("div");
+  g.className = "group";
+  g.append(...items);
+  return g;
+}
+const ICONS = { sedan: "🚗", suv: "🚙", taxi: "🚕", police: "🚓", firetruck: "🚒", race: "🏎️", "race-future": "🚀", truck: "🛻", van: "🚐", ambulance: "🚑", delivery: "🚚", "garbage-truck": "♻️", "sedan-sports": "🏁", "hatchback-sports": "⚡", "suv-luxury": "💎", tractor: "🚜", "kart-oobi": "👽" };
+function ui() {
+  const home = document.createElement("a");
+  home.href = "../";
+  home.textContent = "🏠";
+  topBar.replaceChildren(home, group(...CARS.map((c) => btn(ICONS[c], look.car === c, () => (look.car = c)))));
+  const sw = (id) => {
+    const i = document.createElement("i");
+    const p = PAINTS[id];
+    i.style.background = p === "rainbow" ? "linear-gradient(90deg,#ff5a5f,#ffd23f,#3ebd4a,#2ab7ca,#8f5bd8)" : p === "galaxy" ? "radial-gradient(#7b5cff,#140f33)" : p === "gold" ? "linear-gradient(90deg,#a87b00,#fff2a8,#a87b00)" : p;
+    return btn(i, look.paint === id, () => (look.paint = id), "sw");
+  };
+  const txt = (t) => document.createTextNode(t);
+  bottom.replaceChildren(
+    group(...Object.keys(PAINTS).map(sw)),
+    group(...PATTERNS.map((p) => btn(txt({ none: "➖", stripes: "🏁", checker: "♟️", dots: "⚪", flames: "🔥" }[p]), look.pattern === p, () => (look.pattern = p)))),
+    group(...Object.entries(WHEELS).map(([w, ic]) => btn(txt(ic), look.wheel === w, () => (look.wheel = w))), btn(txt("🟡"), look.rim === "gold", () => (look.rim = look.rim === "gold" ? "none" : "gold")), btn(txt("⬆"), look.monster, () => (look.monster = !look.monster))),
+    group(...["none", "small", "big"].map((w) => btn(txt({ none: "➖", small: "🪽", big: "🪽🪽" }[w]), look.wing === w, () => (look.wing = w)))),
+    group(...Object.entries(ROOFS).map(([id, e]) => btn(txt(e || "➖"), look.roof === id, () => (look.roof = id)))),
+    group(...Object.entries(STICKERS).map(([id, e]) => btn(txt(e || "➖"), look.sticker === id, () => (look.sticker = id)))),
+    group(btn(txt("💡"), look.neon, () => (look.neon = !look.neon))),
+  );
+}
+rebuild();
+window.__preview = { look, rebuild };
+</script>
+</body>
+</html>
