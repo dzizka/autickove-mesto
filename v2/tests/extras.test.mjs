@@ -116,10 +116,10 @@ for (const width of WIDTHS) {
   });
 }
 
-test("version-7 saves migrate to version 8 with quests and trophies", async () => {
+test("version-7 saves migrate to the current schema with quests and trophies", async () => {
   const page = await openGame(env.browser, env.server.url, { storage: { version: 7, coins: 3 } });
   const s = await page.evaluate(() => window.__game.state.getState());
-  assert.equal(s.version, 8);
+  assert.equal(s.version, await page.evaluate(() => window.__game.state.CURRENT_VERSION));
   assert.equal(s.quests.active.length, 3, "quests are filled on start");
   assert.deepEqual(s.trophies, {});
   await page.context().close();

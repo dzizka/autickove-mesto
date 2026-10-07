@@ -59,6 +59,7 @@ v2/
 │   │   ├── cars.js  tuning.js  tracks.js  bosses.js
 │   │   ├── loot-bases.js  affixes.js  legendaries.js  sets.js
 │   │   ├── crew.js  trophies.js  quests.js
+│   │   ├── minigames.js    # hry v herni: zoznam, obtiažnosti, obrázky pexesa, poruchy v servise, farby parkoviska
 │   │   └── coloring/       # palette.js, free.js (24 obrázkov SVG), pixel.js (30 obrázkov podľa čísel)
 │   ├── systems/            # logika bez kreslenia
 │   │   ├── economy.js  progress.js  quests.js  trophies.js   # progress.js: level, čas hrania, postup na tratiach, bossovia
@@ -67,7 +68,8 @@ v2/
 │   │   ├── stats.js        # súčet štatistík auta (diely + sety + kamarát)
 │   │   ├── tuning.js       # vzhľad: vlastnené veci, kúpa, náhodný vzhľad
 │   │   ├── coloring.js     # omaľovánka: pixelové obrázky z tvarov, odomykanie, galéria, odmeny
-│   │   └── crew.js         # kamaráti: vajíčka, levely, vývoj
+│   │   ├── crew.js         # kamaráti: vajíčka, levely, vývoj
+│   │   └── minigames.js    # herňa: hviezdy, odmeny, obtiažnosť, ktorá sama rastie
 │   ├── render/
 │   │   ├── car-side.js     # auto z boku (SVG)
 │   │   ├── car-top.js      # auto zhora (canvas): ikony a náhľady
@@ -79,12 +81,14 @@ v2/
 │   │                       # settings.js test-menu.js topbar.js coloring.js (výber obrázka) trophies.js
 │   │                       # races.js (výber trate a úrovne), stat-panel.js (pruhy štatistík, sila auta)
 │   │                       # part-card.js (karta dielu, detail s porovnaním), chest.js (truhlica po pretekoch)
-│   │                       # set-book.js (kniha setov)
+│   │                       # set-book.js (kniha setov), games.js (🎪 herňa)
 │   └── games/
 │       ├── demo/           # skúšobná jazda len z testovacieho menu (overuje slučku a odmeny)
 │       ├── race/           # index.js  spawner.js  physics.js  hud.js  boss.js  abilities.js (legendárne schopnosti)
 │       │                   # road.js (úseky cesty, projekcia, obloha)  scene.js (prekážky, autá, efekty)  weather.js
-│       └── coloring/       # index.js  free-paint.js  by-number.js  brush.js  tools.js (panel nástrojov)
+│       ├── coloring/       # index.js  free-paint.js  by-number.js  brush.js  tools.js (panel nástrojov)
+│       ├── mini/shell.js   # spoločný rám hier v herni: 🏠, hviezdy obtiažnosti, pruh postupu, 🔊, koniec s hviezdami
+│       └── pexeso/  wash/  repair/  park/  …   # hry z v1 (bod 12), každá vo vlastnom priečinku
 └── tests/                  # Playwright testy (bod 10): node --test, package.json, helpers.mjs,
                             # progress-sim.mjs (simulácia dlhého hrania na vyváženie)
 ```
@@ -368,6 +372,20 @@ Rodič chce v2 so všetkým, čo dieťa hralo vo v1. Každá hra je modul v `js/
 | 🚦 Križovatka | púšťa autá cez križovatku na zelenú, aby sa nezrazili |
 
 Každá hra má 3 obtiažnosti, ktoré sa samy zvyšujú, a prehra neexistuje (chyba len zahrá zvuk a hlas poradí).
+
+**Spoločné pravidlá (časť 10):**
+- **Herňa 🎪** je šiesta veľká voľba na domovskej obrazovke. Dlaždica ukazuje obtiažnosť hviezdami ★★★, zamknutá hra 🔒 a level, na ktorom sa otvorí.
+- **Hviezdy:** hra skončí 1 až 3 hviezdami podľa chýb alebo času. Mince závisia od obtiažnosti a hviezd, XP od obtiažnosti.
+- **Obtiažnosť rastie sama:** dva výsledky s aspoň 2 hviezdami na aktuálnej obtiažnosti posunú hru o stupeň vyššie. Nikdy neklesá. Hlas na konci povie, že nabudúce to bude ťažšie.
+- **Uloženie:** `minigames: { pexeso: { level, plays, good, best } }` (schéma verzia 9).
+- **Úlohy a trofeje:** úlohy „Zahraj si dve / štyri hry v herni“, trofeje „Všetky hry v herni“ a „Najťažšia úroveň v hre“.
+
+| Hra | Obtiažnosť 1 → 3 | Hviezdy |
+|---|---|---|
+| 🃏 Pexeso | 3, 6, 8 dvojíc; na ľahších sa karty na chvíľu ukážu | podľa chybných dvojíc |
+| 🧽 Umyváreň | viac blata, menšia špongia; najprv špongia (blato sa zmení na penu), potom sprcha | podľa času |
+| 🔧 Servis | 3, 4, 5 porúch a toľko nástrojov na výber; vlastné auto dieťaťa | podľa zlých nástrojov |
+| 🅿️ Parkovisko | 3, 4, 5 áut v kole, 3 kolá; na 3. stupni sa párujú aj bodky | podľa zlých miest |
 
 ## 13. Mesto a album (časť 12)
 

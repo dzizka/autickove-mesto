@@ -32,6 +32,12 @@ import coloringGame from "./games/coloring/index.js";
 import { recordFinished, addToGallery } from "./systems/coloring.js";
 import { tickEggs, addEgg, rollChestEgg, giveCrewXp } from "./systems/crew.js";
 import { demoGame, demoCrashGame } from "./games/demo/index.js";
+import gamesRoom from "./screens/games.js";
+import pexeso from "./games/pexeso/index.js";
+import wash from "./games/wash/index.js";
+import repair from "./games/repair/index.js";
+import park from "./games/park/index.js";
+import { isMini, recordMini } from "./systems/minigames.js";
 
 state.load();
 audio.initVoice();
@@ -51,12 +57,15 @@ router.registerScreen(settings);
 router.registerScreen(gallery);
 router.registerScreen(trophies);
 router.registerScreen(parents);
+router.registerScreen(gamesRoom);
 // The four pillars (DESIGN-v2 §1) plus the garage.
 for (const screen of [races, garage, tuning, crew, coloring]) router.registerScreen(screen);
 router.registerGame(raceGame);
 router.registerGame(coloringGame);
 router.registerGame(demoGame);
 router.registerGame(demoCrashGame);
+// 🎪 games room (DESIGN-v2 §12)
+for (const game of [pexeso, wash, repair, park]) router.registerGame(game);
 
 // Race results: track progress (medals, unlocks, boss bar), then the chest with parts.
 router.addRewardHandler((gameId, result) => {
@@ -81,6 +90,13 @@ router.addRewardHandler((gameId, result) => {
   if (c.thumb) addToGallery({ id: c.id, mode: c.mode, src: c.thumb });
   return { coloringReward: { glitter, sticker, thumb: c.thumb } };
 });
+// Games room: count the result; good results raise the game's difficulty by itself.
+router.addRewardHandler((gameId, result) => {
+  const m = result.extra?.mini;
+  if (!isMini(gameId) || !m) return null;
+  const { levelUp } = recordMini(m);
+  return { miniLevelUp: levelUp };
+});
 router.setRewardPresenter(presentReward);
 
 // Quests (DESIGN-v2 §8): game events move the active quests forward.
@@ -93,6 +109,7 @@ events.on("gameFinished", ({ gameId, result }) => {
     questEvent("collect", x.collected || 0);
   }
   if (gameId === "coloring" && x.coloring) questEvent("paint");
+  if (x.mini) questEvent("mini");
 });
 events.on("partsDismantled", ({ count }) => questEvent("dismantle", count));
 events.on("carChanged", ({ before, after }) => after > before && questEvent("equip"));

@@ -10,8 +10,9 @@ import { TRACKS } from "../data/tracks.js";
 import { TROPHIES } from "../data/trophies.js";
 import { CREW } from "../data/crew.js";
 import { isTrackUnlocked, trackProgress } from "../systems/progress.js";
+import { MINIGAMES } from "../data/minigames.js";
 
-const GAME_NAMES = { race: "Preteky", coloring: "Omaľovánka", demo: "Skúšobná jazda" };
+const GAME_NAMES = { race: "Preteky", coloring: "Omaľovánka", demo: "Skúšobná jazda", ...Object.fromEntries(MINIGAMES.map((g) => [g.id, g.name])) };
 const DAY_NAMES = ["ne", "po", "ut", "st", "št", "pi", "so"];
 
 function lastDays(n) {

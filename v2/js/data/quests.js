@@ -16,6 +16,8 @@ export const QUESTS = [
   { id: "tune1", icon: "🚗", event: "buy", target: 1, say: "Kúp niečo nové na auto.", reward: { coins: 60 } },
   { id: "pet3", icon: "💖", event: "pet", target: 3, say: "Trikrát pohladkaj kamaráta.", reward: { coins: 30, candy: 3 }, need: "buddy" },
   { id: "hatch1", icon: "🐣", event: "hatch", target: 1, say: "Vyliahni vajíčko.", reward: { coins: 50, candy: 3 }, need: "egg" },
+  { id: "mini2", icon: "🎪", event: "mini", target: 2, say: "Zahraj si dve hry v herni.", reward: { coins: 50 } },
+  { id: "mini4", icon: "🃏", event: "mini", target: 4, say: "Zahraj si štyri hry v herni.", reward: { coins: 90, scrap: 10 } },
   { id: "boss1", icon: "👑", event: "boss", target: 1, say: "Poraz bossa.", reward: { coins: 150 }, need: "bossReady" },
 ];
 

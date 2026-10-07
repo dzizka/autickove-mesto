@@ -9,7 +9,7 @@ import { defaultColoring } from "../systems/coloring.js";
 import { defaultQuests } from "../systems/quests.js";
 
 export const STORAGE_KEY = "autickove-mesto-v2";
-export const CURRENT_VERSION = 8;
+export const CURRENT_VERSION = 9;
 
 export function defaultState() {
   return {
@@ -49,6 +49,7 @@ export function defaultState() {
     // v8: quests (3 active + count of claimed ones) and trophies (id → time earned).
     quests: defaultQuests(),
     trophies: {},
+    minigames: {}, // games room: { pexeso: { level, plays, good, best } }
   };
 }
 
@@ -86,6 +87,8 @@ const MIGRATIONS = {
   // v7 → v8: quests and trophies (filled from defaults; trophies for old progress are
   // awarded on the next check).
   7: (s) => ({ ...s, version: 8 }),
+  // v8 → v9: games room progress (filled from defaults: every game on level 1).
+  8: (s) => ({ ...s, version: 9 }),
 };
 
 const isPlainObject = (v) => v !== null && typeof v === "object" && !Array.isArray(v);
