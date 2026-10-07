@@ -23,3 +23,27 @@ export const CITY = {
   rentCapHours: 12, // rent waits at most this long, then stops growing
   minCollect: 1, // a coin bubble shows from this many coins
 };
+
+/**
+ * The town seen from above (DESIGN-v2 §14, part 16): a grid of streets with blocks between them.
+ * Buildings take the blocks nearest the middle (in BUILDINGS order), houses and parks the rest.
+ * Models are Kenney City Kits (CC0) in v2/models/city.
+ */
+export const TOWN = {
+  blocks: 4, // blocks per side
+  blockTiles: 3, // a block is 3 × 3 road tiles
+  start: [2, 2], // the car starts on this crossing
+  speed: 3.2, // tiles per second
+  lane: 0.2, // drive on the right
+  carLength: 0.85, // in tiles
+  pickup: 0.5, // a coin is taken this close
+  // the look of a building on level 1, 2 and 3: it grows from a small shop to a tower
+  looks: [
+    ["city/commercial/building-c", "city/commercial/building-f", "city/commercial/building-skyscraper-a"],
+    ["city/commercial/building-e", "city/commercial/building-i", "city/commercial/building-skyscraper-b"],
+    ["city/commercial/building-a", "city/commercial/building-g", "city/commercial/building-skyscraper-c"],
+    ["city/commercial/building-b", "city/commercial/building-l", "city/commercial/building-skyscraper-e"],
+    ["city/commercial/building-d", "city/commercial/building-j", "city/commercial/building-m"],
+  ],
+  houses: ["city/suburban/building-type-a", "city/suburban/building-type-b", "city/suburban/building-type-d", "city/suburban/building-type-n", "city/suburban/building-type-s"],
+};

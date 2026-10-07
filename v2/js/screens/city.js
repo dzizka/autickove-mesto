@@ -1,5 +1,6 @@
-// 🏙️ Mesto (DESIGN-v2 §13): a street with buildings the child builds and upgrades for coins.
-// Buildings collect rent (a coin bubble to tap) and open games; cars of the child drive by.
+// 🏙️ Mesto (DESIGN-v2 §13, §14): the town the child builds and upgrades for coins. With WebGL it is
+// seen from above and the child drives its own car through the streets to pick up the rent
+// (part 16); without WebGL it is a street with a coin bubble to tap. Buildings open games.
 // Sky follows the real time of day.
 
 import { h, modal, closeModal, flyCoins, confetti, toast } from "../core/ui.js";
@@ -10,6 +11,9 @@ import { BUILDINGS, CITY } from "../data/city.js";
 import { buildingLevel, nextPrice, isBuildingOpen, buildOrUpgrade, rentWaiting, collectRent } from "../systems/city.js";
 import { getLook, resolveLook, colorLook } from "../systems/tuning.js";
 import { carSidePic } from "../render/car-side.js";
+import { hasWebGL } from "../render/car-pics.js";
+import { setLook } from "../systems/stats.js";
+import { activeBuddy, buddyLook } from "../systems/crew.js";
 
 const COLORS = ["#ff5a5f", "#2f80ed", "#ffd23f", "#3ebd4a", "#8f5bd8", "#ff8c42"];
 
@@ -29,6 +33,35 @@ function openTarget(def) {
 }
 
 let timer = null;
+let town = null;
+
+/** What a lot shows in the 3D town: locked, a building site, or the building with its coins. */
+function lotInfo(def, now = Date.now()) {
+  const s = getState();
+  if (!isBuildingOpen(def.id, s)) return { state: "locked", level: 0, coins: 0 };
+  const level = buildingLevel(def.id, s);
+  if (!level) return { state: "empty", level: 0, coins: 0 };
+  const rent = rentWaiting(def.id, now);
+  const hour = def.rent * level;
+  const coins = rent < CITY.minCollect ? 0 : rent < hour * 2 ? 1 : rent < hour * 6 ? 2 : 3;
+  return { state: "built", level, coins };
+}
+
+/** The arrows for driving in the town (also a swipe or the keys). */
+function drivePad() {
+  const pad = h("div", { class: "town-pad", "data-testid": "town-pad" });
+  for (const [dir, icon, label] of [["u", "⬆️", "Hore"], ["l", "⬅️", "Doľava"], ["r", "➡️", "Doprava"], ["d", "⬇️", "Dole"]]) {
+    const b = h("button", { class: `pad-${dir}`, "data-testid": `drive-${dir}`, "aria-label": label }, icon);
+    b.addEventListener("pointerdown", (e) => {
+      e.preventDefault();
+      town?.hold(true);
+      town?.press(dir);
+    });
+    for (const ev of ["pointerup", "pointerleave", "pointercancel"]) b.addEventListener(ev, () => town?.hold(false));
+    pad.append(b);
+  }
+  return pad;
+}
 
 export default {
   id: "city",
@@ -135,43 +168,81 @@ export default {
       if (price !== null && getState().coins < price) speak(`${def.say} Na ${lvl ? "vylepšenie" : "stavbu"} treba viac mincí.`, { interrupt: false });
     }
 
+    const use3d = hasWebGL();
     function paint() {
-      street.replaceChildren(...BUILDINGS.map(buildingEl));
+      if (town) BUILDINGS.forEach((def) => town.setLot(def, lotInfo(def)));
+      else street.replaceChildren(...BUILDINGS.map(buildingEl));
     }
 
-    // cars of the child drive along the street: its own car first, then the other kinds it owns
-    const s = getState();
-    const kinds = [...new Set([getLook().car, ...(s.owned?.car || [])])].slice(0, 4);
-    const cars = kinds.map((kind, i) => {
-      const look = i === 0 ? getLook() : { ...colorLook(COLORS[i % COLORS.length]), car: resolveLook({ car: kind }).car.id };
-      return h(
-        "button",
-        { class: `city-car${i % 2 ? " back" : ""}`, "aria-label": "Auto", style: { animationDuration: `${14 + i * 5}s`, animationDelay: `${-i * 4}s` }, onclick: () => playNotes(resolveLook(look).horn.notes) },
-        carSidePic(look),
-      );
-    });
-
-    root.append(
-      h(
-        "div",
-        { class: "city-bar" },
-        h("button", { class: "btn big plum city-album", "data-testid": "open-album", "aria-label": "Album", onclick: () => (sfx.tap(), speak("Album s nálepkami."), go("album")) }, h("span", { class: "btn-icon", "aria-hidden": "true" }, "📒"), h("span", { class: "btn-label" }, "Album")),
-      ),
-      h(
-        "div",
-        { class: "city-street" },
-        h("div", { class: "city-inner" }, h("div", { class: "city-sky", "aria-hidden": "true" }, h("span", { class: "sun" }), h("span", { class: "cloud c1" }), h("span", { class: "cloud c2" })), street, h("div", { class: "city-road" }, cars)),
-      ),
+    const albumBar = h(
+      "div",
+      { class: "city-bar" },
+      h("button", { class: "btn big plum city-album", "data-testid": "open-album", "aria-label": "Album", onclick: () => (sfx.tap(), speak("Album s nálepkami."), go("album")) }, h("span", { class: "btn-icon", "aria-hidden": "true" }, "📒"), h("span", { class: "btn-label" }, "Album")),
     );
-    paint();
-    view.append(root);
+
+    if (use3d) {
+      // part 16: the town from above, the child drives its own car through the streets
+      const host = h("div", { class: "town-wrap", "data-testid": "town" });
+      root.classList.add("town3d");
+      root.append(albumBar, host);
+      view.append(root);
+      import("../render/three/town.js")
+        .then(({ createTown }) => {
+          if (!root.isConnected) return;
+          town = createTown(host, {
+            look: resolveLook({ ...getLook(), ...setLook() }),
+            passenger: buddyLook(activeBuddy())?.icon || null,
+            phase: dayPhase(),
+            onLot: (id) => details(BUILDINGS.find((b) => b.id === id)),
+            onCoins: (id, at) => {
+              const got = collectRent(id);
+              if (!got) return;
+              sfx.coin();
+              flyCoins(at, Math.min(12, got / 5));
+              paint();
+            },
+          });
+          host.append(drivePad());
+          paint();
+          if (window.__game) window.__game.town = town; // test hook
+        })
+        .catch((err) => {
+          console.warn("[city] 3D town failed", err);
+        });
+    } else {
+      // without WebGL: the street with the child's cars driving by
+      const s = getState();
+      const kinds = [...new Set([getLook().car, ...(s.owned?.car || [])])].slice(0, 4);
+      const cars = kinds.map((kind, i) => {
+        const look = i === 0 ? getLook() : { ...colorLook(COLORS[i % COLORS.length]), car: resolveLook({ car: kind }).car.id };
+        return h(
+          "button",
+          { class: `city-car${i % 2 ? " back" : ""}`, "aria-label": "Auto", style: { animationDuration: `${14 + i * 5}s`, animationDelay: `${-i * 4}s` }, onclick: () => playNotes(resolveLook(look).horn.notes) },
+          carSidePic(look),
+        );
+      });
+      root.append(
+        albumBar,
+        h(
+          "div",
+          { class: "city-street" },
+          h("div", { class: "city-inner" }, h("div", { class: "city-sky", "aria-hidden": "true" }, h("span", { class: "sun" }), h("span", { class: "cloud c1" }), h("span", { class: "cloud c2" })), street, h("div", { class: "city-road" }, cars)),
+        ),
+      );
+      paint();
+      view.append(root);
+    }
     // rent bubbles appear while the child looks at the town
     timer = setInterval(paint, 30000);
     const built = BUILDINGS.filter((b) => buildingLevel(b.id) > 0).length;
-    speak(built ? "Tvoje mesto! Ťukni na mince nad domami." : "Tu postavíš svoje mesto. Ťukni na stavenisko.", { interrupt: false });
+    if (use3d) speak(built ? "Tvoje mesto! Jazdi šípkami a zbieraj mince pred domami." : "Tu postavíš svoje mesto. Ťukni na stavenisko.", { interrupt: false });
+    else speak(built ? "Tvoje mesto! Ťukni na mince nad domami." : "Tu postavíš svoje mesto. Ťukni na stavenisko.", { interrupt: false });
   },
   leave() {
     clearInterval(timer);
     timer = null;
+    town?.destroy();
+    town = null;
+    if (window.__game) window.__game.town = null;
   },
 };

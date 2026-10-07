@@ -110,8 +110,9 @@ after(async () => {
 });
 
 for (const width of WIDTHS) {
-  test(`${width}px: build in the town, collect rent, buy stickers in the album`, async () => {
+  test(`${width}px: without 3D: build on the street, collect rent, buy stickers in the album`, async () => {
     const page = await openGame(env.browser, env.server.url, { width, storage: quiet({ coins: 2000, level: 3, owned: { car: ["sedan", "jeep", "fire"] } }) });
+    await page.evaluate(() => (window.__game.no3d = true)); // the 2D street (tablets without WebGL)
     await page.getByTestId("home-city").click();
     await page.getByTestId("screen-city").waitFor();
     assert.equal(await page.locator('[data-state="locked"]').count(), BUILDINGS.filter((b) => b.unlockLevel > 3).length);
@@ -146,6 +147,43 @@ for (const width of WIDTHS) {
     await page.getByTestId("pack-ok").click();
     assert.ok((await page.locator(".alb-slot.got").count()) >= 1);
     await screenshot(page, `${width}-album`);
+    assert.deepEqual(page.errors, []);
+    await page.context().close();
+  });
+}
+
+for (const width of WIDTHS) {
+  test(`${width}px: the town from above: drive, tap a lot to build, drive over the rent coins`, async () => {
+    const now = Date.now();
+    const page = await openGame(env.browser, env.server.url, { width, storage: quiet({ coins: 1000, level: 2, city: { buildings: { kiosk: 2, gas: 1 }, rentAt: { kiosk: now - 3 * 3600000, gas: now } } }) });
+    await page.getByTestId("home-city").click();
+    await page.getByTestId("town-canvas").waitFor({ timeout: 20000 });
+    await page.waitForFunction(() => window.__game.town?.state().car && window.__game.town.state().coins > 0, null, { timeout: 30000 });
+    assert.equal(await page.locator(".city-lots").count(), 0, "no 2D street");
+    // a tap on the empty lot of the car wash opens it: build it
+    const at = await page.evaluate(() => window.__game.town.screenOf("wash"));
+    const box = await page.getByTestId("town-canvas").boundingBox();
+    assert.ok(at.x > box.x && at.x < box.x + box.width && at.y > box.y && at.y < box.y + box.height, "the lot is in view");
+    await page.mouse.click(at.x, at.y);
+    await page.getByTestId("bld-detail").waitFor();
+    await page.getByTestId("bld-build").click();
+    await page.getByTestId("bld-detail").waitFor({ state: "detached" });
+    assert.equal(await page.evaluate(() => window.__game.state.getState().city.buildings.wash), 1);
+    // the arrows drive the car to the next crossing
+    const start = await page.evaluate(() => window.__game.town.state());
+    await page.getByTestId("drive-r").dispatchEvent("pointerdown");
+    await page.getByTestId("drive-r").dispatchEvent("pointerup");
+    await page.waitForFunction((gx) => window.__game.town.state().gx === gx + 1 && !window.__game.town.state().moving, start.gx, { timeout: 10000 });
+    await screenshot(page, `${width}-town-3d`);
+    // drive over the kiosk's coins: its rent is collected
+    const coins = await page.evaluate(() => window.__game.state.getState().coins);
+    await page.evaluate(() => window.__game.town.driveToCoins("kiosk"));
+    await page.waitForFunction((c) => window.__game.state.getState().coins > c, coins, { timeout: 10000 });
+    assert.ok((await page.evaluate(() => window.__game.state.getState().coins)) - coins >= 6, "three hours of rent on level 2");
+    // leaving the town frees its 3D canvas
+    await page.getByTestId("open-album").click();
+    await page.getByTestId("screen-album").waitFor();
+    assert.equal(await page.getByTestId("town-canvas").count(), 0);
     assert.deepEqual(page.errors, []);
     await page.context().close();
   });

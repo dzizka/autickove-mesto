@@ -82,6 +82,7 @@ v2/
 │   │   ├── car-view.js     # 3D auto (točňa, zdvihák) a 3D obrázky; bez WebGL ostane 2D auto
 │   │   ├── three/          # kit.js (modely) paint.js (farba, vzory) car3d.js (auto s tuningom)
 │   │   │                   # stage.js (scéna s autom) snapshot.js (obrázok auta)
+│   │   │                   # town.js (mesto zhora: auto, ovládanie, kamera) town-map.js (ulice, pozemky, mince)
 │   │   └── emoji.js        # emoji kreslené do malého plátna (rýchle na tablete)
 │   ├── screens/            # home.js garage.js tuning.js crew.js gallery.js parents.js
 │   │                       # settings.js test-menu.js topbar.js coloring.js (výber obrázka) trophies.js
@@ -341,7 +342,7 @@ Každá časť sa po dokončení nahrá na GitHub a dá sa hneď hrať na `/v2/`
 | **14. Pohyblivé pozadie domova** | Auto dieťaťa jazdí v pseudo 3D za tlačidlami domovskej obrazovky, trate sa striedajú, čas dňa podľa hodín; vypínač pre staršie tablety (bod 14) | domovská obrazovka ide plynulo aj na staršom tablete |
 | **15a. 3D auto** | Autá z Kenney Car Kit (nová zostava, raketa → raketové auto v uložení), otočné 3D auto vo Vzhľade a na zdviháku v Garáži, 3D obrázky na dlaždiciach Vzhľadu, 2D auto ako záloha bez WebGL (bod 14) | všetko kúpené vidno na 3D aute; hra ide aj bez WebGL |
 | **15b. Obrázky áut všade** | Obrázky toho istého 3D auta zboku, zozadu a zhora všade v hre (domov, preteky, hry, mesto), kužele a krabice ako prekážky, skúšobná jazda vo Vzhľade (bod 14) | auto vyzerá všade rovnako |
-| **16. Mesto zhora** | Mesto z City Kit modelov zhora, dieťa jazdí po uliciach a zbiera nájomné (bod 14) | rodič odsúhlasí náhľad |
+| **16. Mesto zhora** | Mesto z City Kit modelov zhora, dieťa jazdí po uliciach a zbiera nájomné (bod 14) | dieťa nájde a vyberie mince samo |
 
 ---
 
@@ -409,7 +410,7 @@ Každá hra má 3 obtiažnosti, ktoré si dieťa vyberá samo (od časti 13), a 
 
 ## 13. Mesto a album (časť 12)
 
-- **🏙️ Mesto** je siedma veľká voľba na domovskej obrazovke. Je to ulica s 12 parcelami, ktorá sa dá posúvať prstom. Obloha sa mení podľa skutočného času (ráno, deň, večer, noc). Po ceste jazdia autá dieťaťa: jeho vlastné a ďalšie druhy, ktoré si kúpilo. Ťuknutie na auto zatrúbi.
+- **🏙️ Mesto** je siedma veľká voľba na domovskej obrazovke. Od časti 16 je to mesto zhora, po ktorom dieťa jazdí (bod 14). Bez WebGL ostáva pôvodná ulica s 12 parcelami, ktorá sa dá posúvať prstom. Obloha sa mení podľa skutočného času (ráno, deň, večer, noc). Po ceste jazdia autá dieťaťa: jeho vlastné a ďalšie druhy, ktoré si kúpilo. Ťuknutie na auto zatrúbi.
 - **Budovy** (`data/city.js`): Trafika, Benzínka, Umyváreň, Herňa, Hračkárstvo, Obchod, Servis, Parkovisko, Záhrada s bludiskom, Škola, Hudobňa, Polícia.
   - Každá sa otvorí na svojom leveli, postaví sa za mince a dá sa dvakrát vylepšiť (3 úrovne, každá 2× drahšia, dom je väčší a má viac okien).
   - **Nájom:** každá budova zarába mince za hodinu (× úroveň), najviac za 12 hodín. Nad domom sa ukáže 🪙, ťuknutím sa mince vyberú.
@@ -439,6 +440,6 @@ Každá hra má 3 obtiažnosti, ktoré si dieťa vyberá samo (od časti 13), a 
   - **Skúšobná jazda (časť 15b):** tlačidlo „🛣️ Jazda“ vo Vzhľade: 14 sekúnd po prázdnej mestskej ceste, ťukanie vľavo a vpravo mení pruh, 📯 trúbi, ✖ končí. Bez odmien.
   - Všetky autá majú skutočný pomer veľkostí z balíka (motokára je malá, hasiči veľkí). Kolesá sa pri výmene prispôsobia veľkosti a miestu pôvodných kolies; traktory a motokáry si nechávajú svoje.
   - Náhľad: `/v2/preview/carkit.html`.
-- **Mesto (časť 16), rozhodnutie rodiča:** mesto **zhora**, ulice v mriežke, dieťa jazdí hore, dole, doľava a doprava (šípky, potiahnutie prstom) a cestou zbiera mince z kúpených pozemkov. Pohľad z uhla je krajší, ale vysoká budova zakryje auto; vrátime sa k nemu možno neskôr. Modely: Kenney City Kit Roads, Suburban a Commercial (CC0). Budova rastie s úrovňou (malý obchod → poschodový dom → mrakodrap), každá má svoju farbu a ikonu; pozemok na predaj je hlina s kužeľmi, zamknutý má 🔒. Náhľad `/v2/preview/town3d.html`. Rodič nahral aj Nature, Racing a Toy Car Kit; použijú sa podľa potreby (napr. stromy, okolie trate). Pôvodné dve možnosti (už nevybrané) v náhľade `/v2/preview/town.html`:
+- **Mesto (časť 16), rozhodnutie rodiča:** mesto **zhora**, ulice v mriežke, dieťa jazdí hore, dole, doľava a doprava (šípky, potiahnutie prstom) a cestou zbiera mince z kúpených pozemkov. Pohľad z uhla je krajší, ale vysoká budova zakryje auto; vrátime sa k nemu možno neskôr. **Hotové v časti 16** (`render/three/town.js`, `town-map.js`, rozloženie v `data/city.js` TOWN): mapa 4 × 4 blokov, budovy na 12 blokoch najbližšie stredu, okolo domy, parky a rad stromov. Auto dieťaťa (3D auto s tuningom a kamarátom) jazdí šípkami, potiahnutím prsta alebo klávesmi. Nájom čaká ako 1 až 3 mince na ulici pred domom (podľa toho, koľko sa nazbieralo); prejazdom cez ne sa vyberie. Ťuknutie na pozemok otvorí detail (postaviť, vylepšiť, ▶ hra). Svetlo podľa času dňa, v noci svietia aj svetlá auta. Modely: Kenney City Kit Roads, Suburban a Commercial (CC0). Budova rastie s úrovňou (malý obchod → poschodový dom → mrakodrap), každá má svoju farbu a ikonu; pozemok na predaj je hlina s kužeľmi, zamknutý má 🔒. Náhľad `/v2/preview/town3d.html`. Rodič nahral aj Nature, Racing a Toy Car Kit; použijú sa podľa potreby (napr. stromy, okolie trate). Pôvodné dve možnosti (už nevybrané) v náhľade `/v2/preview/town.html`:
   - **D1 jazda ulicou:** pohľad zozadu ako v pretekoch, domy po oboch stranách, šípky ◀ ▶ presunú auto k ďalšiemu domu, dom pred autom je veľký a ťuká sa naň.
   - **D2 bočná ulica s vrstvami:** súčasná ulica, ale krajšia: viac vrstiev pozadia, ktoré sa pri posúvaní hýbu rôzne rýchlo, a lepšie kreslené domy.
