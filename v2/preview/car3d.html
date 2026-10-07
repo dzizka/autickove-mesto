@@ -19,7 +19,7 @@
   .group { display: flex; gap: 6px; padding: 4px; border-radius: 20px; background: rgba(0, 0, 0, .25); pointer-events: auto; }
   .note { position: fixed; top: 70px; left: 50%; transform: translateX(-50%); color: #fff; font: 14px system-ui; opacity: .8; text-align: center; pointer-events: none; }
 </style>
-<script type="importmap">{ "imports": { "three": "./vendor/three.module.min.js" } }</script>
+<script type="importmap">{ "imports": { "three": "../vendor/three.module.min.js" } }</script>
 </head>
 <body>
 <div id="stage"></div>
@@ -31,7 +31,7 @@
 // kind, B = a free CC0 model (Kenney). Both with the look from the game: paint, wheels, wing,
 // roof item, sticker, neon. Drag to turn, it turns slowly by itself when left alone.
 import * as THREE from "three";
-import { GLTFLoader } from "./vendor/addons/loaders/GLTFLoader.js";
+import { GLTFLoader } from "../vendor/addons/loaders/GLTFLoader.js";
 import { CARS } from "../js/data/cars.js";
 import { TUNING } from "../js/data/tuning.js";
 
@@ -262,7 +262,7 @@ function recolor(tex, hex) {
   return t;
 }
 async function buildKenney(file) {
-  if (!cache.has(file)) cache.set(file, await loader.loadAsync(`./models/kenney/${file}`));
+  if (!cache.has(file)) cache.set(file, await loader.loadAsync(`../models/kenney/${file}`));
   const src = cache.get(file).scene.clone(true);
   const c = item("color", look.color);
   const wh = item("wheels", look.wheels);

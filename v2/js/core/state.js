@@ -7,9 +7,10 @@ import { defaultLook, defaultOwned } from "../systems/tuning.js";
 import { defaultCrew } from "../systems/crew.js";
 import { defaultColoring } from "../systems/coloring.js";
 import { defaultQuests } from "../systems/quests.js";
+import { RENAMED_CARS } from "../data/cars.js";
 
 export const STORAGE_KEY = "autickove-mesto-v2";
-export const CURRENT_VERSION = 10;
+export const CURRENT_VERSION = 11;
 
 /** Local date as YYYY-MM-DD (the same format as the play log). */
 export function todayKey(date = new Date()) {
@@ -102,6 +103,13 @@ const MIGRATIONS = {
   8: (s) => ({ ...s, version: 9 }),
   // v9 → v10: town, album and daily gift (filled from defaults; the first gift comes tomorrow).
   9: (s) => ({ ...s, version: 10 }),
+  // v10 → v11: Car Kit cars (part 15a). The rocket became the rocket car; a bought rocket stays bought.
+  10: (s) => {
+    const rename = (id) => RENAMED_CARS[id] || id;
+    const look = isPlainObject(s.look) ? { ...s.look, car: rename(s.look.car) } : s.look;
+    const owned = isPlainObject(s.owned) && Array.isArray(s.owned.car) ? { ...s.owned, car: [...new Set(s.owned.car.map(rename))] } : s.owned;
+    return { ...s, version: 11, look, owned };
+  },
 };
 
 const isPlainObject = (v) => v !== null && typeof v === "object" && !Array.isArray(v);

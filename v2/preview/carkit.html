@@ -22,7 +22,7 @@
   .views canvas { display: block; width: 150px; height: 100px; }
   @media (max-width: 700px) { .views { top: auto; bottom: 150px; right: 6px; } .views canvas { width: 96px; height: 64px; } .views figure { padding: 3px; } }
 </style>
-<script type="importmap">{ "imports": { "three": "./vendor/three.module.min.js" } }</script>
+<script type="importmap">{ "imports": { "three": "../vendor/three.module.min.js" } }</script>
 </head>
 <body>
 <div id="stage"></div>
@@ -35,7 +35,7 @@
 // roof item, sticker, neon), and the same model is rendered into the 2D pictures the game needs:
 // from the side (home, games), from behind (races) and from the top (maze, crossing).
 import * as THREE from "three";
-import { GLTFLoader } from "./vendor/addons/loaders/GLTFLoader.js";
+import { GLTFLoader } from "../vendor/addons/loaders/GLTFLoader.js";
 
 const CARS = ["sedan", "suv", "taxi", "police", "firetruck", "race", "race-future", "truck", "van", "ambulance", "delivery", "garbage-truck", "sedan-sports", "hatchback-sports", "suv-luxury", "tractor", "kart-oobi"];
 const PAINTS = { red: "#ef4b4b", orange: "#ff8c42", yellow: "#ffd23f", green: "#3ebd4a", blue: "#2f80ed", purple: "#8f5bd8", pink: "#ff7eb6", white: "#f4f6f8", black: "#2b2d33", gold: "gold", rainbow: "rainbow", galaxy: "galaxy" };
@@ -81,7 +81,7 @@ plate.add(holder);
 const loader = new GLTFLoader();
 const models = new Map();
 const load = async (name) => {
-  if (!models.has(name)) models.set(name, loader.loadAsync(`./models/carkit/${name}.glb`).then((g) => g.scene));
+  if (!models.has(name)) models.set(name, loader.loadAsync(`../models/carkit/${name}.glb`).then((g) => g.scene));
   return models.get(name);
 };
 

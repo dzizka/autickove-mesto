@@ -104,6 +104,9 @@
 }
 .lift-car { position: relative; padding-bottom: 24px; }
 .lift-car .car-side { position: relative; z-index: 1; }
+.lift-car .car-view { aspect-ratio: 16 / 10; }
+.lift-car .car-flat { position: absolute; left: 0; right: 0; bottom: 4%; }
+.lift-car:has(.car-view[data-mode="3d"]) .lift-post { display: none; }
 .lift-post {
   position: absolute;
   left: 20%;

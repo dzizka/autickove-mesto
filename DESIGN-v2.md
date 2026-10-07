@@ -78,6 +78,9 @@ v2/
 │   │   ├── car-back.js     # auto zozadu (canvas) v pretekoch
 │   │   ├── road-sprites.js # kreslené prekážky, krajina, mince a kanistre v pretekoch
 │   │   ├── effects.js      # neón a stopa v pretekoch
+│   │   ├── car-view.js     # 3D auto (točňa, zdvihák) a 3D obrázky; bez WebGL ostane 2D auto
+│   │   ├── three/          # kit.js (modely) paint.js (farba, vzory) car3d.js (auto s tuningom)
+│   │   │                   # stage.js (scéna s autom) snapshot.js (obrázok auta)
 │   │   └── emoji.js        # emoji kreslené do malého plátna (rýchle na tablete)
 │   ├── screens/            # home.js garage.js tuning.js crew.js gallery.js parents.js
 │   │                       # settings.js test-menu.js topbar.js coloring.js (výber obrázka) trophies.js
@@ -238,7 +241,7 @@ Sú 4 sety po 3 dieloch: **Policajný, Hasičský, Vesmírny, Džungľa**. Diel 
 
 ## 5. Vzhľad auta (tuning)
 
-- **Autá:** aspoň 8 druhov (osobné, džíp, taxík, polícia, hasiči, formula, kamión, raketa), ktoré sa kupujú za mince. Druh auta je len vzhľad, štatistiky dávajú diely.
+- **Autá:** 18 druhov z balíka Kenney Car Kit (osobné, džíp, taxík, dodávka, polícia, športiak, sanitka, hasiči, pikap, smetiari, traktor, pretekár, formula, luxusné auto, kamión, dve motokáry s mimozemšťanom, raketové auto), ktoré sa kupujú za mince (bod 14). Druh auta je len vzhľad, štatistiky dávajú diely.
 - **Kategórie vzhľadu:** farba (aj dúhová a galaxia), vzor, kolesá, krídlo, nálepka, strecha, neón, stopa za autom, klaksón. Každá s 5 až 15 možnosťami.
 - **Showroom:** auto na otočnej plošine pod reflektorom, tlačidlá 📯 Trúbiť a 🎲 Náhodne.
 - **Zobrazenie:** všetko, čo si dieťa kúpi, vidno v pretekoch aj v Garáži.
@@ -333,8 +336,9 @@ Každá časť sa po dokončení nahrá na GitHub a dá sa hneď hrať na `/v2/`
 | **12. Mesto a album** | Systémy z v1 nanovo: mesto s budovami, album s nálepkami, denný darček (bod 13) | odmeny z hier sa dajú použiť v meste a albume |
 | **13. Výber obtiažnosti** | Dieťa si v herni vyberá ★ / ★★ / ★★★, odporúčaný stupeň svieti (bod 12) | dieťa vie bez čítania zvoliť ťažšiu hru |
 | **14. Pohyblivé pozadie domova** | Auto dieťaťa jazdí v pseudo 3D za tlačidlami domovskej obrazovky, trate sa striedajú, čas dňa podľa hodín; vypínač pre staršie tablety (bod 14) | domovská obrazovka ide plynulo aj na staršom tablete |
-| **15. 3D auto** | Otočné 3D auto vo Vzhľade a v Garáži, skúšobná jazda; podľa náhľadu buď vlastný model, alebo stiahnutý model CC0 (bod 14) | rodič odsúhlasí náhľad; všetko kúpené vidno na 3D aute |
-| **16. Mesto v pseudo 3D** | Podľa náhľadu: jazda ulicou (D1) alebo krajšia bočná ulica s vrstvami (D2) (bod 14) | rodič odsúhlasí náhľad |
+| **15a. 3D auto** | Autá z Kenney Car Kit (nová zostava, raketa → raketové auto v uložení), otočné 3D auto vo Vzhľade a na zdviháku v Garáži, 3D obrázky na dlaždiciach Vzhľadu, 2D auto ako záloha bez WebGL (bod 14) | všetko kúpené vidno na 3D aute; hra ide aj bez WebGL |
+| **15b. Obrázky áut všade** | Obrázky toho istého 3D auta zboku, zozadu a zhora všade v hre (domov, preteky, hry, mesto), kužele a krabice ako prekážky, skúšobná jazda vo Vzhľade (bod 14) | auto vyzerá všade rovnako |
+| **16. Mesto zhora** | Mesto z City Kit modelov zhora, dieťa jazdí po uliciach a zbiera nájomné (bod 14) | rodič odsúhlasí náhľad |
 
 ---
 
@@ -424,9 +428,9 @@ Každá hra má 3 obtiažnosti, ktoré si dieťa vyberá samo (od časti 13), a 
 **Pripomienky rodiča:** pseudo 3D z pretekov sa páči a má sa použiť aj inde, kde to dáva zmysel. Otáčanie plochého auta vo Vzhľade vyzerá zle. Domovská obrazovka má mať pohyblivé pozadie.
 
 - **Domov (časť 14):** za tlačidlami beží pseudo 3D cesta, po ktorej jazdí auto dieťaťa zozadu (so všetkým tuningom a kamarátom). Trate sa po chvíli striedajú, obloha sa riadi skutočným časom dňa. Ťuknutie na auto zatrúbi. Tlačidlá sú na polopriehľadných paneloch. Pozadie beží úspornejšie ako preteky a zastaví sa pri otvorenom okne. V nastaveniach pre rodičov je vypínač „Pohyblivé pozadie“.
-- **3D auto (časť 15):** skutočne otočné auto vo Vzhľade (samo sa pomaly otáča, dá sa točiť prstom, pri výbere sa natočí k tomu, čo sa mení) a na zdviháku v Garáži. Tlačidlo „Skúšobná jazda“ ukáže auto na ceste v pseudo 3D.
+- **3D auto (časť 15a):** skutočne otočné auto vo Vzhľade (samo sa pomaly otáča, dá sa točiť prstom, pri výbere sa natočí k tomu, čo sa mení) a na zdviháku v Garáži. Dlaždice vo Vzhľade ukazujú obrázky 3D auta. Bez WebGL ostane 2D auto. Tlačidlo „Skúšobná jazda“ (auto na ceste v pseudo 3D) príde v časti 15b spolu s obrázkom auta zozadu.
   - Rodič chce porovnať dve možnosti: vlastný model vytvorený z tvaru auta z boku, a hotový voľne dostupný model (Kenney, licencia CC0). Náhľad: `/v2/preview/car3d.html`.
-  - **Rozhodnutie rodiča:** všetky autá v hre budú z balíka **Kenney Car Kit** (CC0), aby grafika bola jednotná. Raketa odpadne (kto ju vlastní, dostane futuristickú formulu). Ponechajú sa všetky autá z balíka, pri skúšaní sa niektoré odoberú alebo pridajú.
+  - **Rozhodnutie rodiča:** všetky autá v hre budú z balíka **Kenney Car Kit** (CC0), aby grafika bola jednotná. Raketa odpadne (kto ju vlastní, dostane raketové auto; migrácia uloženia v11). Ponechajú sa všetky autá z balíka, pri skúšaní sa niektoré odoberú alebo pridajú.
   - 3D sa kreslí knižnicou three.js. Vo Vzhľade a v Garáži je otočné 3D auto; všade inde sa z toho istého modelu vyrobí obrázok zboku (domov, hry, mesto), zozadu (preteky) alebo zhora (Bludisko, Križovatka).
   - Všetky autá majú skutočný pomer veľkostí z balíka (motokára je malá, hasiči veľkí). Kolesá sa pri výmene prispôsobia veľkosti a miestu pôvodných kolies; traktory a motokáry si nechávajú svoje.
   - Náhľad: `/v2/preview/carkit.html`.

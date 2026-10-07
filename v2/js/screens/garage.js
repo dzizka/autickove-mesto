@@ -8,7 +8,7 @@ import { SLOTS } from "../data/stats.js";
 import { carStats, carPower, activeSetBonuses, setLook } from "../systems/stats.js";
 import { partPower, compareToEquipped, equipBest, dismantleableLow, dismantleLow, bagPrice, expandBag } from "../systems/garage.js";
 import { canAfford } from "../systems/economy.js";
-import { carSide } from "../render/car-side.js";
+import { createCarView } from "../render/car-view.js";
 import { activeBuddy, buddyLook } from "../systems/crew.js";
 import { getLook } from "../systems/tuning.js";
 import { partCard, openPartDetail } from "./part-card.js";
@@ -16,6 +16,7 @@ import { openSetBook } from "./set-book.js";
 import { statPanel, powerBadge } from "./stat-panel.js";
 
 let filter = "all";
+let carView = null;
 
 function sortedBag(s) {
   return [...s.inventory]
@@ -29,6 +30,7 @@ export default {
   render(view) {
     const root = h("section", { class: "screen garage", "data-testid": "screen-garage" });
     view.append(root);
+    carView = createCarView({ mode: "lift" });
 
     const paint = () => {
       const s = getState();
@@ -48,11 +50,12 @@ export default {
         );
       };
 
+      carView.setLook({ ...getLook(), ...setLook() }, { passenger: buddyLook(activeBuddy())?.icon });
       const lift = h(
         "div",
         { class: "lift card" },
         h("div", { class: "lift-slots left" }, SLOTS.slice(0, 3).map(slotBtn)),
-        h("div", { class: "lift-car" }, carSide({ ...getLook(), ...setLook() }, { passenger: buddyLook(activeBuddy())?.icon }), h("div", { class: "lift-post", "aria-hidden": "true" })),
+        h("div", { class: "lift-car" }, carView.el, h("div", { class: "lift-post", "aria-hidden": "true" })),
         h("div", { class: "lift-slots right" }, SLOTS.slice(3).map(slotBtn)),
       );
 
@@ -159,5 +162,9 @@ export default {
 
     const better = getState().inventory.some((p) => compareToEquipped(p) > 0);
     speak(better ? "Garáž. Máš lepší diel! Hľadaj zelenú šípku hore." : "Garáž. Ťukni na diel a pozri sa naň.");
+  },
+  leave() {
+    carView?.destroy();
+    carView = null;
   },
 };

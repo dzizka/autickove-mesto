@@ -43,9 +43,13 @@ export function startServer() {
   });
 }
 
-export async function setup() {
+/**
+ * webgl: software WebGL for the 3D car tests (part 15a). Only there: it also moves the 2D
+ * canvas onto the slow software GPU, which would spoil the race performance tests.
+ */
+export async function setup({ webgl = false } = {}) {
   const server = await startServer();
-  const browser = await chromium.launch();
+  const browser = await chromium.launch(webgl ? { args: ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader"] } : {});
   return {
     server,
     browser,

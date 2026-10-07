@@ -1,5 +1,6 @@
 // Appearance tuning (DESIGN-v2 §5): 9 categories, 5–15 options each, bought with coins.
 // No stats here. The first item of every category is free and owned from the start.
+// 3D (part 15a): wheels and wings name a Car Kit `model`; `tint` colours a wheel.
 
 export const TUNING = [
   {
@@ -45,13 +46,13 @@ export const TUNING = [
     name: "Kolesá",
     icon: "🛞",
     items: [
-      { id: "basic", rim: "#d9dde3", style: "cross", price: 0 },
-      { id: "sport", rim: "#f4f6f8", style: "spokes", price: 150 },
-      { id: "red", rim: "#ff5a5f", style: "spokes", price: 150 },
-      { id: "gold", rim: "#e8b923", style: "spokes", price: 400 },
-      { id: "star", rim: "#ffd23f", style: "star", price: 300 },
-      { id: "neon", rim: "#7df9ff", style: "ring", price: 450 },
-      { id: "monster", rim: "#9aa0a6", style: "cross", big: true, price: 700 },
+      { id: "basic", rim: "#d9dde3", style: "cross", model: "wheel-default", price: 0 },
+      { id: "sport", rim: "#f4f6f8", style: "spokes", model: "wheel-racing", price: 150 },
+      { id: "red", rim: "#ff5a5f", style: "spokes", model: "wheel-racing", tint: "#ff5a5f", price: 150 },
+      { id: "gold", rim: "#e8b923", style: "spokes", model: "wheel-default", tint: "#e8b923", price: 400 },
+      { id: "star", rim: "#ffd23f", style: "star", model: "wheel-racing", tint: "#ffd23f", price: 300 },
+      { id: "neon", rim: "#7df9ff", style: "ring", model: "wheel-dark", tint: "#7df9ff", glow: true, price: 450 },
+      { id: "monster", rim: "#9aa0a6", style: "cross", big: true, model: "wheel-truck", price: 700 },
     ],
   },
   {
@@ -60,11 +61,11 @@ export const TUNING = [
     icon: "🪽",
     items: [
       { id: "none", price: 0 },
-      { id: "small", size: 1, price: 150 },
-      { id: "big", size: 1.6, price: 300 },
-      { id: "double", size: 1.3, double: true, price: 450 },
-      { id: "gold", size: 1.4, color: "#e8b923", price: 600 },
-      { id: "angel", size: 1.2, feather: true, price: 700 },
+      { id: "small", size: 1, model: "debris-spoiler-a", price: 150 },
+      { id: "big", size: 1.6, model: "debris-spoiler-b", price: 300 },
+      { id: "double", size: 1.3, double: true, model: "debris-spoiler-a", price: 450 },
+      { id: "gold", size: 1.4, color: "#e8b923", model: "debris-spoiler-b", price: 600 },
+      { id: "angel", size: 1.2, feather: true, icon: "🪽", price: 700 },
     ],
   },
   {

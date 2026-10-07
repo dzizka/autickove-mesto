@@ -18,7 +18,7 @@
   .pad .u { grid-area: u; } .pad .d { grid-area: d; } .pad .l { grid-area: l; } .pad .r { grid-area: r; }
   @media (max-width: 600px) { .pad { grid-template-columns: repeat(3, 60px); grid-template-rows: repeat(3, 60px); right: 50%; transform: translateX(50%); } }
 </style>
-<script type="importmap">{ "imports": { "three": "./vendor/three.module.min.js" } }</script>
+<script type="importmap">{ "imports": { "three": "../vendor/three.module.min.js" } }</script>
 </head>
 <body>
 <div id="stage"></div>
@@ -30,7 +30,7 @@
 // City Kit Roads, Suburban and Commercial, the car from the Car Kit.
 import "../js/core/state.js";
 import * as THREE from "three";
-import { GLTFLoader } from "./vendor/addons/loaders/GLTFLoader.js";
+import { GLTFLoader } from "../vendor/addons/loaders/GLTFLoader.js";
 import { BUILDINGS } from "../js/data/city.js";
 
 const N = 4; // blocks per side
@@ -84,7 +84,7 @@ scene.add(grass);
 const loader = new GLTFLoader();
 const cache = new Map();
 const model = (path) => {
-  const url = path.startsWith("carkit/") ? `./models/${path}.glb` : `./models/city/${path}.glb`;
+  const url = path.startsWith("carkit/") ? `../models/${path}.glb` : `../models/city/${path}.glb`;
   if (!cache.has(path)) cache.set(path, loader.loadAsync(url).then((g) => g.scene));
   return cache.get(path);
 };

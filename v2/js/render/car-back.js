@@ -53,7 +53,7 @@ function paintBox(g, color, patternId, x, y, w, h, r, plain) {
  * Returns anchors (relative to the bottom centre): win (rear window) and lights.
  */
 function drawBack(g, r, w, plain) {
-  const kind = r.car.id;
+  const kind = r.car.shape || r.car.id; // 2D drawing of the car kind
   const color = plain ? { value: plain } : r.color;
   const pattern = r.pattern.id;
   const wheels = r.wheels;

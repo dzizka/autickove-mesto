@@ -170,7 +170,7 @@ test("set book: found pieces light up, a full set shows its bonus and look in th
     await page.getByTestId("part-equip").click();
   }
   await page.getByTestId("active-set-police").waitFor();
-  assert.equal(await page.locator(".lift-car svg").getAttribute("data-roof"), "siren");
+  assert.equal(await page.locator(".lift-car [data-testid=car-view]").getAttribute("data-roof"), "siren");
 
   // the legendary shows its ability in the detail
   const ghost = await page.evaluate(() => window.__game.state.getState().inventory.find((p) => p.legendary).uid);

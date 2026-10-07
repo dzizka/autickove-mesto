@@ -9,6 +9,7 @@ import { TUNING, CARS_TAB } from "../data/tuning.js";
 import { canAfford } from "../systems/economy.js";
 import { itemsOf, getLook, resolveLook, isOwned, priceOf, select, buy, randomLook } from "../systems/tuning.js";
 import { carSide } from "../render/car-side.js";
+import { createCarView, carPictureInto } from "../render/car-view.js";
 import { activeBuddy, buddyLook } from "../systems/crew.js";
 
 const TABS = [CARS_TAB, ...TUNING];
@@ -16,6 +17,7 @@ const MINI_CAR = new Set(["car", "pattern", "wheels", "wing", "neon"]);
 const SAY = { car: "Autá", color: "Farba", pattern: "Vzor", wheels: "Kolesá", wing: "Krídlo", sticker: "Nálepka", roof: "Strecha", neon: "Neón", trail: "Stopa", horn: "Klaksón" };
 
 let tab = "car";
+let carView = null;
 
 function swatch(item) {
   const bg = item.special === "rainbow" ? "linear-gradient(90deg,#ff5a5f,#ffd23f,#3ebd4a,#2ab7ca,#8f5bd8)" : item.special === "galaxy" ? "radial-gradient(circle at 40% 40%,#7b5cff,#3b2f7a 50%,#140f33)" : item.special === "gold" ? "linear-gradient(180deg,#fff2a8,#e8b923,#a87b00)" : item.value;
@@ -24,7 +26,12 @@ function swatch(item) {
 
 function tileFace(cat, item, look) {
   if (cat === "color") return swatch(item);
-  if (MINI_CAR.has(cat)) return h("span", { class: "tile-car" }, carSide({ ...look, [cat]: item.id }));
+  if (MINI_CAR.has(cat)) {
+    const tileLook = { ...look, [cat]: item.id };
+    const holder = h("span", { class: "tile-car" }, carSide(tileLook));
+    carPictureInto(holder, tileLook);
+    return holder;
+  }
   return h("span", { class: "tile-icon", "aria-hidden": "true" }, item.icon || "🚫");
 }
 
@@ -37,15 +44,17 @@ export default {
     view.append(root);
 
     const shownLook = () => (preview ? { ...getLook(), [preview.cat]: preview.id } : getLook());
+    carView = createCarView({ mode: "turntable" });
 
     function paint() {
       const look = shownLook();
+      carView.setLook(look, { trail: look.trail !== "none", passenger: buddyLook(activeBuddy())?.icon });
       const stage = h(
         "div",
         { class: "showroom", "data-testid": "showroom" },
         h("div", { class: "spotlight", "aria-hidden": "true" }),
         h("div", { class: "turntable", "aria-hidden": "true" }),
-        h("div", { class: "show-car", "data-testid": "show-car" }, carSide(look, { trail: look.trail !== "none", passenger: buddyLook(activeBuddy())?.icon })),
+        h("div", { class: "show-car", "data-testid": "show-car" }, carView.el),
       );
 
       const buttons = h(
@@ -116,6 +125,7 @@ export default {
               onclick: () => {
                 tab = t.id;
                 preview = null;
+                carView.focus(tab);
                 sfx.tap();
                 speak(SAY[t.id]);
                 paint();
@@ -144,6 +154,7 @@ export default {
               onclick: () => {
                 if (tab === "horn") playNotes(item.notes);
                 else sfx.tap();
+                carView.focus(tab);
                 if (owned) {
                   preview = null;
                   select(tab, item.id);
@@ -166,6 +177,10 @@ export default {
 
     paint();
     speak("Vzhľad auta. Vyber si, čo sa ti páči.");
+  },
+  leave() {
+    carView?.destroy();
+    carView = null;
   },
 };
 

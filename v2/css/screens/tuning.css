@@ -41,14 +41,14 @@
   background: repeating-conic-gradient(#d7dbe8 0 15deg, #b9bfd2 15deg 30deg);
   animation: spin 8s linear infinite;
 }
-.show-car {
-  position: absolute;
-  left: 8%;
-  right: 8%;
-  bottom: 14%;
-  animation: show-turn 8s ease-in-out infinite;
-}
+.show-car { position: absolute; inset: 0; }
+.show-car .car-view { height: 100%; }
+.show-car .car-flat { position: absolute; left: 8%; right: 8%; bottom: 14%; }
 .show-car .car-side { width: 100%; height: auto; overflow: visible; }
+/* the 3D car stands on its own turntable */
+.showroom:has(.car-view[data-mode="3d"]) .turntable { display: none; }
+.tile-car .car-pic { display: block; width: 100%; height: auto; }
+.tile-car.pic-loading { opacity: .35; }
 .show-buttons { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
 
 .buy-bar {
@@ -115,8 +115,4 @@
   .tune-top { position: sticky; top: calc(var(--topbar-h) + 10px); }
 }
 
-@keyframes show-turn {
-  0%, 40% { transform: scaleX(1); }
-  48%, 52% { transform: scaleX(0.05); }
-  60%, 100% { transform: scaleX(-1); }
-}
+

@@ -18,9 +18,9 @@ after(async () => {
 
 const quiet = { settings: { sound: false, voice: false } };
 
-test("data: at least 8 cars, 9 categories with 5–15 options, free first item, unique ids", () => {
-  assert.ok(CARS.length >= 8);
-  for (const kind of ["sedan", "jeep", "taxi", "police", "fire", "formula", "truck", "rocket"]) assert.ok(CARS.some((c) => c.id === kind), kind);
+test("data: the Car Kit cars, 9 categories with 5–15 options, free first item, unique ids", () => {
+  assert.ok(CARS.length >= 15);
+  for (const kind of ["sedan", "jeep", "taxi", "police", "fire", "formula", "truck", "future"]) assert.ok(CARS.some((c) => c.id === kind), kind);
   assert.equal(CARS[0].price, 0);
   assert.deepEqual(TUNING.map((c) => c.id), ["color", "pattern", "wheels", "wing", "sticker", "roof", "neon", "trail", "horn"]);
   for (const c of TUNING) {
