@@ -59,13 +59,14 @@ v2/
 │   │   ├── cars.js  tuning.js  tracks.js  bosses.js
 │   │   ├── loot-bases.js  affixes.js  legendaries.js  sets.js
 │   │   ├── crew.js  trophies.js
-│   │   └── coloring/       # obrázky na voľné maľovanie a podľa čísel
+│   │   └── coloring/       # palette.js, free.js (24 obrázkov SVG), pixel.js (30 obrázkov podľa čísel)
 │   ├── systems/            # logika bez kreslenia
 │   │   ├── economy.js  progress.js  quests.js  trophies.js   # progress.js: level, čas hrania, postup na tratiach
 │   │   ├── loot.js         # generovanie dielov, vzácnosť, sila
 │   │   ├── garage.js       # nasadenie, porovnanie, rozoberanie, vylepšenie
 │   │   ├── stats.js        # súčet štatistík auta (diely + sety + kamarát)
 │   │   ├── tuning.js       # vzhľad: vlastnené veci, kúpa, náhodný vzhľad
+│   │   ├── coloring.js     # omaľovánka: pixelové obrázky z tvarov, odomykanie, galéria, odmeny
 │   │   └── crew.js         # kamaráti: vajíčka, levely, vývoj
 │   ├── render/
 │   │   ├── car-side.js     # auto z boku (SVG)
@@ -73,14 +74,14 @@ v2/
 │   │   ├── effects.js      # neón a stopa v pretekoch
 │   │   └── emoji.js        # emoji kreslené do malého plátna (rýchle na tablete)
 │   ├── screens/            # home.js garage.js tuning.js crew.js gallery.js parents.js
-│   │                       # settings.js test-menu.js topbar.js soon.js („ešte sa stavia“)
+│   │                       # settings.js test-menu.js topbar.js coloring.js (výber obrázka)
 │   │                       # races.js (výber trate a úrovne), stat-panel.js (pruhy štatistík, sila auta)
 │   │                       # part-card.js (karta dielu, detail s porovnaním), chest.js (truhlica po pretekoch)
 │   │                       # set-book.js (kniha setov)
 │   └── games/
 │       ├── demo/           # skúšobná jazda len z testovacieho menu (overuje slučku a odmeny)
 │       ├── race/           # index.js  track.js  spawner.js  physics.js  draw.js  hud.js  boss.js  abilities.js (legendárne schopnosti)
-│       └── coloring/       # index.js  free-paint.js  by-number.js  brush.js
+│       └── coloring/       # index.js  free-paint.js  by-number.js  brush.js  tools.js (panel nástrojov)
 └── tests/                  # Playwright testy (bod 10): node --test, package.json, helpers.mjs
 ```
 
@@ -248,7 +249,10 @@ Vo v1 ju malo dieťa rado, ale mala len 3 obrázky. Vo v2 bude mať dva režimy 
 
 ### 7.4 Galéria a odmeny
 - **Galéria:** hotové obrázky (vrstva vedierka aj štetca spolu) sa uložia do Galérie, najviac 40. Ukladajú sa ako malý obrázok, aby nezaplnili pamäť prehliadača.
-- **Odmena:** mince podľa veľkosti obrázka. Občas aj nálepka na auto alebo trblietavá farba. Za obrázky sú trofeje (prvý 24×24, 10 obrázkov a pod.).
+  - Galéria má vlastný kľúč `autickove-mesto-v2-gallery` a prenos kódom `AM2:` ju neprenáša. Obrázky by kód zväčšili na stovky kB. Pri plnej galérii najstarší obrázok uvoľní miesto a dieťa môže obrázok zmazať 🗑️.
+  - Rozpracovaný obrázok podľa čísel sa ukladá (vyfarbené štvorčeky) a v ponuke má pruh postupu, aby sa dal 24×24 dokončiť inokedy. Ťahy štetcom sa do rozpracovaného obrázka neukladajú.
+  - Pixelové obrázky sú v dátach zapísané ako jednoduché tvary a mriežka sa z nich vypočíta, nepoužité farby sa vynechajú. Obrázky na voľné maľovanie, ktoré nie sú hneď otvorené, sa odomknú po 2 až 10 pretekoch alebo za 60 až 150 mincí.
+- **Odmena:** mince podľa veľkosti obrázka. Občas aj nálepka na auto alebo trblietavá farba. Presne: voľný obrázok 20 🪙, 10×10 15 🪙, 16×16 30 🪙, 24×24 60 🪙; trblietavé farby po 2., 5., 9. a 14. hotovom obrázku; nálepka na auto po 3., 7., 12., 18. a 25. obrázku. Za obrázky sú trofeje (prvý 24×24, 10 obrázkov a pod.).
 
 ---
 

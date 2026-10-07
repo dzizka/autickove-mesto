@@ -7,6 +7,7 @@ import { go } from "../core/router.js";
 import { rarityDef, rarityIndex } from "../systems/loot.js";
 import { RARITIES } from "../data/loot-bases.js";
 import { partCard } from "./part-card.js";
+import { presentColoringReward } from "./gallery.js";
 
 const BEST_SAY = [
   "Truhlica je otvorená! Pozri, čo si našiel.",
@@ -36,6 +37,7 @@ function chestSvg() {
  * otherwise the plain coin dialog.
  */
 export function presentReward(granted, { onHome, onAgain } = {}) {
+  if (granted.coloringReward) return presentColoringReward(granted, { onHome });
   const loot = granted.loot;
   if (!loot?.parts?.length) return rewardModal(granted, { onHome, onAgain });
 

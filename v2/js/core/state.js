@@ -5,9 +5,10 @@ import { emit } from "./events.js";
 import { starterParts, emptyLootHistory } from "../systems/loot.js";
 import { defaultLook, defaultOwned } from "../systems/tuning.js";
 import { defaultCrew } from "../systems/crew.js";
+import { defaultColoring } from "../systems/coloring.js";
 
 export const STORAGE_KEY = "autickove-mesto-v2";
-export const CURRENT_VERSION = 6;
+export const CURRENT_VERSION = 7;
 
 export function defaultState() {
   return {
@@ -41,6 +42,9 @@ export function defaultState() {
     legendariesFound: [],
     // v6: crew buddies (owned, active buddy in the car, candy 🍬, bought clothes).
     crew: defaultCrew(),
+    // v7: colouring book (finished count, bought pictures, glitter colours, unfinished work).
+    // The gallery images live under their own key (systems/coloring.js).
+    coloring: defaultColoring(),
   };
 }
 
@@ -73,6 +77,8 @@ const MIGRATIONS = {
   4: (s) => ({ ...s, version: 5 }),
   // v5 → v6: crew; eggs from bosses (v5) are kept and count as eggs already received.
   5: (s) => ({ ...s, version: 6, crew: { ...defaultCrew(), eggsEver: Array.isArray(s.eggs) ? s.eggs.length : 0 } }),
+  // v6 → v7: colouring book (filled from defaults).
+  6: (s) => ({ ...s, version: 7 }),
 };
 
 const isPlainObject = (v) => v !== null && typeof v === "object" && !Array.isArray(v);

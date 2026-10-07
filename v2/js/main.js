@@ -9,9 +9,7 @@ import * as router from "./core/router.js";
 import { loopStats } from "./core/loop.js";
 import { exportCode, parseCode } from "./core/save-transfer.js";
 import { startPlayClock } from "./systems/progress.js";
-import { PILLARS } from "./data/menu.js";
 import { mountTopbar } from "./screens/topbar.js";
-import { makeSoonScreen } from "./screens/soon.js";
 import home from "./screens/home.js";
 import settings from "./screens/settings.js";
 import races from "./screens/races.js";
@@ -23,6 +21,10 @@ import raceGame from "./games/race/index.js";
 import { recordRace, recordBoss } from "./systems/progress.js";
 import { BOSSES } from "./data/bosses.js";
 import crew from "./screens/crew.js";
+import coloring from "./screens/coloring.js";
+import gallery from "./screens/gallery.js";
+import coloringGame from "./games/coloring/index.js";
+import { recordFinished, addToGallery } from "./systems/coloring.js";
 import { tickEggs, addEgg, rollChestEgg, giveCrewXp } from "./systems/crew.js";
 import { demoGame, demoCrashGame } from "./games/demo/index.js";
 
@@ -41,10 +43,11 @@ mountTopbar(document.querySelector("[data-topbar]"), document.querySelector("[da
 
 router.registerScreen(home);
 router.registerScreen(settings);
-// Pillars that are built get their real screen; the rest say "being built".
-const built = { races, garage, tuning, crew };
-for (const p of PILLARS) router.registerScreen(built[p.id] || makeSoonScreen(p));
+router.registerScreen(gallery);
+// The four pillars (DESIGN-v2 §1) plus the garage.
+for (const screen of [races, garage, tuning, crew, coloring]) router.registerScreen(screen);
 router.registerGame(raceGame);
+router.registerGame(coloringGame);
 router.registerGame(demoGame);
 router.registerGame(demoCrashGame);
 
@@ -63,10 +66,21 @@ router.addRewardHandler((gameId, result) => {
   const boss = BOSSES.find((b) => b.id === result.extra.boss) || null;
   return { unlocks, loot: grantRaceLoot(result.extra), egg, boss, buddyLevels };
 });
+// Finished pictures: count them, glitter colours and stickers on schedule, save to the gallery.
+router.addRewardHandler((gameId, result) => {
+  const c = result.extra?.coloring;
+  if (gameId !== "coloring" || !c) return null;
+  const { glitter, sticker } = recordFinished(c);
+  if (c.thumb) addToGallery({ id: c.id, mode: c.mode, src: c.thumb });
+  return { coloringReward: { glitter, sticker, thumb: c.thumb } };
+});
 router.setRewardPresenter(presentReward);
+
+// The one allowed global: hooks for automated tests (DESIGN-v2 §2). Set before the router
+// starts, so a game opened straight from the URL can register its hooks too.
+window.__game = { state, events, rng, audio, ui, router, loopStats, exportCode, parseCode };
 
 startPlayClock();
 router.startRouter(document.querySelector("main"));
 
-// The one allowed global: hooks for automated tests (DESIGN-v2 §2).
-window.__game = { state, events, rng, audio, ui, router, loopStats, exportCode, parseCode };
+

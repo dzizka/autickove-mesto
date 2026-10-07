@@ -259,10 +259,10 @@ test("dismantling can give candy; blue parts always do", async () => {
   await page.context().close();
 });
 
-test("version-5 saves migrate to version 6; boss eggs are kept", async () => {
+test("version-5 saves migrate to the current schema; boss eggs are kept", async () => {
   const page = await openGame(env.browser, env.server.url, { storage: { version: 5, coins: 5, eggs: [{ id: "e1", from: "bear", races: 2, at: 1 }] } });
   const s = await page.evaluate(() => window.__game.state.getState());
-  assert.equal(s.version, 6);
+  assert.equal(s.version, await page.evaluate(() => window.__game.state.CURRENT_VERSION));
   assert.equal(s.eggs.length, 1);
   assert.equal(s.crew.eggsEver, 1);
   assert.equal(s.crew.active, null);
