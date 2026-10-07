@@ -331,6 +331,10 @@ Každá časť sa po dokončení nahrá na GitHub a dá sa hneď hrať na `/v2/`
 | **10. Hry 1** | Hlavná ponuka 🎪 Hry a prvé aktivity z v1: Pexeso, Umyváreň, Servis, Parkovisko (bod 12) | dieťa nájde a dohrá každú hru bez čítania |
 | **11. Hry 2** | Počítanie, Skladačka, Bludisko, Písmenká, Hudobná garáž, Križovatka (bod 12) | ako pri časti 10 |
 | **12. Mesto a album** | Systémy z v1 nanovo: mesto s budovami, album s nálepkami, denný darček (bod 13) | odmeny z hier sa dajú použiť v meste a albume |
+| **13. Výber obtiažnosti** | Dieťa si v herni vyberá ★ / ★★ / ★★★, odporúčaný stupeň svieti (bod 12) | dieťa vie bez čítania zvoliť ťažšiu hru |
+| **14. Pohyblivé pozadie domova** | Auto dieťaťa jazdí v pseudo 3D za tlačidlami domovskej obrazovky, trate sa striedajú, čas dňa podľa hodín; vypínač pre staršie tablety (bod 14) | domovská obrazovka ide plynulo aj na staršom tablete |
+| **15. 3D auto** | Otočné 3D auto vo Vzhľade a v Garáži, skúšobná jazda; podľa náhľadu buď vlastný model, alebo stiahnutý model CC0 (bod 14) | rodič odsúhlasí náhľad; všetko kúpené vidno na 3D aute |
+| **16. Mesto v pseudo 3D** | Podľa náhľadu: jazda ulicou (D1) alebo krajšia bočná ulica s vrstvami (D2) (bod 14) | rodič odsúhlasí náhľad |
 
 ---
 
@@ -373,12 +377,13 @@ Rodič chce v2 so všetkým, čo dieťa hralo vo v1. Každá hra je modul v `js/
 | 🎵 Hudobná garáž | hrá na trúbiace autá a opakuje melódiu |
 | 🚦 Križovatka | púšťa autá cez križovatku na zelenú, aby sa nezrazili |
 
-Každá hra má 3 obtiažnosti, ktoré sa samy zvyšujú, a prehra neexistuje (chyba len zahrá zvuk a hlas poradí).
+Každá hra má 3 obtiažnosti, ktoré si dieťa vyberá samo (od časti 13), a prehra neexistuje (chyba len zahrá zvuk a hlas poradí).
 
 **Spoločné pravidlá (časť 10):**
 - **Herňa 🎪** je šiesta veľká voľba na domovskej obrazovke. Dlaždica ukazuje obtiažnosť hviezdami ★★★, zamknutá hra 🔒 a level, na ktorom sa otvorí.
 - **Hviezdy:** hra skončí 1 až 3 hviezdami podľa chýb alebo času. Mince závisia od obtiažnosti a hviezd, XP od obtiažnosti.
-- **Obtiažnosť rastie sama:** dva výsledky s aspoň 2 hviezdami na aktuálnej obtiažnosti posunú hru o stupeň vyššie. Nikdy neklesá. Hlas na konci povie, že nabudúce to bude ťažšie.
+- **Výber obtiažnosti (časť 13, rozhodnutie rodiča):** po ťuknutí na hru sa ukážu tri veľké tlačidlá ★ ľahké, ★★ stredné, ★★★ ťažké, hlas ich prečíta. Všetky tri sú otvorené od začiatku. Hra si pamätá posledný výber dieťaťa.
+- **Odporúčanie:** dva výsledky s aspoň 2 hviezdami na odporúčanom stupni posunú odporúčanie o stupeň vyššie (nikdy neklesá). Odporúčaný stupeň svieti 👍 a hlas na konci hry povie „Nabudúce skús ťažšie!“. Ťažší stupeň dáva viac mincí a XP.
 - **Uloženie:** `minigames: { pexeso: { level, plays, good, best } }` (schéma verzia 9).
 - **Úlohy a trofeje:** úlohy „Zahraj si dve / štyri hry v herni“, trofeje „Všetky hry v herni“ a „Najťažšia úroveň v hre“.
 
@@ -411,3 +416,17 @@ Každá hra má 3 obtiažnosti, ktoré sa samy zvyšujú, a prehra neexistuje (c
 - **Úlohy a trofeje:** „Postav alebo vylepši dom“, „Otvor balíček“; trofeje Prvý dom, Celé mesto, Päť domov na najvyššej úrovni, Plná stránka, Celý album, Zlatá nálepka, Sedem dní za sebou.
 - **Testovacie menu:** denný darček znova, +30 nálepiek, nájom za 12 hodín.
 - **Prenos postupu z v1:** zatiaľ nie. Ak ho rodič bude chcieť, doplní sa ako samostatný bod.
+
+---
+
+## 14. Grafika menu (časti 14 až 16, po skúšaní)
+
+**Pripomienky rodiča:** pseudo 3D z pretekov sa páči a má sa použiť aj inde, kde to dáva zmysel. Otáčanie plochého auta vo Vzhľade vyzerá zle. Domovská obrazovka má mať pohyblivé pozadie.
+
+- **Domov (časť 14):** za tlačidlami beží pseudo 3D cesta, po ktorej jazdí auto dieťaťa zozadu (so všetkým tuningom a kamarátom). Trate sa po chvíli striedajú, obloha sa riadi skutočným časom dňa. Ťuknutie na auto zatrúbi. Tlačidlá sú na polopriehľadných paneloch. Pozadie beží úspornejšie ako preteky a zastaví sa pri otvorenom okne. V nastaveniach pre rodičov je vypínač „Pohyblivé pozadie“.
+- **3D auto (časť 15):** skutočne otočné auto vo Vzhľade (samo sa pomaly otáča, dá sa točiť prstom, pri výbere sa natočí k tomu, čo sa mení) a na zdviháku v Garáži. Tlačidlo „Skúšobná jazda“ ukáže auto na ceste v pseudo 3D.
+  - Rodič chce porovnať dve možnosti: vlastný model vytvorený z tvaru auta z boku, a hotový voľne dostupný model (Kenney, licencia CC0). Náhľad: `/v2/preview/car3d.html`.
+  - Ak sa použije hotový model, potrebuje 3D knižnicu (three.js, licencia MIT) uloženú priamo v repozitári. Je to výnimka z pravidla „bez knižníc“, ktorú musí rodič odsúhlasiť.
+- **Mesto (časť 16):** dve možnosti v náhľade `/v2/preview/town.html`:
+  - **D1 jazda ulicou:** pohľad zozadu ako v pretekoch, domy po oboch stranách, šípky ◀ ▶ presunú auto k ďalšiemu domu, dom pred autom je veľký a ťuká sa naň.
+  - **D2 bočná ulica s vrstvami:** súčasná ulica, ale krajšia: viac vrstiev pozadia, ktoré sa pri posúvaní hýbu rôzne rýchlo, a lepšie kreslené domy.

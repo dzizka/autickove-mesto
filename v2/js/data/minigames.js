@@ -1,5 +1,5 @@
 // Games in the 🎪 Hry room (DESIGN-v2 §12): the activities from v1, written anew. Data only.
-// Every game has 3 difficulty levels; good results move the child up by itself.
+// Every game has 3 difficulty levels the child picks; good results move the recommendation up.
 
 export const MINIGAMES = [
   { id: "pexeso", icon: "🃏", name: "Pexeso", say: "Pexeso. Nájdi dvojice.", color: "plum", unlockLevel: 1, part: 10 },
@@ -17,10 +17,11 @@ export const MINIGAMES = [
 /** Difficulty and rewards shared by all games. */
 export const MINI = {
   levels: 3,
-  levelUpAfter: 2, // results with ≥ 2 stars on the current level → next level
-  baseCoins: [20, 30, 45], // by level, × stars factor below
+  levelUpAfter: 2, // results with ≥ 2 stars on (or above) the recommended level → recommend the next one
+  levelNames: ["Ľahké", "Stredné", "Ťažké"], // read aloud on the difficulty buttons
+  baseCoins: [15, 30, 50], // by level, × stars factor below (harder pays more)
   starFactor: [0.6, 0.8, 1], // 1, 2, 3 stars
-  baseXp: [12, 16, 22],
+  baseXp: [10, 16, 24],
 };
 
 // ---------- Pexeso ----------

@@ -148,3 +148,16 @@
 /* ---------- traffic ---------- */
 .mini-traffic .mini-stage { place-items: stretch; }
 .traffic-canvas { position: absolute; inset: 0; display: block; border-radius: 16px; touch-action: none; }
+
+/* ---------- difficulty picker (part 13) ---------- */
+.level-modal { text-align: center; }
+.level-pick { display: grid; gap: 12px; margin: 8px 0; }
+@media (min-width: 700px) { .level-pick { grid-template-columns: repeat(3, 1fr); } }
+.diff-btn { position: relative; min-height: 96px; gap: 4px; }
+.diff-btn.lv1 { --c: var(--grass); --c-dark: var(--grass-dark); --fg: #fff; }
+.diff-btn.lv2 { --c: var(--sun); --c-dark: var(--sun-dark); }
+.diff-btn.lv3 { --c: var(--tomato); --c-dark: var(--tomato-dark); --fg: #fff; }
+.lv-stars { font-size: 2rem; letter-spacing: 2px; line-height: 1; }
+.diff-btn.last { outline: 4px solid #fff; outline-offset: -8px; }
+.diff-btn.recommended { animation: gift-glow 1.4s ease-in-out infinite; }
+.lv-thumb { position: absolute; top: -12px; right: -8px; font-size: 1.8rem; }

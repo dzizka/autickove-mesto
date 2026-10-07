@@ -8,9 +8,20 @@ export const isMini = (id) => !!miniDef(id);
 
 const clampLevel = (n) => Math.max(1, Math.min(MINI.levels, Math.round(Number(n) || 1)));
 
+/** level = the recommended difficulty; pick = the child's last choice (null before the first game). */
 export function miniProgress(id, s = getState()) {
   const m = s.minigames?.[id] || {};
-  return { level: clampLevel(m.level), plays: m.plays || 0, good: m.good || 0, best: m.best || 0 };
+  return { level: clampLevel(m.level), pick: m.pick ? clampLevel(m.pick) : null, plays: m.plays || 0, good: m.good || 0, best: m.best || 0 };
+}
+
+/** Remember the child's choice for next time. */
+export function setPick(id, level) {
+  if (!isMini(id)) return;
+  update((s) => {
+    s.minigames ||= {};
+    const m = (s.minigames[id] ||= { level: 1, plays: 0, good: 0, best: 0 });
+    m.pick = clampLevel(level);
+  });
 }
 
 /** 3, 2 or 1 star: `value` (mistakes, seconds…) against the limits [for 3, for 2]. */
@@ -26,8 +37,8 @@ export function miniReward(level, stars) {
 }
 
 /**
- * Count a finished game. Two results with ≥ 2 stars on the current level move the game
- * one level up (never down). Returns { level, levelUp }.
+ * Count a finished game. Two results with ≥ 2 stars on (or above) the recommended level move the
+ * recommendation one level up (never down). Returns { level, levelUp }.
  */
 export function recordMini({ id, stars, level }) {
   if (!isMini(id)) return { level: 1, levelUp: false };
@@ -39,7 +50,7 @@ export function recordMini({ id, stars, level }) {
     m.level = clampLevel(m.level);
     m.plays = (m.plays || 0) + 1;
     m.best = Math.max(m.best || 0, stars || 0);
-    if (stars >= 2 && clampLevel(level) === m.level && m.level < MINI.levels) {
+    if (stars >= 2 && clampLevel(level) >= m.level && m.level < MINI.levels) {
       m.good = (m.good || 0) + 1;
       if (m.good >= MINI.levelUpAfter) {
         m.level += 1;

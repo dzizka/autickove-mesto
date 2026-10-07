@@ -2,11 +2,15 @@
 // bar instead of numbers, 🔊 repeat, timers that stop with the game, and the finish with stars.
 
 import { h } from "../../core/ui.js";
-import { miniProgress, miniReward } from "../../systems/minigames.js";
+import { miniProgress, miniReward, setPick } from "../../systems/minigames.js";
 import { MINI } from "../../data/minigames.js";
 
 export function createShell(view, ctx, game) {
-  const level = miniProgress(game.id).level;
+  // the level the child picked (#/game/pexeso/2), else its last pick, else the recommendation
+  const prog = miniProgress(game.id);
+  const asked = Number(ctx.params?.[0]);
+  const level = asked >= 1 && asked <= MINI.levels ? Math.round(asked) : prog.pick || prog.level;
+  setPick(game.id, level);
   const fill = h("i");
   const stage = h("div", { class: "mini-stage", "data-testid": "mini-stage" });
   const wrap = h(

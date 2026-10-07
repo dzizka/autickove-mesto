@@ -196,7 +196,7 @@ export function rewardModal(result, { onHome, onAgain } = {}) {
     [
       h("div", { class: "modal-icon bounce", "aria-hidden": "true" }, "🏆"),
       result.stars > 0 && h("div", { class: "reward-stars", "data-testid": "reward-stars", "data-stars": String(result.stars), "aria-label": "Hviezdy" }, [1, 2, 3].map((i) => h("i", { class: i <= result.stars ? "on" : "" }, "★"))),
-      result.miniLevelUp && h("div", { class: "reward-row level-up", "data-testid": "reward-harder", "aria-label": "Ťažšie" }, "⬆️ ★"),
+      result.miniLevelUp && h("div", { class: "reward-row level-up", "data-testid": "reward-harder", "aria-label": "Skús ťažšie" }, "👍 ⬆️ ★"),
       result.sticker && h("div", { class: "reward-row sticker", "data-testid": "reward-sticker", "aria-label": "Nálepka" }, "📒 +", result.sticker.sticker),
       h("div", { class: "reward-row", "data-testid": "reward-coins" }, "🪙 +", String(result.coins || 0)),
       h(
@@ -211,7 +211,7 @@ export function rewardModal(result, { onHome, onAgain } = {}) {
   );
   sfx.win();
   confetti();
-  speak(result.miniLevelUp ? "Výborne! Nabudúce to bude o niečo ťažšie." : result.stars === 3 ? "Tri hviezdy! Si šikovný!" : "Výborne! Tu sú tvoje mince.");
+  speak(result.miniLevelUp ? "Výborne! Nabudúce skús ťažšie!" : result.stars === 3 ? "Tri hviezdy! Si šikovný!" : "Výborne! Tu sú tvoje mince.");
   if (result.coins > 0) setTimeout(() => flyCoins(box.querySelector(".reward-row"), result.coins / 5), 300);
 }
 

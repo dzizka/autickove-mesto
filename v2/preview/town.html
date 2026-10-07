@@ -1,0 +1,345 @@
+<!doctype html>
+<html lang="sk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Náhľad: mesto</title>
+<style>
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #000; font-family: system-ui, sans-serif; user-select: none; -webkit-user-select: none; }
+  canvas { display: block; width: 100vw; height: 100vh; height: 100dvh; touch-action: none; }
+  .bar { position: fixed; top: 8px; left: 8px; right: 8px; display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; pointer-events: none; }
+  .bar button, .bar a, .arrow { pointer-events: auto; min-width: 56px; height: 56px; padding: 0 12px; display: grid; place-items: center; border: 0; border-radius: 18px;
+    background: rgba(255, 255, 255, .88); color: #23324a; font: 800 16px system-ui; text-decoration: none; box-shadow: 0 3px 8px rgba(0, 0, 0, .3); cursor: pointer; }
+  .bar button.on { background: #ffd23f; outline: 3px solid #fff; }
+  .bar .emo { font-size: 26px; }
+  .arrow { position: fixed; bottom: 18px; width: 84px; height: 84px; font-size: 44px; border-radius: 50%; }
+  .arrow.l { left: 16px; }
+  .arrow.r { right: 16px; }
+  .tip { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); padding: 8px 16px; border-radius: 999px; background: rgba(255, 255, 255, .9); font: 700 15px system-ui; color: #23324a; pointer-events: none; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div class="bar" id="bar"></div>
+<button class="arrow l" id="left" aria-label="Späť">◀</button>
+<button class="arrow r" id="right" aria-label="Ďalej">▶</button>
+<div class="tip" id="tip"></div>
+<script type="module">
+// Town preview (DESIGN-v2 §14, part 16). D1: drive along the street in pseudo 3D and stop at
+// every building. D2: the side street, but nicer: layers that move at different speeds.
+import "../js/core/state.js"; // first, like the game (state ↔ tuning import order)
+import { BUILDINGS } from "../js/data/city.js";
+import { M, SEG, PLAYER_Z, DRAW, DEPTH, buildRoad, makeView, renderRoad, createBackdrop, drawBackdrop, segIndex, fogAt } from "../js/games/race/road.js";
+import { drawRoadSprite, emojiAt } from "../js/render/road-sprites.js";
+import { drawCarBack } from "../js/render/car-back.js";
+import { carSide } from "../js/render/car-side.js";
+import { colorLook } from "../js/systems/tuning.js";
+
+const cv = document.getElementById("c");
+const g = cv.getContext("2d");
+const LOOK = { car: "jeep", color: "red", wheels: "sport", roof: "crown", sticker: "star" };
+// a sample town: some built (level 1–3), some empty lots, the last ones still locked
+const STATE = BUILDINGS.map((b, i) => ({ def: b, level: [2, 3, 1, 1, 2, 0, 1, 0, 0, 0, -1, -1][i] ?? 0, rent: i % 3 === 0 }));
+let mode = "d1";
+let night = new Date().getHours() >= 19 || new Date().getHours() < 7;
+let W = 0, H = 0;
+const dpr = Math.min(2, devicePixelRatio || 1);
+let focus = 0; // D1: the building in front of the car
+let tapped = null; // { i, t } building that was tapped (it bounces)
+let time = 0;
+
+function say(text) {
+  try { speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(text); u.lang = "sk-SK"; speechSynthesis.speak(u); } catch { /* no voice */ }
+}
+
+// ---------- a building facade (both modes); (x, y) = bottom centre, u = px per unit ----------
+function facade(b, x, y, u, { side = 0, bounce = 0 } = {}) {
+  const s = (v) => v * u;
+  const { def, level } = b;
+  if (level < 0) {
+    g.fillStyle = "rgba(255,255,255,.35)";
+    g.fillRect(x - s(600), y - s(900), s(1200), s(900));
+    emojiAt(g, "🔒", x, y - s(450), s(500));
+    return { top: y - s(900), w: s(1200) };
+  }
+  if (level === 0) {
+    // building site: fence, crane and the price
+    g.fillStyle = "#ffd23f";
+    for (let k = -6; k < 6; k++) g.fillRect(x + s(k * 100), y - s(420), s(60), s(420));
+    g.fillStyle = "#e0a400";
+    g.fillRect(x - s(650), y - s(360), s(1300), s(60));
+    emojiAt(g, "🏗️", x + s(150), y - s(900), s(800));
+    emojiAt(g, def.icon, x - s(330), y - s(700), s(380), 0.55);
+    return { top: y - s(1300), w: s(1300) };
+  }
+  const w = 1100 + level * 150;
+  const hgt = 1000 + level * 450 + bounce * 120;
+  const left = x - s(w / 2);
+  const topY = y - s(hgt);
+  if (side) {
+    // D2: the side wall gives the block some depth
+    g.fillStyle = shade(def.color, -0.25);
+    g.beginPath();
+    g.moveTo(left + s(w), y);
+    g.lineTo(left + s(w) + s(side), y - s(side * 0.5));
+    g.lineTo(left + s(w) + s(side), topY - s(side * 0.5));
+    g.lineTo(left + s(w), topY);
+    g.fill();
+  }
+  g.fillStyle = def.color;
+  g.fillRect(left, topY, s(w), s(hgt));
+  g.fillStyle = "rgba(0,0,0,.08)";
+  g.fillRect(left, y - s(80), s(w), s(80));
+  // roof
+  g.fillStyle = shade(def.color, -0.45);
+  g.beginPath();
+  g.moveTo(left - s(80), topY);
+  g.lineTo(left + s(w) + s(80), topY);
+  g.lineTo(x + s(w * 0.25), topY - s(320));
+  g.lineTo(x - s(w * 0.25), topY - s(320));
+  g.fill();
+  // windows (lit at night)
+  const rows = level + 1;
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < 3; c++) {
+      const lit = night && (r * 3 + c + level) % 4 !== 0;
+      g.fillStyle = lit ? "#ffd86b" : night ? "#3a3f6b" : "#dff3ff";
+      g.fillRect(left + s(130 + c * (w - 260) / 2.6), topY + s(520 + r * 380), s(200), s(240));
+    }
+  }
+  // sign with the icon, door, awning
+  g.fillStyle = "#ffffff";
+  g.beginPath();
+  g.roundRect(x - s(230), topY + s(80), s(460), s(360), s(60));
+  g.fill();
+  emojiAt(g, def.icon, x, topY + s(260), s(300));
+  for (let k = 0; k < 6; k++) {
+    g.fillStyle = k % 2 ? "#ffffff" : shade(def.color, -0.3);
+    g.fillRect(x - s(420) + s(k * 140), y - s(560), s(140), s(90));
+  }
+  g.fillStyle = shade(def.color, -0.5);
+  g.fillRect(x - s(150), y - s(460), s(300), s(460));
+  for (let k = 0; k < level; k++) emojiAt(g, "⭐", x - s(160) + s(k * 160), topY - s(430), s(180));
+  if (b.rent) emojiAt(g, "🪙", x + s(w / 2) - s(60), topY - s(260) + Math.sin(time * 4) * s(40), s(340));
+  return { top: topY - s(400), w: s(w) };
+}
+function shade(hex, k) {
+  const n = parseInt(hex.slice(1), 16);
+  const f = (v) => Math.round(Math.max(0, Math.min(255, k < 0 ? v * (1 + k) : v + (255 - v) * k)));
+  return `rgb(${f(n >> 16)},${f((n >> 8) & 255)},${f(n & 255)})`;
+}
+
+// ---------- D1: drive along the street ----------
+const STREET = {
+  id: "town", lanes: 2, scenery: ["tree", "lamp", "bush", "lamp"], road: [[80, 1, 0], [80, -1, 0], [60, 0, 0]],
+  scene: { sky: ["#58b7ff", "#d4f0ff"], fog: "#d4f0ff", far: "skyline", hills: ["#a9c0d3", "#86a0b6"], grass: ["#9aa3ad", "#949da7"], road: ["#5e636c", "#5a5f68"], rumble: ["#e4e9f0", "#c9ced6"], line: "#ffffff", sun: "sun" },
+};
+const NIGHT_SCENE = { ...STREET.scene, sky: ["#0b1033", "#2a2f6b"], fog: "#141838", hills: ["#1f2350", "#161a3c"], sun: "moon", stars: true, night: true };
+const GAP = 26; // metres between buildings
+const road = buildRoad({ ...STREET, scene: STREET.scene }, 30 + GAP * STATE.length + 40);
+for (const s of road.segs) s.scenery = s.scenery.filter((sp) => Math.abs(sp.off) > road.half * 2.2); // keep the kerbs free
+STATE.forEach((b, i) => {
+  const z = (30 + i * GAP) * M;
+  const seg = road.segs[segIndex(road, z)];
+  const side = i % 2 ? -1 : 1;
+  seg.scenery.push({ id: `bld:${i}`, off: side * (road.half * 1.25 + 750), side, seed: 0.5 });
+});
+let camZ = 0;
+let backdrop = null;
+const camTarget = () => (30 + focus * GAP - 17) * M;
+let frame = 0;
+function drawD1(dt) {
+  const target = camTarget();
+  const speed = (target - camZ) * Math.min(1, dt * 1.6);
+  camZ += speed;
+  const V = makeView(W, H);
+  road.track.scene = night ? NIGHT_SCENE : STREET.scene;
+  if (!backdrop || backdrop.night !== night || backdrop.w !== W) backdrop = { ...createBackdrop(road.track, V, dpr), night, w: W };
+  drawBackdrop(g, V, backdrop, camZ / M / 400);
+  frame++;
+  road.frame = frame;
+  const r = renderRoad(g, V, road, { z: camZ, x: 0, frame, fog: night ? 4 : 2 });
+  hits.length = 0;
+  for (let n = DRAW - 1; n > 0; n--) {
+    const s = road.segs[r.base + n];
+    if (!s || s.frame !== frame || s.p1.cz <= DEPTH || !s.scenery.length) continue;
+    g.save();
+    if (s.clip < V.h) {
+      g.beginPath();
+      g.rect(0, 0, V.w, s.clip);
+      g.clip();
+    }
+    g.globalAlpha = 1 - fogAt(n, night ? 4 : 2);
+    const u = s.p1.s * V.KX;
+    for (const sp of s.scenery) {
+      const x = s.p1.x + sp.off * u;
+      if (sp.id.startsWith("bld:")) {
+        const i = Number(sp.id.slice(4));
+        const bounce = tapped?.i === i ? Math.max(0, Math.sin((time - tapped.t) * 10)) * Math.max(0, 1 - (time - tapped.t)) : 0;
+        const box = facade(STATE[i], x, s.p1.y, u * 1.3, { bounce });
+        hits.push({ i, x0: x - box.w / 2, x1: x + box.w / 2, y0: box.top, y1: s.p1.y });
+        if (i === focus && Math.abs(target - camZ) < M) {
+          g.strokeStyle = `rgba(255,210,63,${0.6 + 0.4 * Math.sin(time * 5)})`;
+          g.lineWidth = 6;
+          g.strokeRect(x - box.w / 2 - 8, box.top - 8, box.w + 16, s.p1.y - box.top + 8);
+        }
+      } else drawRoadSprite(g, sp.id, x, s.p1.y, u, { night, seed: sp.seed, side: sp.side, t: time });
+    }
+    g.restore();
+  }
+  const moving = Math.abs(target - camZ) > M * 0.3;
+  drawCarBack(g, LOOK, W / 2 + (focus % 2 ? -1 : 1) * V.carPx * 0.4, V.carY + (moving ? Math.sin(time * 20) * 2 : 0), V.carPx, { dpr });
+}
+
+// ---------- D2: side street with layers ----------
+let scroll = 0;
+let vel = 0;
+const carImgs = [];
+for (const [i, hex] of ["#ff5a5f", "#2f80ed", "#ffd23f"].entries()) {
+  const img = new Image();
+  const svg = carSide(i === 0 ? LOOK : { ...colorLook(hex), car: ["sedan", "jeep", "taxi"][i] });
+  svg.setAttribute("width", "240");
+  svg.setAttribute("height", "124");
+  img.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(new XMLSerializer().serializeToString(svg))}`;
+  carImgs.push({ img, x: i * 500, v: (i % 2 ? -1 : 1) * (60 + i * 25) });
+}
+function drawD2(dt) {
+  if (!drag) {
+    scroll += vel * dt;
+    vel *= Math.pow(0.05, dt);
+  }
+  const step = Math.min(360, W * 0.42);
+  const ground = H * 0.72;
+  const maxScroll = Math.max(0, STATE.length * step + 120 - W);
+  scroll = Math.max(0, Math.min(maxScroll, scroll));
+  const sky = g.createLinearGradient(0, 0, 0, ground);
+  sky.addColorStop(0, night ? "#0b1033" : "#58b7ff");
+  sky.addColorStop(1, night ? "#2a2f6b" : "#d4f0ff");
+  g.fillStyle = sky;
+  g.fillRect(0, 0, W, ground);
+  g.fillStyle = night ? "#fff7d6" : "#fff3b0";
+  g.beginPath();
+  g.arc(W * 0.8 - scroll * 0.05, H * 0.14, 34, 0, 6.29);
+  g.fill();
+  // far skyline (slow) and trees (medium) move slower than the street
+  const layer = (f, color, hgt, seed) => {
+    g.fillStyle = color;
+    for (let k = -1; k < 40; k++) {
+      const bx = k * 90 - ((scroll * f) % 90);
+      const bh = hgt * (0.5 + 0.5 * Math.abs(Math.sin(k * 12.9898 + seed + Math.floor((scroll * f) / 90) * 7.1)));
+      g.fillRect(bx, ground - bh, 92, bh);
+    }
+  };
+  layer(0.2, night ? "#1f2350" : "#b7c8d8", H * 0.33, 1);
+  layer(0.45, night ? "#161a3c" : "#93aac0", H * 0.22, 5);
+  for (let k = -1; k < 30; k++) {
+    const tx = k * 160 - ((scroll * 0.7) % 160);
+    drawRoadSprite(g, "tree", tx, ground - 6, H / 5200, { t: time });
+  }
+  // sidewalk, buildings, lamps
+  g.fillStyle = night ? "#3a3f55" : "#c9ced6";
+  g.fillRect(0, ground - 10, W, 24);
+  hits.length = 0;
+  STATE.forEach((b, i) => {
+    const x = 90 + i * step - scroll + step / 2;
+    if (x < -step || x > W + step) return;
+    const bounce = tapped?.i === i ? Math.max(0, Math.sin((time - tapped.t) * 10)) * Math.max(0, 1 - (time - tapped.t)) : 0;
+    const u = Math.min(step / 1700, H / 3600);
+    const box = facade(b, x, ground, u, { side: 260, bounce });
+    hits.push({ i, x0: x - box.w / 2, x1: x + box.w / 2, y0: box.top, y1: ground });
+    drawRoadSprite(g, "lamp", x + step / 2, ground + 4, u * 1.1, { night, side: 1 });
+  });
+  // road with cars
+  g.fillStyle = "#4a4e57";
+  g.fillRect(0, ground + 14, W, H - ground);
+  g.fillStyle = "#ffffff";
+  for (let k = -1; k < W / 80 + 2; k++) g.fillRect(k * 80 - (scroll % 80), ground + 14 + (H - ground) * 0.45, 44, 6);
+  for (const c of carImgs) {
+    c.x += c.v * dt;
+    const span = W + 400;
+    const x = ((c.x % span) + span) % span - 200;
+    const ch = (H - ground) * 0.42;
+    const y = c.v > 0 ? ground + 14 + (H - ground) * 0.05 : ground + 14 + (H - ground) * 0.5;
+    if (c.img.complete) {
+      g.save();
+      g.translate(x, y);
+      if (c.v < 0) g.scale(-1, 1);
+      g.drawImage(c.img, -ch * 0.97, 0, ch * 1.94, ch);
+      g.restore();
+    }
+  }
+}
+
+// ---------- input, loop, buttons ----------
+const hits = [];
+let drag = null;
+cv.addEventListener("pointerdown", (e) => (drag = { x: e.clientX, y: e.clientY, s: scroll, moved: false, t: performance.now() }));
+addEventListener("pointermove", (e) => {
+  if (!drag) return;
+  const dx = e.clientX - drag.x;
+  if (Math.abs(dx) > 8) drag.moved = true;
+  if (mode === "d2" && drag.moved) {
+    const ns = drag.s - dx;
+    vel = (ns - scroll) * 30;
+    scroll = ns;
+  }
+});
+addEventListener("pointerup", (e) => {
+  if (!drag) return;
+  const d = drag;
+  drag = null;
+  if (d.moved) {
+    if (mode === "d1") go(e.clientX - d.x < 0 ? 1 : -1);
+    return;
+  }
+  const hit = [...hits].reverse().find((r) => e.clientX >= r.x0 && e.clientX <= r.x1 && e.clientY >= r.y0 && e.clientY <= r.y1);
+  if (!hit) return;
+  tapped = { i: hit.i, t: time };
+  const b = STATE[hit.i];
+  say(b.level < 0 ? "Toto sa otvorí neskôr." : b.level === 0 ? `Tu môžeš postaviť: ${b.def.name}.` : b.def.say);
+  if (mode === "d1" && hit.i !== focus) go(hit.i - focus);
+});
+function go(step) {
+  focus = Math.max(0, Math.min(STATE.length - 1, focus + step));
+  say(STATE[focus].level > 0 ? STATE[focus].def.name : STATE[focus].level === 0 ? "Stavenisko" : "Zatiaľ zamknuté");
+}
+document.getElementById("left").onclick = () => (mode === "d1" ? go(-1) : (vel = -900));
+document.getElementById("right").onclick = () => (mode === "d1" ? go(1) : (vel = 900));
+function resize() {
+  W = innerWidth;
+  H = innerHeight;
+  cv.width = W * dpr;
+  cv.height = H * dpr;
+  g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  backdrop = null;
+}
+addEventListener("resize", resize);
+resize();
+const bar = document.getElementById("bar");
+function ui() {
+  const b = (label, on, fn, cls = "") => Object.assign(document.createElement("button"), { textContent: label, className: `${on ? "on " : ""}${cls}`, onclick: () => (fn(), ui()) });
+  const home = Object.assign(document.createElement("a"), { href: "../", textContent: "🏠", className: "emo" });
+  bar.replaceChildren(home, b("D1 jazda ulicou", mode === "d1", () => (mode = "d1")), b("D2 bočná ulica", mode === "d2", () => (mode = "d2")), b(night ? "🌙" : "☀️", false, () => ((night = !night), (backdrop = null)), "emo"));
+  document.getElementById("tip").textContent = mode === "d1" ? "◀ ▶ alebo potiahni: auto ide k ďalšiemu domu. Ťukni na dom." : "Potiahni prstom: ulica ide, vrstvy sa hýbu rôzne rýchlo. Ťukni na dom.";
+}
+ui();
+let last = performance.now();
+function loop(now) {
+  requestAnimationFrame(loop);
+  const dt = Math.min(0.05, (now - last) / 1000);
+  last = now;
+  time += dt;
+  try {
+    g.clearRect(0, 0, W, H);
+    if (mode === "d1") drawD1(dt);
+    else drawD2(dt);
+  } catch (err) {
+    console.error(err);
+  }
+}
+requestAnimationFrame(loop);
+window.__preview = { setMode: (m) => ((mode = m), ui()), setNight: (n) => ((night = n), (backdrop = null), ui()), go, state: () => ({ focus, scroll }) };
+void SEG; void PLAYER_Z;
+</script>
+</body>
+</html>

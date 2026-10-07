@@ -1,0 +1,397 @@
+<!doctype html>
+<html lang="sk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Náhľad: 3D auto</title>
+<style>
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #23263f; font-family: system-ui, sans-serif; user-select: none; -webkit-user-select: none; }
+  #stage { position: fixed; inset: 0; touch-action: none; }
+  .bar { position: fixed; left: 8px; right: 8px; display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; pointer-events: none; }
+  .bar.top { top: 8px; }
+  .bar.bottom { bottom: 8px; }
+  .bar button, .bar a { pointer-events: auto; min-width: 52px; height: 52px; padding: 0 10px; display: grid; place-items: center; border: 0; border-radius: 16px;
+    background: rgba(255, 255, 255, .88); font: 700 15px system-ui; font-size: 24px; text-decoration: none; color: #23324a; box-shadow: 0 3px 8px rgba(0, 0, 0, .3); cursor: pointer; }
+  .bar button.on { background: #ffd23f; outline: 3px solid #fff; }
+  .bar button.txt { font-size: 15px; }
+  .bar .sw { width: 52px; padding: 0; }
+  .bar .sw i { display: block; width: 30px; height: 30px; border-radius: 50%; box-shadow: inset 0 0 0 3px rgba(0, 0, 0, .15); }
+  .group { display: flex; gap: 6px; padding: 4px; border-radius: 20px; background: rgba(0, 0, 0, .25); pointer-events: auto; }
+  .note { position: fixed; top: 70px; left: 50%; transform: translateX(-50%); color: #fff; font: 14px system-ui; opacity: .8; text-align: center; pointer-events: none; }
+</style>
+<script type="importmap">{ "imports": { "three": "./vendor/three.module.min.js" } }</script>
+</head>
+<body>
+<div id="stage"></div>
+<div class="bar top" id="top"></div>
+<div class="note" id="note"></div>
+<div class="bar bottom" id="bottom"></div>
+<script type="module">
+// 3D car preview (DESIGN-v2 §14, part 15): A = own model built from the side view of every car
+// kind, B = a free CC0 model (Kenney). Both with the look from the game: paint, wheels, wing,
+// roof item, sticker, neon. Drag to turn, it turns slowly by itself when left alone.
+import * as THREE from "three";
+import { GLTFLoader } from "./vendor/addons/loaders/GLTFLoader.js";
+import { CARS } from "../js/data/cars.js";
+import { TUNING } from "../js/data/tuning.js";
+
+const item = (cat, id) => TUNING.find((c) => c.id === cat).items.find((i) => i.id === id);
+const look = { mode: "own", car: "sedan", color: "red", wheels: "basic", wing: "none", roof: "none", sticker: "none", neon: "none" };
+
+// ---------- scene ----------
+const stage = document.getElementById("stage");
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(Math.min(2, devicePixelRatio || 1));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+stage.append(renderer.domElement);
+const scene = new THREE.Scene();
+scene.background = new THREE.Color("#2b2f52");
+scene.fog = new THREE.Fog("#2b2f52", 14, 30);
+const camera = new THREE.PerspectiveCamera(35, 1, 0.1, 100);
+scene.add(new THREE.HemisphereLight("#dfe8ff", "#3a3550", 1.6));
+const sun = new THREE.DirectionalLight("#ffffff", 2.2);
+sun.position.set(4, 8, 5);
+sun.castShadow = true;
+sun.shadow.mapSize.set(1024, 1024);
+Object.assign(sun.shadow.camera, { left: -5, right: 5, top: 5, bottom: -5 });
+scene.add(sun);
+const spot = new THREE.SpotLight("#fff3c4", 30, 20, 0.5, 0.6);
+spot.position.set(0, 9, 0);
+scene.add(spot);
+
+// turntable with stripes
+const plate = new THREE.Group();
+scene.add(plate);
+const disc = new THREE.Mesh(new THREE.CylinderGeometry(4.2, 4.3, 0.25, 64), new THREE.MeshStandardMaterial({ color: "#c9cfe0", roughness: 0.6 }));
+disc.position.y = -0.125;
+disc.receiveShadow = true;
+plate.add(disc);
+for (let i = 0; i < 24; i++) {
+  const s = new THREE.Mesh(new THREE.CircleGeometry(4.15, 1, (i / 24) * Math.PI * 2, Math.PI / 24), new THREE.MeshStandardMaterial({ color: "#aeb6cc" }));
+  s.rotation.x = -Math.PI / 2;
+  s.position.y = 0.006;
+  s.receiveShadow = true;
+  plate.add(s);
+}
+const floor = new THREE.Mesh(new THREE.CircleGeometry(30, 48), new THREE.MeshStandardMaterial({ color: "#3a3f68" }));
+floor.rotation.x = -Math.PI / 2;
+floor.position.y = -0.26;
+scene.add(floor);
+
+const carHolder = new THREE.Group();
+plate.add(carHolder);
+let neonLight = null;
+
+// ---------- helpers ----------
+function emojiTexture(char, size = 128) {
+  const cv = document.createElement("canvas");
+  cv.width = cv.height = size;
+  const g = cv.getContext("2d");
+  g.font = `${size * 0.8}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif`;
+  g.textAlign = "center";
+  g.textBaseline = "middle";
+  g.fillText(char, size / 2, size / 2 + size * 0.05);
+  const t = new THREE.CanvasTexture(cv);
+  t.colorSpace = THREE.SRGBColorSpace;
+  return t;
+}
+function paintMaterial() {
+  const c = item("color", look.color);
+  if (c.special === "rainbow" || c.special === "galaxy") {
+    const cv = document.createElement("canvas");
+    cv.width = 256;
+    cv.height = 64;
+    const g = cv.getContext("2d");
+    const gr = g.createLinearGradient(0, 0, 256, 0);
+    (c.special === "rainbow" ? ["#ff5a5f", "#ff8c42", "#ffd23f", "#3ebd4a", "#2ab7ca", "#8f5bd8"] : ["#140f33", "#3b2f7a", "#7b5cff", "#3b2f7a", "#140f33"]).forEach((col, i, a) => gr.addColorStop(i / (a.length - 1), col));
+    g.fillStyle = gr;
+    g.fillRect(0, 0, 256, 64);
+    if (c.special === "galaxy") for (let i = 0; i < 60; i++) (g.fillStyle = "#fff"), g.fillRect(Math.random() * 256, Math.random() * 64, 1.5, 1.5);
+    const t = new THREE.CanvasTexture(cv);
+    t.colorSpace = THREE.SRGBColorSpace;
+    t.wrapS = t.wrapT = THREE.RepeatWrapping;
+    t.repeat.set(0.004, 0.004);
+    return new THREE.MeshStandardMaterial({ map: t, roughness: 0.35, metalness: 0.1 });
+  }
+  return new THREE.MeshStandardMaterial({ color: c.value, roughness: c.special === "gold" ? 0.25 : 0.4, metalness: c.special === "gold" ? 0.8 : 0.05 });
+}
+function pathPoints(d, step = 2) {
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  const p = document.createElementNS("http://www.w3.org/2000/svg", "path");
+  p.setAttribute("d", d);
+  svg.append(p);
+  document.body.append(svg);
+  const len = p.getTotalLength();
+  const pts = [];
+  for (let l = 0; l < len; l += step) {
+    const q = p.getPointAtLength(l);
+    pts.push(new THREE.Vector2(q.x, -q.y));
+  }
+  svg.remove();
+  return pts;
+}
+
+// ---------- A: own model from the side view (viewBox 240 × 124 → 6 × 3.1 units) ----------
+const K = 1 / 40;
+function buildOwn() {
+  const kind = CARS.find((c) => c.id === look.car);
+  const side = kind.side;
+  const group = new THREE.Group();
+  const width = (kind.top.width || 1) * 2.5;
+  const shape = new THREE.Shape(pathPoints(side.body));
+  const body = new THREE.Mesh(
+    new THREE.ExtrudeGeometry(shape, { depth: width / K - 16, bevelEnabled: true, bevelThickness: 8, bevelSize: 6, bevelSegments: 4, curveSegments: 6 }),
+    paintMaterial(),
+  );
+  body.scale.set(K, K, K);
+  body.castShadow = true;
+  group.add(body);
+  // windows: thin glass panels on both sides
+  for (const w of side.windows) {
+    const g = new THREE.ExtrudeGeometry(new THREE.Shape(pathPoints(w)), { depth: width / K + 2, bevelEnabled: false });
+    const m = new THREE.Mesh(g, new THREE.MeshStandardMaterial({ color: "#9fd8ff", roughness: 0.1, metalness: 0.2 }));
+    m.scale.set(K, K, K);
+    m.position.z = -9 * K;
+    group.add(m);
+  }
+  // wheels
+  const wh = item("wheels", look.wheels);
+  const r = side.wheelR * (wh.big ? 1.25 : 1) * K;
+  const tireMat = new THREE.MeshStandardMaterial({ color: "#23252b", roughness: 0.9 });
+  const rimMat = new THREE.MeshStandardMaterial({ color: wh.rim, roughness: 0.3, metalness: 0.6 });
+  for (const x of side.wheels) {
+    for (const z of [-0.05, width - 8 * K]) {
+      const t = new THREE.Mesh(new THREE.CylinderGeometry(r, r, 0.45, 28), tireMat);
+      t.rotation.x = Math.PI / 2;
+      t.position.set(x * K, -side.wheelY * K, z + (z < 0 ? -0.1 : 0.25));
+      t.castShadow = true;
+      group.add(t);
+      const rim = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.55, r * 0.55, 0.47, 6), rimMat);
+      rim.rotation.x = Math.PI / 2;
+      rim.position.copy(t.position);
+      group.add(rim);
+    }
+  }
+  // lights
+  const lamp = (x, y, col) => {
+    for (const z of [0.3, width - 0.6]) {
+      const m = new THREE.Mesh(new THREE.SphereGeometry(0.16, 12, 8), new THREE.MeshStandardMaterial({ color: col, emissive: col, emissiveIntensity: 0.8 }));
+      m.position.set(x * K, -y * K, z);
+      group.add(m);
+    }
+  };
+  lamp(side.front[0] + 3, side.front[1], "#fff6b0");
+  lamp(side.back[0] - 2, side.back[1], "#ff4040");
+  center(group, width, side, kind);
+  return group;
+}
+function addLook(group, { roofPos, stickerPos, backPos, width, sideZ }) {
+  const wing = item("wing", look.wing);
+  if (wing.size) {
+    const mat = new THREE.MeshStandardMaterial({ color: wing.color || (wing.feather ? "#ffffff" : "#2b2d33") });
+    const bar = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.1, width * (0.7 + 0.2 * wing.size)), mat);
+    bar.position.set(backPos.x, backPos.y + 0.55, sideZ);
+    bar.castShadow = true;
+    group.add(bar);
+    for (const dz of [-0.6, 0.6]) {
+      const post = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.55, 0.08), mat);
+      post.position.set(backPos.x, backPos.y + 0.28, sideZ + dz);
+      group.add(post);
+    }
+    if (wing.double) {
+      const b2 = bar.clone();
+      b2.position.y += 0.25;
+      group.add(b2);
+    }
+  }
+  const roof = item("roof", look.roof);
+  if (roof.icon) {
+    const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: emojiTexture(roof.icon) }));
+    s.scale.set(1.3, 1.3, 1);
+    s.position.set(roofPos.x, roofPos.y + 0.6, sideZ);
+    group.add(s);
+  }
+  const st = item("sticker", look.sticker);
+  if (st.icon) {
+    for (const [z, flip] of [[sideZ + width / 2 + 0.02, 1], [sideZ - width / 2 - 0.02, -1]]) {
+      const m = new THREE.Mesh(new THREE.PlaneGeometry(0.75, 0.75), new THREE.MeshBasicMaterial({ map: emojiTexture(st.icon), transparent: true }));
+      m.position.set(stickerPos.x, stickerPos.y, z);
+      if (flip < 0) m.rotation.y = Math.PI;
+      group.add(m);
+    }
+  }
+}
+function center(group, width, side, kind) {
+  addLook(group, {
+    roofPos: { x: side.roof[0] * K, y: -side.roof[1] * K },
+    stickerPos: { x: side.sticker[0] * K, y: -side.sticker[1] * K },
+    backPos: { x: side.wing[0] * K + 0.2, y: -side.wing[1] * K },
+    width,
+    sideZ: width / 2 - 0.2,
+  });
+  group.position.set(-120 * K, side.wheelY * K + side.wheelR * K * (item("wheels", look.wheels).big ? 1.25 : 1), -width / 2 + 0.2);
+  void kind;
+}
+
+// ---------- B: free CC0 model (Kenney), recoloured through its palette texture ----------
+const loader = new GLTFLoader();
+const cache = new Map();
+function recolor(tex, hex) {
+  const img = tex.image;
+  const cv = document.createElement("canvas");
+  cv.width = img.width;
+  cv.height = img.height;
+  const g = cv.getContext("2d");
+  g.drawImage(img, 0, 0);
+  const target = new THREE.Color(hex);
+  const area = g.getImageData(320, 256, 64, 128); // the red swatches the truck body uses
+  const d = area.data;
+  for (let i = 0; i < d.length; i += 4) {
+    const l = (0.3 * d[i] + 0.59 * d[i + 1] + 0.11 * d[i + 2]) / 140; // shading of the swatch
+    d[i] = Math.min(255, target.r * 255 * l);
+    d[i + 1] = Math.min(255, target.g * 255 * l);
+    d[i + 2] = Math.min(255, target.b * 255 * l);
+  }
+  g.putImageData(area, 320, 256);
+  const t = new THREE.CanvasTexture(cv);
+  t.flipY = false;
+  t.colorSpace = THREE.SRGBColorSpace;
+  t.magFilter = THREE.NearestFilter;
+  return t;
+}
+async function buildKenney(file) {
+  if (!cache.has(file)) cache.set(file, await loader.loadAsync(`./models/kenney/${file}`));
+  const src = cache.get(file).scene.clone(true);
+  const c = item("color", look.color);
+  const wh = item("wheels", look.wheels);
+  src.traverse((o) => {
+    if (!o.isMesh) return;
+    o.castShadow = true;
+    o.material = o.material.clone();
+    if (o.material.map && !file.includes("motorcycle")) o.material.map = recolor(o.material.map, c.special ? c.value : c.value);
+    if (o.name.startsWith("wheel") && wh.big) o.scale.multiplyScalar(1.3);
+  });
+  // Kenney cars face +z; turn them to face +x like the own models (front = right)
+  const pivot = new THREE.Group();
+  pivot.add(src);
+  pivot.rotation.y = Math.PI / 2;
+  const size = new THREE.Box3().setFromObject(pivot).getSize(new THREE.Vector3());
+  pivot.scale.setScalar(6 / size.x);
+  const box = new THREE.Box3().setFromObject(pivot);
+  pivot.position.set(-(box.min.x + box.max.x) / 2, -box.min.y, -(box.min.z + box.max.z) / 2);
+  const s2 = box.getSize(new THREE.Vector3());
+  const group = new THREE.Group();
+  group.add(pivot);
+  addLook(group, { roofPos: { x: s2.x * 0.12, y: s2.y }, stickerPos: { x: s2.x * 0.18, y: s2.y * 0.5 }, backPos: { x: -s2.x * 0.42, y: s2.y * 0.62 }, width: s2.z, sideZ: 0 });
+  return group;
+}
+
+// ---------- build + neon ----------
+let building = 0;
+async function rebuild() {
+  const ticket = ++building;
+  const g = look.mode === "own" ? buildOwn() : await buildKenney(look.car === "motorcycle" ? "vehicle-motorcycle.glb" : "vehicle-truck-red.glb");
+  if (ticket !== building) return;
+  carHolder.clear();
+  carHolder.add(g);
+  if (neonLight) scene.remove(neonLight);
+  const n = item("neon", look.neon);
+  if (n.value) {
+    neonLight = new THREE.PointLight(n.value, 25, 5, 1.5);
+    neonLight.position.set(0, 0.15, 0);
+    plate.add(neonLight);
+  } else neonLight = null;
+  ui();
+}
+
+// ---------- turning ----------
+let angle = 0.6;
+let velocity = 0;
+let dragging = null;
+let idle = 0;
+stage.addEventListener("pointerdown", (e) => (dragging = { x: e.clientX, a: angle, id: e.pointerId }));
+addEventListener("pointermove", (e) => {
+  if (!dragging || e.pointerId !== dragging.id) return;
+  const na = dragging.a + (e.clientX - dragging.x) * 0.012;
+  velocity = na - angle;
+  angle = na;
+  idle = 0;
+});
+addEventListener("pointerup", () => (dragging = null));
+function resize() {
+  renderer.setSize(innerWidth, innerHeight);
+  camera.aspect = innerWidth / innerHeight;
+  const far = innerWidth < innerHeight ? 17 : 12.5;
+  camera.position.set(0, 4.2, far);
+  camera.lookAt(0, 1.1, 0);
+  camera.updateProjectionMatrix();
+}
+addEventListener("resize", resize);
+resize();
+let last = performance.now();
+renderer.setAnimationLoop((now) => {
+  const dt = Math.min(0.05, (now - last) / 1000);
+  last = now;
+  idle += dt;
+  if (!dragging) {
+    velocity *= 0.92;
+    angle += velocity + (idle > 1.5 ? dt * 0.5 : 0);
+  }
+  plate.rotation.y = angle;
+  renderer.render(scene, camera);
+});
+
+// ---------- buttons ----------
+const top = document.getElementById("top");
+const bottom = document.getElementById("bottom");
+const note = document.getElementById("note");
+function btn(content, on, click, cls = "") {
+  const b = document.createElement("button");
+  b.className = `${on ? "on " : ""}${cls}`;
+  if (content instanceof Node) b.append(content);
+  else b.textContent = content;
+  b.onclick = () => {
+    click();
+    rebuild();
+  };
+  return b;
+}
+function group(...items) {
+  const g = document.createElement("div");
+  g.className = "group";
+  g.append(...items);
+  return g;
+}
+function ui() {
+  const own = look.mode === "own";
+  note.textContent = own ? "A: vlastný model (z tvaru auta z boku)" : "B: stiahnutý model Kenney, CC0 (v ukážke len nákladiak a motorka; celá sada má 45 áut)";
+  const home = document.createElement("a");
+  home.href = "../";
+  home.textContent = "🏠";
+  top.replaceChildren(
+    home,
+    group(btn("A vlastný", own, () => ((look.mode = "own"), (look.car = "sedan")), "txt"), btn("B stiahnutý", !own, () => ((look.mode = "kenney"), (look.car = "truck")), "txt")),
+    group(...(own ? CARS.map((c) => btn(c.icon, look.car === c.id, () => (look.car = c.id))) : [btn("🚚", look.car === "truck", () => (look.car = "truck")), btn("🏍️", look.car === "motorcycle", () => (look.car = "motorcycle"))])),
+  );
+  const swatch = (id) => {
+    const c = item("color", id);
+    const i = document.createElement("i");
+    i.style.background = c.special === "rainbow" ? "linear-gradient(90deg,#ff5a5f,#ffd23f,#3ebd4a,#2ab7ca,#8f5bd8)" : c.special === "galaxy" ? "radial-gradient(#7b5cff,#140f33)" : c.value;
+    return btn(i, look.color === id, () => (look.color = id), "sw");
+  };
+  bottom.replaceChildren(
+    group(...["red", "blue", "yellow", "green", "purple", "black", "gold", "rainbow", "galaxy"].map(swatch)),
+    group(btn("⚪", look.wheels === "basic", () => (look.wheels = "basic")), btn("🟡", look.wheels === "gold", () => (look.wheels = "gold")), btn("🚙", look.wheels === "monster", () => (look.wheels = "monster"))),
+    group(btn("➖", look.wing === "none", () => (look.wing = "none")), btn("🪽", look.wing === "big", () => (look.wing = "big")), btn("🪽🪽", look.wing === "double", () => (look.wing = "double"), "txt")),
+    group(...["none", "crown", "duck", "siren"].map((id) => btn(item("roof", id).icon || "➖", look.roof === id, () => (look.roof = id)))),
+    group(...["none", "star", "fire", "unicorn"].map((id) => btn(item("sticker", id).icon || "➖", look.sticker === id, () => (look.sticker = id)))),
+    group(btn("💡", look.neon !== "none", () => (look.neon = look.neon === "none" ? "pink" : "none"))),
+  );
+}
+rebuild();
+window.__preview = { look, rebuild };
+</script>
+</body>
+</html>

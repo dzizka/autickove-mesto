@@ -1,12 +1,49 @@
 // 🎪 Hry: the games room with the activities from v1 (DESIGN-v2 §12). Big tiles with an icon,
-// the difficulty as stars; locked games show 🔒 and the level they open on.
+// the difficulty as stars; locked games show 🔒 and the level they open on. A tap asks for the
+// difficulty: ★ / ★★ / ★★★, the recommended one glows 👍 (DESIGN-v2 §12, part 13).
 
-import { h } from "../core/ui.js";
+import { h, modal, closeModal } from "../core/ui.js";
 import { speak, sfx } from "../core/audio.js";
 import { getState } from "../core/state.js";
 import { startGame } from "../core/router.js";
 import { MINIGAMES, MINI } from "../data/minigames.js";
 import { miniProgress } from "../systems/minigames.js";
+
+/** The child picks the difficulty; all three are open, the recommendation glows. */
+function pickLevel(g) {
+  const prog = miniProgress(g.id);
+  const current = prog.pick || prog.level;
+  modal(
+    [
+      h("div", { class: "modal-icon", "aria-hidden": "true" }, g.icon),
+      h(
+        "div",
+        { class: "level-pick" },
+        MINI.levelNames.map((name, i) =>
+          h(
+            "button",
+            {
+              class: `btn big diff-btn lv${i + 1}${i + 1 === current ? " last" : ""}${i + 1 === prog.level ? " recommended" : ""}`,
+              "data-testid": `level-${i + 1}`,
+              "aria-label": name,
+              onclick: () => {
+                sfx.tap();
+                closeModal();
+                startGame(g.id, i + 1);
+              },
+            },
+            h("span", { class: "lv-stars", "aria-hidden": "true" }, "★".repeat(i + 1)),
+            h("span", { class: "btn-label" }, name),
+            i + 1 === prog.level && h("span", { class: "lv-thumb", "aria-hidden": "true" }, "👍"),
+          ),
+        ),
+      ),
+      h("div", { class: "modal-row" }, h("button", { class: "btn ghost", "data-testid": "level-close", onclick: closeModal }, "✖")),
+    ],
+    { testId: "level-picker", className: "level-modal" },
+  );
+  speak(`${g.say} Vyber si: ľahké, stredné, alebo ťažké.`);
+}
 
 export default {
   id: "games",
@@ -15,7 +52,8 @@ export default {
     const s = getState();
     const tiles = MINIGAMES.map((g) => {
       const locked = s.level < g.unlockLevel;
-      const lvl = miniProgress(g.id, s).level;
+      const prog = miniProgress(g.id, s);
+      const lvl = prog.pick || prog.level;
       return h(
         "button",
         {
@@ -30,8 +68,7 @@ export default {
               return;
             }
             sfx.tap();
-            speak(g.say);
-            startGame(g.id);
+            pickLevel(g);
           },
         },
         h("span", { class: "btn-icon", "aria-hidden": "true" }, locked ? "🔒" : g.icon),

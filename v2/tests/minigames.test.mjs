@@ -61,8 +61,17 @@ for (const width of WIDTHS) {
     await page.getByTestId("mini-repair").click();
     await page.waitForTimeout(200);
     assert.equal(await page.getByTestId("screen-games").count(), 1, "a locked game does not open");
+    // the child picks the difficulty: all three open, the recommended one has 👍
     await page.getByTestId("mini-pexeso").click();
+    await page.getByTestId("level-picker").waitFor();
+    assert.equal(await page.locator(".diff-btn").count(), 3);
+    assert.equal(await page.locator(".diff-btn.recommended").getAttribute("data-testid"), "level-1");
+    await screenshot(page, `${width}-level-picker`);
+    await page.getByTestId("level-3").click();
     await page.getByTestId("screen-game-pexeso").waitFor();
+    assert.equal(await page.getByTestId("screen-game-pexeso").getAttribute("data-level"), "3");
+    assert.equal(await page.locator(".pex-card").count(), PEXESO.pairs[2] * 2);
+    assert.equal(await page.evaluate(() => window.__game.state.getState().minigames.pexeso.pick), 3, "the choice is remembered");
     assert.deepEqual(page.errors, []);
     await page.context().close();
   });
