@@ -20,7 +20,7 @@ export function initAbilities(race) {
   if (race.abilities.has("starTurbo")) {
     // stars along the course, never on top of an obstacle
     for (let d = 120; d < race.length - 60; d += 100 / STARS_PER_100) {
-      const lane = race.rng.int(0, RACE.lanes - 1);
+      const lane = race.rng.int(0, race.lanes - 1);
       const blocked = race.objects.some((o) => (o.kind === "obstacle" || o.kind === "ramp") && o.lane === lane && Math.abs(o.d - d) < 6);
       if (!blocked) race.objects.push(makeObject("star", { lane, d, icon: "🌟", len: 1.4 }));
     }
@@ -45,7 +45,7 @@ export function updateAbilities(race, dt) {
     ab.rainT -= dt;
     if (ab.rainT <= 0) {
       ab.rainT = COIN_RAIN_EVERY;
-      for (let lane = 0; lane < RACE.lanes; lane++) {
+      for (let lane = 0; lane < race.lanes; lane++) {
         for (let i = 0; i < 3; i++) race.objects.push(makeObject("coin", { lane, d: p.d + 30 + i * 6 + lane * 2, icon: "🪙", len: 1, value: RACE.coinValue }));
       }
       fire(race, "coinRain");

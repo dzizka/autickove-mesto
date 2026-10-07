@@ -22,7 +22,7 @@ function emoji(g, char, x, y, size) {
   g.fillText(char, x, y);
 }
 
-function bodyPaint(g, color, w, h) {
+export function bodyPaint(g, color, w, h) {
   if (color.special === "rainbow") {
     const grad = g.createLinearGradient(0, 0, 0, h);
     ["#ff5a5f", "#ff8c42", "#ffd23f", "#3ebd4a", "#2ab7ca", "#8f5bd8"].forEach((c, i) => grad.addColorStop(i / 5, c));
@@ -46,7 +46,7 @@ function bodyPaint(g, color, w, h) {
   return { fill: base, base, outline: shade(base, -0.22) };
 }
 
-function drawPattern(g, id, special, base, w, h) {
+export function drawPattern(g, id, special, base, w, h) {
   const ink = luminance(base) > 0.62 ? "rgba(0,0,0,.22)" : "rgba(255,255,255,.55)";
   g.fillStyle = ink;
   if (special === "galaxy") {

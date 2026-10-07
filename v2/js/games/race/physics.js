@@ -31,14 +31,17 @@ export function createRace({ track, level, effects, rng, short = false, abilitie
   const length = short ? RACE.shortLength : RACE.length;
   const slow = 1 - Math.max(0, Math.min(RACE.easeMax, Number(ease) || 0)); // no-frustration help
   const rivalSpeed = (track.rivalBase + RACE.rivalLevelStep * (level - 1)) * RACE.baseSpeed * slow;
+  const lanes = track.lanes || RACE.lanes;
+  const mid = Math.floor((lanes - 1) / 2); // the player starts in the middle (left of it on even roads)
   const grid = [
     { lane: 0, d: 8 },
-    { lane: 2, d: 8 },
-    { lane: 1, d: 14 },
+    { lane: lanes - 1, d: 8 },
+    { lane: Math.min(lanes - 1, mid + 1), d: 14 },
   ];
   const race = {
     track,
     level,
+    lanes,
     length,
     effects,
     rng,
@@ -51,8 +54,8 @@ export function createRace({ track, level, effects, rng, short = false, abilitie
     time: 0,
     objects: generateCourse({ track, level, length, rng }),
     player: {
-      lane: 1,
-      x: 1,
+      lane: mid,
+      x: mid,
       vx: 0,
       d: 0,
       speed: 0,
@@ -97,7 +100,7 @@ export function visibleScale(topSpeed) {
 export function steer(race, dir) {
   if (race.phase === "finished") return;
   const p = race.player;
-  const lane = Math.max(0, Math.min(RACE.lanes - 1, p.lane + Math.sign(dir)));
+  const lane = Math.max(0, Math.min(race.lanes - 1, p.lane + Math.sign(dir)));
   if (lane !== p.lane) {
     p.lane = lane;
     race.events.push({ type: "steer" });
@@ -164,7 +167,7 @@ function updatePlayer(race, dt) {
   const slide = race.track.slippery * (1 - e.gripOnSnow);
   const damping = 2 * Math.sqrt(k) * (1 - 0.8 * Math.min(1, slide));
   p.vx += (k * (p.lane - p.x) - damping * p.vx) * dt;
-  p.x = Math.max(-0.35, Math.min(RACE.lanes - 0.65, p.x + p.vx * dt));
+  p.x = Math.max(-0.35, Math.min(race.lanes - 0.65, p.x + p.vx * dt));
 }
 
 function laneBlocked(race, lane, d, ahead) {
@@ -183,7 +186,7 @@ function updateRivals(race, dt) {
     // (rivals are never solid for the player: bumping into them would only frustrate)
     const playerBehind = !r.isBoss && race.phase === "racing" && Math.abs(p.x - r.lane) < 0.6 && p.d < r.d && r.d - p.d < 12 && p.speed > r.speed;
     if (!r.isBoss && (laneBlocked(race, r.lane, r.d, 18) || playerBehind)) {
-      const options = [r.lane - 1, r.lane + 1].filter((l) => l >= 0 && l < RACE.lanes && !laneBlocked(race, l, r.d, 18));
+      const options = [r.lane - 1, r.lane + 1].filter((l) => l >= 0 && l < race.lanes && !laneBlocked(race, l, r.d, 18));
       if (options.length) r.lane = options[Math.floor(race.rng.random() * options.length)];
     }
     r.x += (r.lane - r.x) * Math.min(1, dt * 6);
@@ -206,7 +209,7 @@ function updateTraffic(race, dt) {
     o.d += o.speed * dt * race.view;
     const blocked = race.objects.some((b) => b.kind === "obstacle" && !b.hit && b.lane === o.lane && b.d > o.d && b.d < o.d + 14);
     if (blocked) {
-      const options = [o.lane - 1, o.lane + 1].filter((l) => l >= 0 && l < RACE.lanes && !laneBlocked(race, l, o.d, 14));
+      const options = [o.lane - 1, o.lane + 1].filter((l) => l >= 0 && l < race.lanes && !laneBlocked(race, l, o.d, 14));
       if (options.length) o.lane = options[0];
       else o.speed = 0; // parks behind the obstacle; still avoidable in the free lane
     }

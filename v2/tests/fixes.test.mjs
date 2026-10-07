@@ -3,7 +3,7 @@
 import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
 import { RACE, TRACKS } from "../js/data/tracks.js";
-import { makeLayout } from "../js/games/race/track.js";
+import { makeView, clearViewMetres, LANE, CAM_H } from "../js/games/race/road.js";
 import { createRace, step, visibleScale } from "../js/games/race/physics.js";
 import { raceEffects, carStats } from "../js/systems/stats.js";
 import { starterParts, testParts } from "../js/systems/loot.js";
@@ -12,14 +12,24 @@ import { setup, openGame, screenshot, WIDTHS } from "./helpers.mjs";
 
 const quiet = { settings: { sound: false, voice: false } };
 
-// phones are played upright; tablets and computers either way
-test("a child has at least 1 s to react, on every screen and with any car", () => {
+test("a child has at least 1 s to react on every track, also at night", () => {
   const capped = RACE.baseSpeed * RACE.visibleCap;
+  for (const t of TRACKS) {
+    const seconds = clearViewMetres(t, 1) / capped;
+    assert.ok(seconds >= 1, `${t.id}: ${seconds.toFixed(2)} s`);
+  }
+  const night = TRACKS.find((t) => t.scene.night);
+  assert.ok(clearViewMetres(night, 2) > clearViewMetres(night, 1) * 1.3, "Svetlomet sees further at night");
+});
+
+// phones are played upright; tablets and computers either way
+test("lanes and the car are big enough on every screen", () => {
   for (const [w, h] of [[390, 844], [360, 740], [768, 1024], [1024, 768], [1280, 800], [1920, 1080]]) {
-    const L = makeLayout(w, h);
-    const seconds = L.playerY / L.pxPerM / capped;
-    assert.ok(seconds >= 1, `${w}×${h}: ${seconds.toFixed(2)} s`);
-    assert.ok(L.laneW >= 50, `${w}×${h}: lanes still big enough (${L.laneW.toFixed(0)} px)`);
+    const V = makeView(w, h);
+    const lanePx = (LANE * V.KX) / CAM_H;
+    assert.ok(lanePx >= 60, `${w}×${h}: lane ${lanePx.toFixed(0)} px`);
+    assert.ok(V.carPx >= 60, `${w}×${h}: car ${V.carPx.toFixed(0)} px`);
+    assert.ok(V.horizon > 0 && V.carY < h, `${w}×${h}: horizon and car on screen`);
   }
 });
 

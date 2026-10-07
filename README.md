@@ -15,7 +15,7 @@ v1/
 ├── css/              # vzhľad: základ, obrazovky, hry, responzívne úpravy
 └── js/
     ├── util.js  data.js  state.js  core.js  actions.js  cheats.js  save-transfer.js  main.js
-    ├── render/       # kreslenie áut (z boku a zhora)
+    ├── render/       # kreslenie áut (z boku, zhora a zozadu) a vecí na ceste
     ├── screens/      # obrazovky: mesto, obchod, album, kamaráti, trofeje, prehľad pre rodičov
     └── games/        # každá hra vo vlastnom súbore
 ```

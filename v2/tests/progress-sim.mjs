@@ -29,7 +29,7 @@ function kidDriver() {
     if (!danger || seen.has(danger.id)) return;
     seen.add(danger.id);
     if (race.rng.random() < 0.25) return; // missed it
-    const free = [p.lane - 1, p.lane + 1].filter((l) => l >= 0 && l < RACE.lanes && !race.objects.some((o) => SOLID.has(o.kind) && !o.hit && Math.abs(o.x - l) < 0.7 && o.d > p.d - 4 && o.d < p.d + look));
+    const free = [p.lane - 1, p.lane + 1].filter((l) => l >= 0 && l < race.lanes && !race.objects.some((o) => SOLID.has(o.kind) && !o.hit && Math.abs(o.x - l) < 0.7 && o.d > p.d - 4 && o.d < p.d + look));
     if (free.length) steer(race, free[0] - p.lane);
   };
 }

@@ -70,7 +70,9 @@ v2/
 │   │   └── crew.js         # kamaráti: vajíčka, levely, vývoj
 │   ├── render/
 │   │   ├── car-side.js     # auto z boku (SVG)
-│   │   ├── car-top.js      # auto zhora (canvas)
+│   │   ├── car-top.js      # auto zhora (canvas): ikony a náhľady
+│   │   ├── car-back.js     # auto zozadu (canvas) v pretekoch
+│   │   ├── road-sprites.js # kreslené prekážky, krajina, mince a kanistre v pretekoch
 │   │   ├── effects.js      # neón a stopa v pretekoch
 │   │   └── emoji.js        # emoji kreslené do malého plátna (rýchle na tablete)
 │   ├── screens/            # home.js garage.js tuning.js crew.js gallery.js parents.js
@@ -80,7 +82,8 @@ v2/
 │   │                       # set-book.js (kniha setov)
 │   └── games/
 │       ├── demo/           # skúšobná jazda len z testovacieho menu (overuje slučku a odmeny)
-│       ├── race/           # index.js  track.js  spawner.js  physics.js  draw.js  hud.js  boss.js  abilities.js (legendárne schopnosti)
+│       ├── race/           # index.js  spawner.js  physics.js  hud.js  boss.js  abilities.js (legendárne schopnosti)
+│       │                   # road.js (úseky cesty, projekcia, obloha)  scene.js (prekážky, autá, efekty)  weather.js
 │       └── coloring/       # index.js  free-paint.js  by-number.js  brush.js  tools.js (panel nástrojov)
 └── tests/                  # Playwright testy (bod 10): node --test, package.json, helpers.mjs,
                             # progress-sim.mjs (simulácia dlhého hrania na vyváženie)
@@ -114,15 +117,30 @@ Vo v1 sa našli tri chyby (sú opravené vo v1). Vo v2 im treba predísť od za�
 
 ### 4.1 Preteky
 
-- **Ovládanie:** pohľad zhora, auto ide samo dopredu a dieťa ťukaním vľavo a vpravo mení pruhy.
+- **Ovládanie:** auto ide samo dopredu a dieťa ťukaním na ľavú alebo pravú polovicu obrazovky mení pruhy.
+- **Pohľad (od časti 9):** zozadu v pseudo 3D, ako v náhľade `/v2/preview/pseudo3d.html`, ktorý rodič odsúhlasil. Cesta ubieha do diaľky, má zákruty a kopce, na obzore je krajina trate. Zákruty a kopce sú len na pohľad, fyzika ostáva rovná (pruhy a vzdialenosť), takže vyváženie sa nemení.
 - **Na ceste:** súperi, premávka, prekážky, mince, power-upy, rampy a benzín. Súperi nie sú pevná prekážka: keď ich dieťa dobieha v rovnakom pruhu, uhnú mu (narážanie do nich len hnevalo).
 - **Trate:** 6 tratí s vlastným vzhľadom a počasím: Mesto, Les, Púšť, Sneh, Noc a Vesmír.
 - **Úrovne trate:** každá trať má úrovne 1 až 5 (ako úrovne sveta v Diable). Úroveň sa odomkne víťazstvom na nižšej. Vyššia úroveň znamená rýchlejších súperov, viac prekážok a lepšie diely.
 - **Výber trate:** pri každej úrovni je odporúčaná sila auta 🟢 zvládneš, 🟡 bude ťažké, 🔴 ešte nie. Ďalej sú tam medaily a pruh výziev k bossovi.
 - **Koniec pretekov:** pódium s umiestnením a truhlica s korisťou (bod 4.5).
-- **Výkon:** preteky musia ísť plynulo na staršom tablete. Svetlá v noci sa kreslia na zmenšenom plátne.
-- **Rýchlosť na obrazovke má strop** (po skúšaní: s vylepšeným autom sa nedalo uhýbať). Auto sa na obrazovke pohybuje najviac `RACE.visibleCap` × základná rýchlosť. Silnejšie auto preteky spomalí ako spomalený film, takže súperi aj tak zaostávajú, ale prekážky prichádzajú tempom, na ktoré dieťa stihne zareagovať. Kamera ukáže aspoň `RACE.viewAhead` metrov cesty pred autom, čo je **aspoň 1 sekunda** na reakciu. Stráži to test.
-- **Ďalej (časť 9):** trate sa budú líšiť nielen farbou: iný počet pruhov, vlastné prekážky a zákruty, a pohľad zozadu v pseudo 3D (náhľad je na `/v2/preview/pseudo3d.html`, čaká na odsúhlasenie).
+- **Výkon:** preteky musia ísť plynulo na staršom tablete. Obloha a kopce na obzore sa nakreslia raz do pomocného plátna a potom sa len posúvajú.
+- **Rýchlosť na obrazovke má strop** (po skúšaní: s vylepšeným autom sa nedalo uhýbať). Auto sa na obrazovke pohybuje najviac `RACE.visibleCap` × základná rýchlosť. Silnejšie auto preteky spomalí ako spomalený film, takže súperi aj tak zaostávajú, ale prekážky prichádzajú tempom, na ktoré dieťa stihne zareagovať. Prekážka je jasne viditeľná (hmla menej ako polovičná) aspoň **1 sekundu** pred autom, aj v noci. Stráži to test.
+- **Každá trať je iná** (časť 9):
+
+  | Trať | Pruhy | Cesta | Prekážky | Krajina |
+  |---|---|---|---|---|
+  | Mesto | 3 | mierne zákruty, rovina | kužele, zábrany, debny | domy, stromy, lampy, mrakodrapy na obzore |
+  | Les | 2 | lesná cesta, veľa zákrut, pahorky | kmene, kamene, pne | stromy, smreky, huby, zelené kopce |
+  | Púšť | 4 | dlhé rovinky cez duny | kaktusy, kamene, guľatý bodliak | kaktusy, skaly, slnko, duny |
+  | Sneh | 3 | horské zákruty a kopce | snehuliaci, ľadové kocky, snehové gule | smreky so snehom, hory, sneženie |
+  | Noc | 3 | mesto v noci | kužele, zábrany, sudy | lampy so svetlom, okná svietia, mesiac, hviezdy |
+  | Vesmír | 5 | veľké vlny hore a dole | asteroidy, satelity, kryštály | planéty, neónové kryštály, hviezdy |
+
+  - Na trati s viacerými pruhmi je viac prekážok a premávky, aby bola rovnako hustá. Vždy ostane aspoň jeden voľný pruh.
+  - V noci je hmla tmavá a cestu osvetľujú svetlá auta. Legendárny Svetlomet posunie hmlu ďalej.
+  - Prekážky, mince, kanistre, rampy a autá sú kreslené vlastnými tvarmi, nie emoji. Emoji ostávajú pri ikonách power-upov, kamarátov a bossov.
+  - Auto hráča je vidieť zozadu so všetkým, čo dieťa kúpilo: druh auta, farba, vzor, kolesá, krídlo, nálepka, vec na streche, neón a stopa.
 
 ### 4.2 Dva druhy úprav auta
 
@@ -303,7 +321,7 @@ Každá časť sa po dokončení nahrá na GitHub a dá sa hneď hrať na `/v2/`
 | **6. Omaľovánka** | Oba režimy, nástroje, 24 + 30 obrázkov, galéria | obrázok podľa čísel 24×24 sa dá dokončiť na telefóne |
 | **7. Doladenie** | Úlohy, trofeje, prehľad pre rodičov, vyváženie, výkon na tablete; potom `/` vedie na `v2/` | rodič s dieťaťom odsúhlasí, že v2 je hlavná verzia |
 | **8. Opravy po skúšaní** | Truhlica čaká na ťuknutie, ⬇ Zložiť diel, strop rýchlosti na obrazovke a dlhší výhľad, štatistiky ako čísla a šípky (body 4.1, 4.3, 4.5, 4.6) | s najsilnejším autom sa dá uhýbať, dieťa vie povedať, ktorý diel je silnejší |
-| **9. Rozdielne trate a pseudo 3D** | Po odsúhlasení náhľadu: pohľad zozadu s perspektívou, zákruty a kopce, pruhy podľa trate (Mesto 3, Les 2, Púšť 4, Sneh 3, Noc 3, Vesmír 5), vlastné prekážky a krajina; vlastné kreslené obrázky namiesto emoji | každá trať vyzerá a jazdí inak |
+| **9. Rozdielne trate a pseudo 3D** | Pohľad zozadu s perspektívou (náhľad odsúhlasený), zákruty a kopce, pruhy podľa trate (Mesto 3, Les 2, Púšť 4, Sneh 3, Noc 3, Vesmír 5), vlastné prekážky a krajina; vlastné kreslené obrázky namiesto emoji | každá trať vyzerá a jazdí inak |
 | **10. Hry 1** | Hlavná ponuka 🎪 Hry a prvé aktivity z v1: Pexeso, Umyváreň, Servis, Parkovisko (bod 12) | dieťa nájde a dohrá každú hru bez čítania |
 | **11. Hry 2** | Počítanie, Skladačka, Bludisko, Písmenká, Hudobná garáž, Križovatka (bod 12) | ako pri časti 10 |
 | **12. Mesto a album** | Systémy z v1 nanovo: mesto s budovami, album s nálepkami, denný darček (bod 13) | odmeny z hier sa dajú použiť v meste a albume |
@@ -331,6 +349,8 @@ Napíš do nového chatu:
 ---
 
 ## 12. Hry z v1 (časti 10 a 11)
+
+**Postup podľa rodiča:** najprv sa hry prenesú tak, ako boli vo v1 (nanovo napísané, rovnaká zábava), a potom sa budú po jednej vylepšovať, aby boli zábavnejšie. Vylepšenia sa zapíšu do tohto bodu ako ďalšie časti.
 
 Rodič chce v2 so všetkým, čo dieťa hralo vo v1. Každá hra je modul v `js/games/<id>/` s rozhraním z bodu 2, dáta v `js/data/`, odomyká sa úrovňou hráča a končí cez `ctx.finish` (mince, XP, občas diel alebo nálepka). Úlohy (bod 8) dostanú aj úlohy z týchto hier.
 

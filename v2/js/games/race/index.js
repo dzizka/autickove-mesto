@@ -1,4 +1,4 @@
-// Race game module (DESIGN-v2 §4.1): top-down, the car drives by itself,
+// Race game module (DESIGN-v2 §4.1): pseudo-3D view from behind, the car drives by itself,
 // taps left/right change lanes. Ends on the podium and hands the result to the host.
 
 import { h } from "../../core/ui.js";
@@ -11,8 +11,9 @@ import { getLook, resolveLook } from "../../systems/tuning.js";
 import { crewBonus, activeBuddy, buddyLook } from "../../systems/crew.js";
 import { createTrail } from "../../render/effects.js";
 import { createRace, step, steer, finalOrder } from "./physics.js";
-import { makeLayout, drawBackground, createWeather, drawWeather } from "./track.js";
-import { drawObjects, drawPlayer, drawSpeedLines, createNight, drawNight } from "./draw.js";
+import { M, PLAYER_Z, SEG, buildRoad, makeView, renderRoad, createBackdrop, drawBackdrop, fogDensity, segIndex } from "./road.js";
+import { drawScene, drawPlayer, drawHeadlights, drawSpeedLines, laneOffset } from "./scene.js";
+import { createWeather, drawWeather } from "./weather.js";
 import { createHud, showPodium } from "./hud.js";
 
 const PLACE_SAY = [
@@ -88,9 +89,13 @@ export default {
     };
     if (boss) flash("race-boss-banner", h("span", { class: "boss-face" }, boss.icon), "👑");
 
-    let L = makeLayout(360, 640);
+    const road = buildRoad(track, race.length);
+    let V = makeView(360, 640);
+    let backdrop = null;
     let weather = null;
-    let night = null;
+    let frame = 0;
+    let skyX = 0;
+    let camX = 0;
     const resize = () => {
       const dpr = Math.min(2, window.devicePixelRatio || 1);
       const w = wrap.clientWidth || 360;
@@ -98,11 +103,10 @@ export default {
       canvas.width = Math.round(w * dpr);
       canvas.height = Math.round(hh * dpr);
       g.setTransform(dpr, 0, 0, dpr, 0, 0);
-      L = makeLayout(w, hh);
-      weather = createWeather(track, L);
-      night?.cv.remove();
-      night = track.dark ? createNight(L) : null;
-      if (night) canvas.after(night.cv);
+      V = makeView(w, hh);
+      backdrop = createBackdrop(track, V, dpr);
+      weather = createWeather(track, V);
+      fx.dpr = dpr;
     };
     resize();
 
@@ -211,12 +215,23 @@ export default {
         hud.update();
       },
       draw(time) {
-        drawBackground(g, L, track, race.player.d, time);
-        drawObjects(g, L, race, time);
-        drawPlayer(g, L, race, time, fx, lastDt);
-        drawSpeedLines(g, L, race, time);
-        if (night) drawNight(g, L, night, race, race.effects.lightRange);
-        drawWeather(g, L, weather, 1 / 60, race.player.speed);
+        const p = race.player;
+        frame++;
+        road.frame = frame;
+        // the camera follows the car most of the way across the lanes
+        camX += (laneOffset(road, p.x) * 0.8 - camX) * Math.min(1, lastDt * 8);
+        const camZ = p.d * M - PLAYER_Z;
+        // the sky drifts against the curve under the car
+        const curve = road.segs[segIndex(road, p.d * M)].curve;
+        skyX += (0.0015 * curve * p.speed * race.view * M * lastDt) / SEG;
+        const fog = fogDensity(track, race.effects.lightRange);
+        drawBackdrop(g, V, backdrop, skyX);
+        const r = renderRoad(g, V, road, { z: camZ, x: camX, frame, fog });
+        drawScene(g, V, road, race, { base: r.base, camZ, fog, time });
+        if (track.scene.night) drawHeadlights(g, V, V.w / 2, race.effects.lightRange);
+        drawPlayer(g, V, road, race, fx, camX, time, lastDt);
+        drawSpeedLines(g, V, race, time);
+        drawWeather(g, V, weather, lastDt, p.speed);
       },
       partial: () => ({ coins: race.player.coins, xp: 5 }),
     });

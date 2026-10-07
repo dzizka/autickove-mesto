@@ -15,7 +15,7 @@ export function carefulBot(race) {
   if (Math.abs(p.x - p.lane) > 0.2) return; // still changing lanes
   const look = p.speed * 1.1 + 8;
   if (!blocked(race, p.lane, p.d - 2, p.d + look)) return;
-  const options = [p.lane - 1, p.lane + 1].filter((l) => l >= 0 && l < RACE.lanes && !blocked(race, l, p.d - 4, p.d + look));
+  const options = [p.lane - 1, p.lane + 1].filter((l) => l >= 0 && l < race.lanes && !blocked(race, l, p.d - 4, p.d + look));
   if (options.length) steer(race, options[0] - p.lane);
 }
 

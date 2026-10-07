@@ -5,10 +5,11 @@
 import { RACE, POWERUPS } from "../../data/tracks.js";
 
 let nextId = 1;
+const MAX_LANES = 5;
 
 /** The single place where race objects are created. */
-export function makeObject(kind, { lane, d, icon = "", color = "#ffffff", len = 2, speed = 0, value = 0 }) {
-  const l = Math.max(0, Math.min(RACE.lanes - 1, Math.round(Number(lane) || 0)));
+export function makeObject(kind, { lane, d, icon = "", color = "#ffffff", len = 2, speed = 0, value = 0, lanes = MAX_LANES }) {
+  const l = Math.max(0, Math.min(lanes - 1, Math.round(Number(lane) || 0)));
   return {
     id: nextId++,
     kind, // obstacle | traffic | coin | powerup | ramp | fuel | star
@@ -42,7 +43,9 @@ const weighted = (rng, entries) => {
  * @returns {object[]} objects sorted by distance
  */
 export function generateCourse({ track, level, length, rng }) {
-  const density = 1 + RACE.densityLevelStep * (level - 1);
+  const N = track.lanes || RACE.lanes;
+  // more lanes → more obstacles and traffic, so every track feels equally busy (§4.1)
+  const density = (1 + RACE.densityLevelStep * (level - 1)) * (N / RACE.lanes);
   const rates = [
     { kind: "obstacle", weight: RACE.obstaclesPer100 * density },
     { kind: "traffic", weight: RACE.trafficPer100 * density },
@@ -54,36 +57,38 @@ export function generateCourse({ track, level, length, rng }) {
   const eventsPer100 = rates.reduce((s, r) => s + r.weight, 0);
   const avgGap = 100 / eventsPer100;
   const out = [];
-  const lanes = [...Array(RACE.lanes).keys()];
+  const lanes = [...Array(N).keys()];
+  const lane = () => rng.int(0, N - 1);
 
   // Rows start after the starting grid and stop before the finish line.
   for (let d = 90; d < length - 50; d += Math.max(18, avgGap * (0.6 + rng.random() * 0.8))) {
     const ev = weighted(rng, rates);
     if (ev.kind === "obstacle") {
       // one obstacle, sometimes two (never all lanes)
-      const blocked = rng.random() < 0.25 + 0.05 * level ? 2 : 1;
+      const extra = (rng.random() < 0.25 + 0.05 * level ? 1 : 0) + (N >= 4 && rng.random() < 0.5 ? 1 : 0);
+      const blocked = Math.min(N - 1, 1 + extra);
       const free = lanes.slice();
       for (let i = 0; i < blocked; i++) {
         const lane = free.splice(rng.int(0, free.length - 1), 1)[0];
         out.push(makeObject("obstacle", { lane, d, icon: rng.pick(track.obstacles), len: 1.6 }));
       }
     } else if (ev.kind === "traffic") {
-      out.push(makeObject("traffic", { lane: rng.int(0, RACE.lanes - 1), d, color: rng.pick(track.traffic), len: 4.2, speed: RACE.baseSpeed * (0.35 + rng.random() * 0.15) }));
+      out.push(makeObject("traffic", { lane: lane(), d, color: rng.pick(track.traffic), len: 4.2, speed: RACE.baseSpeed * (0.35 + rng.random() * 0.15) }));
     } else if (ev.kind === "coins") {
-      const lane = rng.int(0, RACE.lanes - 1);
+      const l = lane();
       const n = rng.int(4, 6);
-      for (let i = 0; i < n; i++) out.push(makeObject("coin", { lane, d: d + i * 5, icon: "🪙", len: 1, value: RACE.coinValue }));
+      for (let i = 0; i < n; i++) out.push(makeObject("coin", { lane: l, d: d + i * 5, icon: "🪙", len: 1, value: RACE.coinValue }));
     } else if (ev.kind === "powerup") {
       const p = weighted(rng, POWERUPS);
-      out.push(makeObject("powerup", { lane: rng.int(0, RACE.lanes - 1), d, icon: p.icon, value: p.id, len: 1.4 }));
+      out.push(makeObject("powerup", { lane: lane(), d, icon: p.icon, value: p.id, len: 1.4 }));
     } else if (ev.kind === "ramp") {
       // a ramp, then an obstacle to jump over and coins in the air
-      const lane = rng.int(0, RACE.lanes - 1);
-      out.push(makeObject("ramp", { lane, d, len: 3 }));
-      out.push(makeObject("obstacle", { lane, d: d + 13, icon: rng.pick(track.obstacles), len: 1.6 }));
-      for (let i = 0; i < 3; i++) out.push(makeObject("coin", { lane, d: d + 8 + i * 5, icon: "🪙", len: 1, value: RACE.coinValue }));
+      const l = lane();
+      out.push(makeObject("ramp", { lane: l, d, len: 3 }));
+      out.push(makeObject("obstacle", { lane: l, d: d + 13, icon: rng.pick(track.obstacles), len: 1.6 }));
+      for (let i = 0; i < 3; i++) out.push(makeObject("coin", { lane: l, d: d + 8 + i * 5, icon: "🪙", len: 1, value: RACE.coinValue }));
     } else {
-      out.push(makeObject("fuel", { lane: rng.int(0, RACE.lanes - 1), d, icon: "⛽", len: 1.4 }));
+      out.push(makeObject("fuel", { lane: lane(), d, icon: "⛽", len: 1.4 }));
     }
   }
   return removeBlockedPickups(out).sort((a, b) => a.d - b.d);
@@ -108,7 +113,7 @@ export function spawnFuelIfLow(race) {
   const ahead = race.objects.some((o) => o.kind === "fuel" && !o.taken && o.d > p.d + 20 && o.d < p.d + 200);
   if (ahead) return null;
   const d = p.d + 90;
-  const lanes = [...Array(RACE.lanes).keys()].filter((l) => !race.objects.some((o) => (o.kind === "obstacle" || o.kind === "traffic") && o.lane === l && Math.abs(o.d - d) < 8));
+  const lanes = [...Array(race.lanes).keys()].filter((l) => !race.objects.some((o) => (o.kind === "obstacle" || o.kind === "traffic") && o.lane === l && Math.abs(o.d - d) < 8));
   if (!lanes.length || d > race.length - 30) return null;
   const lane = lanes.includes(p.lane) ? p.lane : lanes[0];
   const can = makeObject("fuel", { lane, d, icon: "⛽", len: 1.4 });

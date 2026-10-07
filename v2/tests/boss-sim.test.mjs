@@ -72,7 +72,7 @@ test("boss throws show a target first and always leave a free lane", () => {
         const thing = race.objects[race.objects.length - 1];
         assert.ok(thing.warn > 0, "a throw starts as a warning target");
         const blocked = new Set(race.objects.filter((o) => (o.kind === "obstacle" || o.kind === "traffic") && !o.hit && Math.abs(o.d - thing.d) < 4).map((o) => o.lane));
-        assert.ok(blocked.size < RACE.lanes, "all lanes blocked by a throw");
+        assert.ok(blocked.size < race.lanes, "all lanes blocked by a throw");
       }
       race.events.length = 0;
     }

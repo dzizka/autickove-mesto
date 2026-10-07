@@ -16,8 +16,8 @@ export function createBossRival(boss, track, level, rng, slow = 1) {
     color: boss.color,
     icon: boss.icon,
     isBoss: true,
-    lane: 1,
-    x: 1,
+    lane: Math.floor(((track.lanes || RACE.lanes) - 1) / 2),
+    x: Math.floor(((track.lanes || RACE.lanes) - 1) / 2),
     d: 16,
     speed: 0,
     top,
@@ -44,7 +44,7 @@ export function updateBoss(race, dt) {
   b.laneT -= dt;
   if (b.laneT <= 0) {
     b.laneT = 1.5 + race.rng.random() * 2;
-    b.lane = race.rng.int(0, RACE.lanes - 1);
+    b.lane = race.rng.int(0, race.lanes - 1);
   }
 
   b.throwT -= dt;
@@ -53,7 +53,7 @@ export function updateBoss(race, dt) {
   const d = p.d + range(race.rng, BOSS.throwAhead);
   if (d > race.length - 20) return;
   // keep at least one lane open at the landing spot
-  const free = [...Array(RACE.lanes).keys()].filter((l) => laneFree(race, l, d));
+  const free = [...Array(race.lanes).keys()].filter((l) => laneFree(race, l, d));
   if (free.length < 2) return;
   const lane = free[race.rng.int(0, free.length - 1)];
   const thing = makeObject("obstacle", { lane, d, icon: race.boss.throws, len: 1.6 });
