@@ -115,7 +115,10 @@ export function migrate(raw) {
     s = step(s);
     v = s.version;
   }
+  // An empty car slot (the child took the part off) stays empty: no free starter part.
+  const emptySlots = isPlainObject(s.car?.equipped) ? Object.keys(s.car.equipped).filter((k) => s.car.equipped[k] === null) : [];
   s = fillDefaults(s, defaultState());
+  for (const k of emptySlots) s.car.equipped[k] = null;
   // Sanitize numbers that the UI relies on.
   for (const key of ["coins", "xp"]) {
     if (!Number.isFinite(s[key]) || s[key] < 0) s[key] = 0;

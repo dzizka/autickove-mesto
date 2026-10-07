@@ -24,7 +24,8 @@ export function findPart(uid, s = getState()) {
 /** +1 better, -1 worse, 0 same, compared with what is mounted in the part's slot. */
 export function compareToEquipped(part, s = getState()) {
   const mounted = s.car.equipped[part.slot];
-  if (!mounted || mounted.uid === part.uid) return 0;
+  if (!mounted) return partPower(part) > 0 ? 1 : 0; // anything beats an empty slot
+  if (mounted.uid === part.uid) return 0;
   return Math.sign(partPower(part) - partPower(mounted));
 }
 
@@ -79,6 +80,20 @@ export function equip(uid) {
   });
   if (ok) emit("carChanged", { before, after: carPower() });
   return ok;
+}
+
+/** Take a mounted part off into the bag; the slot stays empty. False when the bag is full. */
+export function unequip(slot) {
+  const s = getState();
+  const part = s.car.equipped[slot];
+  if (!part || bagFree(s) <= 0) return false;
+  const before = carPower();
+  update((st) => {
+    st.inventory.unshift({ ...part, isNew: false });
+    st.car.equipped[slot] = null;
+  });
+  emit("carChanged", { before, after: carPower() });
+  return true;
 }
 
 /** ✨ Best: mount the strongest part for every slot. Returns number of swaps. */

@@ -130,14 +130,9 @@
 .stat-panel { display: grid; gap: 6px; }
 .stat-row { display: flex; align-items: center; gap: 8px; }
 .stat-icon { width: 30px; font-size: 1.4rem; text-align: center; }
-.stat-segs { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; flex: 1; }
-.stat-segs i {
-  --fill: 0%;
-  height: 16px;
-  border-radius: 5px;
-  background: linear-gradient(90deg, color-mix(in srgb, var(--stat) 45%, #fff) var(--fill), #e4e9f0 0);
-}
-.stat-segs i.on { background: var(--stat); box-shadow: inset 0 -3px 0 rgba(0, 0, 0, .15); }
+.stat-num { min-width: 2.4em; font-size: 1.1rem; font-weight: 700; text-align: right; font-variant-numeric: tabular-nums; }
+.stat-bar { flex: 1; height: 14px; overflow: hidden; border-radius: 7px; background: #e4e9f0; }
+.stat-bar i { display: block; width: max(6px, var(--fill)); height: 100%; border-radius: 7px; background: var(--stat); box-shadow: inset 0 -3px 0 rgba(0, 0, 0, .15); }
 
 .power-badge {
   display: inline-flex;

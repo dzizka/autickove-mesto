@@ -1,19 +1,21 @@
 // Car stats and part slots (DESIGN-v2 §4.3). Data only.
 
 /**
- * bars: stat value at which the 1st..5th segment of the stat bar lights up.
  * Values come from parts; the starter car has 8 in each main stat.
  */
 export const STATS = {
-  speed: { icon: "⚡", name: "Rýchlosť", color: "#ffc93c", bars: [1, 20, 45, 75, 110] },
-  handling: { icon: "🌀", name: "Ovládanie", color: "#2ab7ca", bars: [1, 20, 45, 75, 110] },
-  armor: { icon: "🛡️", name: "Odolnosť", color: "#8f5bd8", bars: [1, 20, 45, 75, 110] },
-  fuel: { icon: "⛽", name: "Benzín", color: "#ff8c42", bars: [1, 20, 45, 75, 110] },
-  magnet: { icon: "🧲", name: "Magnet", color: "#ff5a5f", bars: [1, 20, 45, 75, 110] },
-  luck: { icon: "🍀", name: "Šťastie", color: "#3ebd4a", bars: [1, 20, 45, 75, 110] },
+  speed: { icon: "⚡", name: "Rýchlosť", color: "#ffc93c" },
+  handling: { icon: "🌀", name: "Ovládanie", color: "#2ab7ca" },
+  armor: { icon: "🛡️", name: "Odolnosť", color: "#8f5bd8" },
+  fuel: { icon: "⛽", name: "Benzín", color: "#ff8c42" },
+  magnet: { icon: "🧲", name: "Magnet", color: "#ff5a5f" },
+  luck: { icon: "🍀", name: "Šťastie", color: "#3ebd4a" },
 };
 
 export const STAT_IDS = Object.keys(STATS);
+
+/** A stat bar is full at this value (a strong late-game car has ~100–150 in its main stats). */
+export const STAT_BAR_FULL = 150;
 
 export const SLOTS = [
   { id: "engine", icon: "🔥", name: "Motor", main: "speed" },

@@ -36,6 +36,9 @@ function chestSvg() {
  * Reward presenter for the router. Shows the chest when the reward has loot,
  * otherwise the plain coin dialog.
  */
+const CHEST_REMIND_MS = 5000;
+const CHEST_AUTO_OPEN_MS = 12000;
+
 export function presentReward(granted, { onHome, onAgain } = {}) {
   if (granted.coloringReward) return presentColoringReward(granted, { onHome });
   const loot = granted.loot;
@@ -92,7 +95,10 @@ export function presentReward(granted, { onHome, onAgain } = {}) {
   };
   chest.addEventListener("click", open);
   if (granted.boss && granted.extra?.bossWin) chest.classList.add("boss-chest");
+  // The child opens the chest. A reminder comes after a while, and only a child who
+  // walked away gets it opened automatically (DESIGN-v2 §4.5).
   speak("Truhlica! Ťukni na ňu.");
-  setTimeout(open, 1600);
+  setTimeout(() => !opened && box.isConnected && speak("Ťukni na truhlicu!"), CHEST_REMIND_MS);
+  setTimeout(() => box.isConnected && open(), CHEST_AUTO_OPEN_MS);
   return box;
 }

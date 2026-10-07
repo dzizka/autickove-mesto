@@ -13,7 +13,7 @@ V jadre je **akčná hra s autami a korisťou** (ako Diablo): dieťa jazdí pret
 Z toho vyplýva:
 - **Ovládanie:** všetko ide ťuknutím alebo ťahaním prstom. Veľké tlačidlá (aspoň 56 px).
 - **Pokyny:** každý pokyn hra predčíta hlasom.
-- **Bez čísel a textu:** štatistiky, porovnania a vzácnosť sa ukazujú ikonami, farbami, hviezdičkami a šípkami ⬆⬇. Čísla vidí len rodič v Prehľade pre rodičov.
+- **Bez textu:** vzácnosť a porovnania sa ukazujú ikonami, farbami, hviezdičkami a šípkami ⬆⬇. **Čísla len pri štatistikách** (rozhodnutie rodiča po skúšaní, bod 4.3): sila dielu a hodnoty štatistík sú malé čísla, vždy so šípkou alebo farbou, takže sa dajú porovnať aj bez čítania.
 - **Prehra neexistuje:** dieťa vždy niečo dostane. Najľahšiu trať musí vyhrať aj so začiatočným autom.
 
 **Čo dieťa vo v1 bavilo najviac** (podľa rodiča): **preteky, tuning, kamaráti, omaľovánka**. Verzia 2 je postavená na týchto štyroch pilieroch.
@@ -25,7 +25,7 @@ Z toho vyplýva:
 - skryté testovacie menu pre rodiča,
 - prenos postupu kódom medzi zariadeniami.
 
-Iné hry a systémy z v1 (mesto, album, minihry…) do v2 nepatria. Ak ich bude chcieť rodič neskôr, pridajú sa ako nové časti tohto zadania.
+Iné hry a systémy z v1 (mesto, album, minihry…) pôvodne do v2 nepatrili. **Po skúšaní v2 rodič rozhodol:** dieťa vo v1 hralo všetko a v2 vznikla hlavne preto, aby sa hra dala ľahšie opravovať a vylepšovať. Preto do v2 postupne prídu **všetky aktivity z v1** (body 12 a 13, časti 10 až 12). Kód ani obsah sa z v1 nekopíruje, každá aktivita sa napíše nanovo podľa pravidiel v2.
 
 ---
 
@@ -121,6 +121,8 @@ Vo v1 sa našli tri chyby (sú opravené vo v1). Vo v2 im treba predísť od za�
 - **Výber trate:** pri každej úrovni je odporúčaná sila auta 🟢 zvládneš, 🟡 bude ťažké, 🔴 ešte nie. Ďalej sú tam medaily a pruh výziev k bossovi.
 - **Koniec pretekov:** pódium s umiestnením a truhlica s korisťou (bod 4.5).
 - **Výkon:** preteky musia ísť plynulo na staršom tablete. Svetlá v noci sa kreslia na zmenšenom plátne.
+- **Rýchlosť na obrazovke má strop** (po skúšaní: s vylepšeným autom sa nedalo uhýbať). Auto sa na obrazovke pohybuje najviac `RACE.visibleCap` × základná rýchlosť. Silnejšie auto preteky spomalí ako spomalený film, takže súperi aj tak zaostávajú, ale prekážky prichádzajú tempom, na ktoré dieťa stihne zareagovať. Kamera ukáže aspoň `RACE.viewAhead` metrov cesty pred autom, čo je **aspoň 1 sekunda** na reakciu. Stráži to test.
+- **Ďalej (časť 9):** trate sa budú líšiť nielen farbou: iný počet pruhov, vlastné prekážky a zákruty, a pohľad zozadu v pseudo 3D (náhľad je na `/v2/preview/pseudo3d.html`, čaká na odsúhlasenie).
 
 ### 4.2 Dva druhy úprav auta
 
@@ -140,7 +142,11 @@ Auto má 6 slotov. Každý slot má hlavnú štatistiku a 0 až 3 vedľajšie.
 | Magnet | 🧲 | 🧲 Magnet | priťahuje mince zo vzdialenejších pruhov |
 | Maskot na palubovke | 🧸 | 🍀 Šťastie | častejšie a vzácnejšie diely |
 
-**Zobrazenie:** každá štatistika je ikona s 1 až 5 farebnými dielikmi na pruhu, nie číslo. **Sila auta** je jedno veľké číslo s farebným odznakom (súčet všetkého). Dieťa vďaka tomu vidí, či je väčšia alebo menšia.
+**Zobrazenie** (po skúšaní zmenené z 5 dielikov na kombináciu čísel a šípok):
+- **Karta dielu:** sila dielu ako jedno malé číslo a zelená ⬆ alebo červená ⬇ oproti namontovanému dielu.
+- **Detail dielu:** pri každej ikone štatistiky je číslo a pruh. Pri porovnaní je vedľa rozdiel **+6** zelenou alebo **−3** červenou, aj pri celkovej sile dielu.
+- **Auto:** každá štatistika je ikona, číslo a súvislý pruh (plný pri 150).
+- **Sila auta** je jedno veľké číslo s farebným odznakom (súčet všetkého).
 
 **Štatistiky musia byť cítiť.** Každá má viditeľný účinok:
 - Rýchlosť rozhoduje, či dieťa súperov predbehne.
@@ -169,7 +175,7 @@ Každá schopnosť má vlastný zvuk a efekt, aby ju dieťa spoznalo.
 
 ### 4.5 Odkiaľ diely padajú
 
-- **Koniec pretekov:** truhlica, ktorá sa otvorí s animáciou. 1. miesto dá 3 diely, 2. miesto 2, 3. a 4. miesto 1. Vzácnosť závisí od úrovne trate a od šťastia.
+- **Koniec pretekov:** truhlica, ktorá sa otvorí s animáciou. **Otvára ju dieťa ťuknutím.** Truhlica sa kýve a svieti, po 5 sekundách hlas pripomenie „Ťukni na truhlicu!“ a sama sa otvorí až po 12 sekundách (keď dieťa odišlo). 1. miesto dá 3 diely, 2. miesto 2, 3. a 4. miesto 1. Vzácnosť závisí od úrovne trate a od šťastia.
 - **Bossovia:** každá trať má svojho bossa: Kráľ ciest (Mesto), Medveď Drevorubač (Les), Škorpión (Púšť), Snežný Yeti (Sneh), Netopier (Noc) a Ufo (Vesmír). Boss príde po naplnení „pruhu výziev“ (3 preteky na trati). Je väčší, má vlastnú hudbu a niečo hádže na cestu. Výhra nad ním dá istý epický diel, malú šancu na legendárny a vajíčko s kamarátom (bod 6).
 - **Boss podrobnejšie:** pred dopadom hodenej veci svieti na ceste červený terč a vždy ostane voľný pruh. Boss je o niečo pomalší než najrýchlejší súper úrovne, aby ho auto s 🟢 isto porazilo. Po výhre sa pruh výziev vyprázdni a k istému dielu pribudnú 2 obyčajné diely. Prehra nič nezoberie: dieťa dostane mince a diel a pruh ostane plný na ďalší pokus.
 
@@ -183,6 +189,7 @@ Každá schopnosť má vlastný zvuk a efekt, aby ju dieťa spoznalo.
 - **Rozobrať:** diel sa zmení na súčiastky 🔩. Je aj tlačidlo „Rozobrať všetko sivé a zelené“, ktoré sa pred použitím opýta.
 - **Vylepšiť:** za súčiastky a mince sa diel vylepší z +1 až na +5. Každé vylepšenie mierne zvýši štatistiky a pribudne hviezdička.
 - **Zamknúť 🔒:** zamknutý diel sa omylom nerozoberie.
+- **Zložiť ⬇:** namontovaný diel sa dá zložiť do tašky a slot ostane prázdny (aj po načítaní hry). Pri plnej taške to hlas povie. Akýkoľvek diel je lepší ako prázdny slot (⬆).
 
 ### 4.7 Sety
 
@@ -295,6 +302,11 @@ Každá časť sa po dokončení nahrá na GitHub a dá sa hneď hrať na `/v2/`
 | **5. Kamaráti** | Vajíčka, zbierka 20 kamarátov, schopnosti, level, vývoj, oblečenie | kamarát vidno v aute a jeho schopnosť je v pretekoch cítiť |
 | **6. Omaľovánka** | Oba režimy, nástroje, 24 + 30 obrázkov, galéria | obrázok podľa čísel 24×24 sa dá dokončiť na telefóne |
 | **7. Doladenie** | Úlohy, trofeje, prehľad pre rodičov, vyváženie, výkon na tablete; potom `/` vedie na `v2/` | rodič s dieťaťom odsúhlasí, že v2 je hlavná verzia |
+| **8. Opravy po skúšaní** | Truhlica čaká na ťuknutie, ⬇ Zložiť diel, strop rýchlosti na obrazovke a dlhší výhľad, štatistiky ako čísla a šípky (body 4.1, 4.3, 4.5, 4.6) | s najsilnejším autom sa dá uhýbať, dieťa vie povedať, ktorý diel je silnejší |
+| **9. Rozdielne trate a pseudo 3D** | Po odsúhlasení náhľadu: pohľad zozadu s perspektívou, zákruty a kopce, pruhy podľa trate (Mesto 3, Les 2, Púšť 4, Sneh 3, Noc 3, Vesmír 5), vlastné prekážky a krajina; vlastné kreslené obrázky namiesto emoji | každá trať vyzerá a jazdí inak |
+| **10. Hry 1** | Hlavná ponuka 🎪 Hry a prvé aktivity z v1: Pexeso, Umyváreň, Servis, Parkovisko (bod 12) | dieťa nájde a dohrá každú hru bez čítania |
+| **11. Hry 2** | Počítanie, Skladačka, Bludisko, Písmenká, Hudobná garáž, Križovatka (bod 12) | ako pri časti 10 |
+| **12. Mesto a album** | Systémy z v1 nanovo: mesto s budovami, album s nálepkami, denný darček (bod 13) | odmeny z hier sa dajú použiť v meste a albume |
 
 ---
 
@@ -315,3 +327,31 @@ Každá časť sa po dokončení nahrá na GitHub a dá sa hneď hrať na `/v2/`
 Napíš do nového chatu:
 
 > Pracujeme na hre Autíčkové mesto v repozitári dzizka/autickove-mesto. Prečítaj si DESIGN-v2.md a CLAUDE.md a začni časťou 0.
+
+---
+
+## 12. Hry z v1 (časti 10 a 11)
+
+Rodič chce v2 so všetkým, čo dieťa hralo vo v1. Každá hra je modul v `js/games/<id>/` s rozhraním z bodu 2, dáta v `js/data/`, odomyká sa úrovňou hráča a končí cez `ctx.finish` (mince, XP, občas diel alebo nálepka). Úlohy (bod 8) dostanú aj úlohy z týchto hier.
+
+| Hra | Čo dieťa robí |
+|---|---|
+| 🃏 Pexeso | otáča kartičky s autami a hľadá dvojice |
+| 🧽 Umyváreň | prstom umýva špinavé auto: mydlo, kefa, voda, sušenie |
+| 🔧 Servis | opravuje auto: vymení koleso, doleje benzín, nafúka pneumatiku |
+| 🅿️ Parkovisko | ťahá auto prstom na voľné miesto rovnakej farby |
+| 🔢 Počítanie | spočíta autá a ťukne na správny počet bodiek |
+| 🧩 Skladačka | skladá obrázok auta z dielikov |
+| 🗺️ Bludisko | vedie auto prstom bludiskom do garáže |
+| 🔤 Písmenká | hlas povie písmeno a dieťa ho nájde (prvé písmenká) |
+| 🎵 Hudobná garáž | hrá na trúbiace autá a opakuje melódiu |
+| 🚦 Križovatka | púšťa autá cez križovatku na zelenú, aby sa nezrazili |
+
+Každá hra má 3 obtiažnosti, ktoré sa samy zvyšujú, a prehra neexistuje (chyba len zahrá zvuk a hlas poradí).
+
+## 13. Mesto a album (časť 12)
+
+- **Mesto:** za mince sa stavajú budovy (garáž, umyváreň, benzínka, obchod…). Budovy dávajú malé bonusy a otvárajú hry z bodu 12.
+- **Album:** nálepky z hier a truhlíc sa lepia na stránky (vozidlá, zvieratá, vesmír…). Plná stránka dá odmenu.
+- **Denný darček:** raz za deň truhlica pri otvorení hry.
+- **Prenos postupu z v1:** zatiaľ nie. Ak ho rodič bude chcieť, doplní sa ako samostatný bod.

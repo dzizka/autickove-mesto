@@ -3,7 +3,7 @@
 
 import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
-import { setup, openGame, screenshot, WIDTHS } from "./helpers.mjs";
+import { setup, openGame, screenshot, WIDTHS, openChest } from "./helpers.mjs";
 
 const TRACKS = ["city", "forest", "desert", "snow", "night", "space"];
 let env;
@@ -63,6 +63,7 @@ for (const width of WIDTHS) {
     assert.equal(s.races.tracks.city.challenge, 1);
     assert.deepEqual(await page.evaluate(() => window.__game.loopStats), { caughtErrors: 0, crashes: 0 });
 
+    await openChest(page);
     await page.getByTestId("reward-home").click();
     await page.getByTestId("screen-home").waitFor();
     assert.deepEqual(page.errors, []);

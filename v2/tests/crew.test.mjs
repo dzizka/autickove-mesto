@@ -5,7 +5,7 @@ import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
 import { CREW, CREW_RARITIES, CREW_RULES, CLOTHES } from "../js/data/crew.js";
 import { STAT_IDS } from "../js/data/stats.js";
-import { setup, openGame, screenshot, WIDTHS } from "./helpers.mjs";
+import { setup, openGame, screenshot, WIDTHS, openChest } from "./helpers.mjs";
 
 let env;
 before(async () => {
@@ -145,6 +145,7 @@ test("races give eggs: the first one is sure in race 3, eggs tick and the buddy 
       location.hash = "#/game/race/city/1";
     }, 10 + i);
     await page.getByTestId("reward-modal").waitFor({ timeout: 40000 });
+    await openChest(page);
     if (i === 3) await page.getByTestId("chest-egg").waitFor();
     await page.getByTestId("reward-home").click();
     await page.getByTestId("screen-home").waitFor();

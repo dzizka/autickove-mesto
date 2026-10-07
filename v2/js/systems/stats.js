@@ -1,5 +1,5 @@
 // Car stats: sum of equipped parts, set bonuses and the crew buddy,
-// stat bars, car power, and how stats turn into race effects.
+// car power, and how stats turn into race effects.
 
 import { STATS, STAT_IDS, EFFECTS } from "../data/stats.js";
 import { RACE, TRACKS } from "../data/tracks.js";
@@ -65,21 +65,6 @@ export function carStats(equipped = getState().car.equipped, withCrew = equipped
 /** Car power: one big number = the sum of all stats (DESIGN-v2 §4.3). */
 export function carPower(stats = carStats()) {
   return STAT_IDS.reduce((sum, id) => sum + num(stats[id]), 0);
-}
-
-/** 0..5 lit segments of a stat bar. */
-export function statBars(statId, value) {
-  const bars = STATS[statId]?.bars || [1, 20, 45, 75, 110];
-  return bars.filter((t) => num(value) >= t).length;
-}
-
-/** Fraction 0..1 inside the current segment (for a smooth fill of the next one). */
-export function statBarFill(statId, value) {
-  const bars = STATS[statId]?.bars || [1, 20, 45, 75, 110];
-  const lit = statBars(statId, value);
-  if (lit >= bars.length) return 0;
-  const lo = lit === 0 ? 0 : bars[lit - 1];
-  return Math.max(0, Math.min(1, (num(value) - lo) / (bars[lit] - lo)));
 }
 
 /**

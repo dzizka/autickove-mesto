@@ -4,7 +4,7 @@ import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
 import { QUESTS, QUEST_SLOTS } from "../js/data/quests.js";
 import { TROPHIES } from "../js/data/trophies.js";
-import { setup, openGame, screenshot, WIDTHS } from "./helpers.mjs";
+import { setup, openGame, screenshot, WIDTHS, openChest } from "./helpers.mjs";
 
 let env;
 before(async () => {
@@ -37,6 +37,7 @@ test("3 quests on the home screen; races move them; a finished quest pays out an
     location.hash = "#/game/race/city/1";
   });
   await page.getByTestId("reward-modal").waitFor({ timeout: 40000 });
+  await openChest(page);
   await page.getByTestId("reward-home").click();
   await page.getByTestId("screen-home").waitFor();
   await screenshot(page, "390-home-quests");

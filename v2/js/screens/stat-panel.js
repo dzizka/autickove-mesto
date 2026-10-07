@@ -1,25 +1,19 @@
-// Car stats for the child: icon + 5 coloured segments per stat, and the car power
-// as one big number on a badge (DESIGN-v2 §4.3). Reused by Races and Garage.
+// Car stats (DESIGN-v2 §4.3): every stat is an icon, its number and a bar, and the car power
+// is one big number on a badge. Reused by Races and Garage.
 
 import { h } from "../core/ui.js";
-import { STATS, STAT_IDS } from "../data/stats.js";
-import { statBars, statBarFill } from "../systems/stats.js";
+import { STATS, STAT_IDS, STAT_BAR_FULL } from "../data/stats.js";
 
 export function statBar(statId, value) {
   const def = STATS[statId];
-  const lit = statBars(statId, value);
-  const fill = statBarFill(statId, value);
-  const segs = [];
-  for (let i = 0; i < 5; i++) {
-    const seg = h("i", { class: i < lit ? "on" : "" });
-    if (i === lit && fill > 0) seg.style.setProperty("--fill", `${Math.round(fill * 100)}%`);
-    segs.push(seg);
-  }
+  const v = Math.max(0, Math.round(Number(value) || 0));
+  const fill = Math.min(1, v / STAT_BAR_FULL);
   return h(
     "div",
-    { class: "stat-row", style: { "--stat": def.color }, "data-stat": statId, "data-bars": String(lit), "aria-label": `${def.name}: ${lit} z 5` },
+    { class: "stat-row", style: { "--stat": def.color, "--fill": `${Math.round(fill * 100)}%` }, "data-stat": statId, "data-value": String(v), "aria-label": `${def.name}: ${v}` },
     h("span", { class: "stat-icon", "aria-hidden": "true" }, def.icon),
-    h("span", { class: "stat-segs" }, segs),
+    h("span", { class: "stat-num" }, String(v)),
+    h("span", { class: "stat-bar" }, h("i")),
   );
 }
 

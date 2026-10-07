@@ -9,7 +9,7 @@ Detská hra v prehliadači pre 6-ročné dieťa, ktoré ešte nevie čítať. Ho
 - **Bez kompilácie:** čisté HTML, CSS a ES moduly, ktoré bežia priamo na GitHub Pages. Žiadny framework.
 - **Štruktúra podľa `DESIGN-v2.md`, bod 2.** Súbor najviac ~400 riadkov, dáta len v `js/data/`, jedna hra = jeden modul s rozhraním `{ id, title, icon, unlockLevel, start(view, ctx), stop() }`.
 - **Texty pre hráča:** po slovensky a predčítané hlasom. Kód a komentáre po anglicky.
-- **Pre dieťa:** žiadne čísla ani text, ktoré musí čítať. Štatistiky ukazovať ikonami a pruhmi. Veľké tlačidlá. Prehra neexistuje.
+- **Pre dieťa:** žiadny text, ktorý musí čítať. Čísla len pri štatistikách, vždy so šípkou ⬆⬇ alebo farbou (`DESIGN-v2.md`, bod 4.3). Veľké tlačidlá. Prehra neexistuje.
 - **Hry s `requestAnimationFrame`:** používajú `core/loop.js` (ochrana proti zamrznutiu).
 - **Uloženie:** `localStorage` kľúč `autickove-mesto-v2`. Zmena schémy znamená zvýšiť `version` a pridať migráciu.
 

@@ -44,6 +44,8 @@ export function createRace({ track, level, effects, rng, short = false, abilitie
     rng,
     abilities: abilities instanceof Set ? abilities : new Set(abilities),
     boss,
+    // movement scale: 1 up to the visible speed cap, below 1 for faster cars (RACE.visibleCap)
+    view: visibleScale(effects.topSpeed),
     phase: "countdown", // countdown | racing | finished
     countdown: COUNTDOWN,
     time: 0,
@@ -83,6 +85,12 @@ export function createRace({ track, level, effects, rng, short = false, abilitie
   };
   initAbilities(race);
   return race;
+}
+
+/** How much a car's movement is slowed so its speed on screen stays at RACE.visibleCap. */
+export function visibleScale(topSpeed) {
+  const cap = RACE.baseSpeed * RACE.visibleCap;
+  return Number.isFinite(topSpeed) && topSpeed > cap ? cap / topSpeed : 1;
 }
 
 /** Change lane by -1 (left) or +1 (right). */
@@ -141,7 +149,7 @@ function updatePlayer(race, dt) {
   p.turboT = Math.max(0, p.turboT - dt);
   p.magnetT = Math.max(0, p.magnetT - dt);
   p.airT = Math.max(0, p.airT - dt);
-  p.fuel = Math.max(0, p.fuel - e.fuelDrain * dt);
+  p.fuel = Math.max(0, p.fuel - e.fuelDrain * dt * race.view);
 
   let target = e.topSpeed;
   if (p.slowT > 0) target *= 0.45;
@@ -149,7 +157,7 @@ function updatePlayer(race, dt) {
   if (p.turboT > 0) target *= 1.45;
   const accel = p.speed < target ? 1.6 : 4;
   p.speed += (target - p.speed) * Math.min(1, dt * accel);
-  p.d += p.speed * dt;
+  p.d += p.speed * dt * race.view;
 
   // Lane change as a spring: handling makes it stiffer; snow makes it slide.
   const k = 90 * e.laneStiffness;
@@ -170,7 +178,7 @@ function updateRivals(race, dt) {
     const wave = 1 + 0.03 * Math.sin(race.time * 0.7 + r.phase);
     const target = r.top * wave * (r.slowT > 0 ? 0.5 : 1) * (race.phase === "countdown" ? 0 : 1);
     r.speed += (target - r.speed) * Math.min(1, dt * 1.6);
-    r.d += r.speed * dt;
+    r.d += r.speed * dt * race.view;
     // dodge obstacles and traffic ahead, and make room for the player coming from behind
     // (rivals are never solid for the player: bumping into them would only frustrate)
     const playerBehind = !r.isBoss && race.phase === "racing" && Math.abs(p.x - r.lane) < 0.6 && p.d < r.d && r.d - p.d < 12 && p.speed > r.speed;
@@ -195,7 +203,7 @@ function updateRivals(race, dt) {
 function updateTraffic(race, dt) {
   for (const o of race.objects) {
     if (o.kind !== "traffic" || o.hit) continue;
-    o.d += o.speed * dt;
+    o.d += o.speed * dt * race.view;
     const blocked = race.objects.some((b) => b.kind === "obstacle" && !b.hit && b.lane === o.lane && b.d > o.d && b.d < o.d + 14);
     if (blocked) {
       const options = [o.lane - 1, o.lane + 1].filter((l) => l >= 0 && l < RACE.lanes && !laneBlocked(race, l, o.d, 14));

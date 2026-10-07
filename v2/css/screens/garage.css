@@ -20,7 +20,7 @@
 .part-card.rarity-legendary { animation: legend-glow 1.6s ease-in-out infinite; }
 .part-card.empty { --rarity: #d5dbe4; font-size: 1.6rem; opacity: .5; cursor: default; }
 .pc-icon { font-size: 2.3rem; line-height: 1; }
-.pc-stars { position: absolute; bottom: -2px; left: 0; right: 0; font-size: .62rem; text-align: center; letter-spacing: -1px; }
+.pc-stars { position: absolute; top: 1px; left: 0; right: 0; font-size: .62rem; text-align: center; letter-spacing: -1px; }
 .pc-arrow {
   position: absolute;
   top: -10px;
@@ -51,6 +51,22 @@
 .pc-new::before { content: "✨"; }
 .pc-lock { position: absolute; bottom: -8px; right: -8px; font-size: 1.1rem; }
 .pc-spark { position: absolute; top: 2px; left: 4px; font-size: .9rem; }
+.pc-power {
+  position: absolute;
+  bottom: -11px;
+  left: 50%;
+  min-width: 30px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: #fff;
+  color: var(--ink);
+  font-size: .85rem;
+  font-weight: 800;
+  line-height: 20px;
+  transform: translateX(-50%);
+  box-shadow: 0 0 0 2px var(--rarity);
+}
+.part-card.empty .pc-power { display: none; }
 @keyframes legend-glow { 50% { box-shadow: 0 0 18px var(--rarity), 0 4px 0 #b35c00; } }
 
 /* ---------- garage ---------- */
@@ -146,7 +162,9 @@
 .pd-rarity { font-weight: 700; color: color-mix(in srgb, var(--rarity) 75%, #000); }
 .pd-stars { font-size: .9rem; min-height: 1.1em; }
 .pd-power { font-size: 1.3rem; font-weight: 700; }
-.pd-vs { color: var(--ink-soft); font-size: 1rem; }
+.pd-vs { color: var(--ink-soft); font-size: 1.1rem; }
+.pd-vs.up, .cmp-diff.up { color: var(--grass-dark); }
+.pd-vs.down, .cmp-diff.down { color: var(--tomato-dark); }
 .pd-arrow { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); display: grid; place-items: center; width: 52px; height: 52px; border-radius: 50%; color: #fff; font-size: 1.8rem; font-weight: 700; }
 .pd-arrow.up { background: var(--grass); }
 .pd-arrow.down { background: var(--tomato); }
@@ -157,16 +175,18 @@
 .cmp-bars { position: relative; flex: 1; display: grid; gap: 3px; }
 .cmp-bars i { display: block; height: 12px; min-width: 3px; border-radius: 6px; }
 .cmp-old { background: #c9d1dc; }
-.cmp-arrow { width: 24px; font-weight: 700; text-align: center; }
-.cmp-arrow.up { color: var(--grass-dark); }
-.cmp-arrow.down { color: var(--tomato-dark); }
+.cmp-num { min-width: 2em; font-weight: 700; text-align: right; font-variant-numeric: tabular-nums; }
+.cmp-diff { min-width: 2.6em; font-weight: 800; text-align: right; font-variant-numeric: tabular-nums; }
 .pd-actions { display: grid; gap: 10px; }
 .pd-actions .btn { width: 100%; }
 .cost { font-size: .8rem; font-weight: 600; opacity: .85; }
 
 /* ---------- chest ---------- */
 .chest-modal { text-align: center; }
-.chest { --glow: #ffd23f; display: block; width: 150px; margin: 0 auto; padding: 0; border: 0; background: none; cursor: pointer; animation: wiggle .8s ease-in-out infinite; }
+.chest { --glow: #ffd23f; display: block; width: 150px; margin: 0 auto; padding: 0; border: 0; background: none; cursor: pointer; animation: chest-glow 1.2s ease-in-out infinite; }
+/* the wiggle sits on the picture, so the button itself keeps still for taps (and tests) */
+.chest:not(.open) .chest-svg { animation: wiggle .8s ease-in-out infinite; }
+@keyframes chest-glow { 50% { filter: drop-shadow(0 0 18px var(--glow)); } }
 .chest-svg { display: block; width: 100%; overflow: visible; filter: drop-shadow(0 6px 0 rgba(0, 0, 0, .15)); }
 .chest-lid { transform-origin: 12px 42px; transition: transform .4s cubic-bezier(.3, 1.6, .5, 1); }
 .chest.open { animation: none; filter: drop-shadow(0 0 22px var(--glow)); }

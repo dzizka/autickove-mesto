@@ -26,7 +26,8 @@ function stats(trackId, level, effects, driverFactory) {
     assert.equal(race.phase, "finished", `race did not finish (${trackId} ${level}, seed ${seed})`);
     places += race.place;
     wins += race.place === 1 ? 1 : 0;
-    time += race.player.finishTime;
+    // race time compared with the rivals: a fast car runs in slow motion on screen (RACE.visibleCap)
+    time += race.player.finishTime * race.view;
   }
   return { place: places / SEEDS.length, wins: wins / SEEDS.length, time: time / SEEDS.length };
 }

@@ -95,3 +95,9 @@ export async function passParentGate(page) {
   await page.getByTestId("gate-input").fill(String(a * b));
   await page.getByTestId("gate-ok").click();
 }
+
+/** After a race the chest waits for a tap (DESIGN-v2 §4.5): tap it if it is there. */
+export async function openChest(page) {
+  const chest = page.getByTestId("chest");
+  if (await chest.count()) await chest.click();
+}

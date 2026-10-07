@@ -5,6 +5,11 @@ export const RACE = {
   lanes: 3,
   laneWidth: 3.6, // metres
   baseSpeed: 24, // top speed of a car with ×1.0 speed
+  // Speed on screen is capped (play-test: a strong car was too fast to dodge anything).
+  // Above the cap the whole race runs in slow motion, so rivals still fall behind,
+  // but obstacles come at a speed a child can react to (§4.1).
+  visibleCap: 1.12, // × baseSpeed
+  viewAhead: 27, // metres of road visible ahead of the car: ≥ 1 s at the capped speed
   length: 1000,
   shortLength: 320, // test-menu "short races"
   rivals: [

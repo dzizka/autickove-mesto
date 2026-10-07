@@ -7,17 +7,12 @@ import { drawEmoji } from "../../render/emoji.js";
 
 /** Screen layout for a canvas of w × h CSS pixels. */
 export function makeLayout(w, h) {
-  const roadW = Math.min(w * 0.76, 480);
-  const laneW = roadW / RACE.lanes;
-  return {
-    w,
-    h,
-    roadX: (w - roadW) / 2,
-    roadW,
-    laneW,
-    pxPerM: laneW / RACE.laneWidth,
-    playerY: h * 0.76,
-  };
+  const playerY = h * 0.8;
+  // zoom out until RACE.viewAhead metres fit above the car (reaction time, §4.1)
+  const pxPerM = Math.min(Math.min(w * 0.76, 480) / RACE.lanes / RACE.laneWidth, playerY / RACE.viewAhead);
+  const laneW = pxPerM * RACE.laneWidth;
+  const roadW = laneW * RACE.lanes;
+  return { w, h, roadX: (w - roadW) / 2, roadW, laneW, pxPerM, playerY };
 }
 
 export const laneToX = (L, x) => L.roadX + L.laneW * (x + 0.5);
