@@ -14,6 +14,7 @@ import { ownAll } from "../systems/tuning.js";
 import { addEgg, hatchEggsNow, ownAllCrew, crewLevelUp } from "../systems/crew.js";
 import { unlockAllColoring } from "../systems/coloring.js";
 import { finishAllQuests } from "../systems/quests.js";
+import { giveStickers } from "../systems/album.js";
 import * as rng from "../core/rng.js";
 import { go } from "../core/router.js";
 
@@ -38,6 +39,9 @@ function giveParts(n, rarity) {
 
 const CHEATS = [
   { id: "c1k", label: "+1 000 🪙", color: "sun", run: () => addCoins(1000) },
+  { id: "daily", label: "🎁 Denný darček znova", color: "grass", run: () => update((s) => (s.daily.last = null)) },
+  { id: "stickers", label: "🎴 +30 nálepiek", color: "plum", run: () => giveStickers(30, rng) },
+  { id: "rent", label: "🏙️ Nájom za 12 h", color: "grass", run: () => update((s) => Object.keys(s.city.rentAt).forEach((k) => (s.city.rentAt[k] -= 12 * 3600000))) },
   { id: "c10k", label: "+10 000 🪙", color: "sun", run: () => addCoins(10000) },
   { id: "c100k", label: "+100 000 🪙", color: "sun", run: () => addCoins(100000) },
   { id: "lvl", label: "+1 level", color: "plum", run: () => addXp(xpToNext(getState().level) - getState().xp) },

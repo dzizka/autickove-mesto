@@ -197,6 +197,7 @@ export function rewardModal(result, { onHome, onAgain } = {}) {
       h("div", { class: "modal-icon bounce", "aria-hidden": "true" }, "🏆"),
       result.stars > 0 && h("div", { class: "reward-stars", "data-testid": "reward-stars", "data-stars": String(result.stars), "aria-label": "Hviezdy" }, [1, 2, 3].map((i) => h("i", { class: i <= result.stars ? "on" : "" }, "★"))),
       result.miniLevelUp && h("div", { class: "reward-row level-up", "data-testid": "reward-harder", "aria-label": "Ťažšie" }, "⬆️ ★"),
+      result.sticker && h("div", { class: "reward-row sticker", "data-testid": "reward-sticker", "aria-label": "Nálepka" }, "📒 +", result.sticker.sticker),
       h("div", { class: "reward-row", "data-testid": "reward-coins" }, "🪙 +", String(result.coins || 0)),
       h(
         "div",

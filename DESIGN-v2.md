@@ -59,6 +59,7 @@ v2/
 │   │   ├── cars.js  tuning.js  tracks.js  bosses.js
 │   │   ├── loot-bases.js  affixes.js  legendaries.js  sets.js
 │   │   ├── crew.js  trophies.js  quests.js
+│   │   ├── city.js  album.js  # mesto (budovy), album (stránky nálepiek), denný darček
 │   │   ├── minigames.js    # hry v herni: zoznam, obtiažnosti, obrázky pexesa, poruchy v servise, farby parkoviska
 │   │   └── coloring/       # palette.js, free.js (24 obrázkov SVG), pixel.js (30 obrázkov podľa čísel)
 │   ├── systems/            # logika bez kreslenia
@@ -69,7 +70,8 @@ v2/
 │   │   ├── tuning.js       # vzhľad: vlastnené veci, kúpa, náhodný vzhľad
 │   │   ├── coloring.js     # omaľovánka: pixelové obrázky z tvarov, odomykanie, galéria, odmeny
 │   │   ├── crew.js         # kamaráti: vajíčka, levely, vývoj
-│   │   └── minigames.js    # herňa: hviezdy, odmeny, obtiažnosť, ktorá sama rastie
+│   │   ├── minigames.js    # herňa: hviezdy, odmeny, obtiažnosť, ktorá sama rastie
+│   │   └── city.js  album.js  daily.js   # nájom a stavby, nálepky, denný darček
 │   ├── render/
 │   │   ├── car-side.js     # auto z boku (SVG)
 │   │   ├── car-top.js      # auto zhora (canvas): ikony a náhľady
@@ -81,7 +83,7 @@ v2/
 │   │                       # settings.js test-menu.js topbar.js coloring.js (výber obrázka) trophies.js
 │   │                       # races.js (výber trate a úrovne), stat-panel.js (pruhy štatistík, sila auta)
 │   │                       # part-card.js (karta dielu, detail s porovnaním), chest.js (truhlica po pretekoch)
-│   │                       # set-book.js (kniha setov), games.js (🎪 herňa)
+│   │                       # set-book.js (kniha setov), games.js (🎪 herňa), city.js album.js daily.js
 │   └── games/
 │       ├── demo/           # skúšobná jazda len z testovacieho menu (overuje slučku a odmeny)
 │       ├── race/           # index.js  spawner.js  physics.js  hud.js  boss.js  abilities.js (legendárne schopnosti)
@@ -395,7 +397,17 @@ Každá hra má 3 obtiažnosti, ktoré sa samy zvyšujú, a prehra neexistuje (c
 
 ## 13. Mesto a album (časť 12)
 
-- **Mesto:** za mince sa stavajú budovy (garáž, umyváreň, benzínka, obchod…). Budovy dávajú malé bonusy a otvárajú hry z bodu 12.
-- **Album:** nálepky z hier a truhlíc sa lepia na stránky (vozidlá, zvieratá, vesmír…). Plná stránka dá odmenu.
-- **Denný darček:** raz za deň truhlica pri otvorení hry.
+- **🏙️ Mesto** je siedma veľká voľba na domovskej obrazovke. Je to ulica s 12 parcelami, ktorá sa dá posúvať prstom. Obloha sa mení podľa skutočného času (ráno, deň, večer, noc). Po ceste jazdia autá dieťaťa: jeho vlastné a ďalšie druhy, ktoré si kúpilo. Ťuknutie na auto zatrúbi.
+- **Budovy** (`data/city.js`): Trafika, Benzínka, Umyváreň, Herňa, Hračkárstvo, Obchod, Servis, Parkovisko, Záhrada s bludiskom, Škola, Hudobňa, Polícia.
+  - Každá sa otvorí na svojom leveli, postaví sa za mince a dá sa dvakrát vylepšiť (3 úrovne, každá 2× drahšia, dom je väčší a má viac okien).
+  - **Nájom:** každá budova zarába mince za hodinu (× úroveň), najviac za 12 hodín. Nad domom sa ukáže 🪙, ťuknutím sa mince vyberú.
+  - **▶ v detaile domu** otvorí jeho hru z herne (Umyváreň → Umyváreň, Škola → Písmenká…), Benzínka preteky a Trafika album.
+- **📒 Album** (`data/album.js`): 11 stránok po 9 nálepkách, stránky sa otvárajú levelom. Posledné 2 nálepky na stránke sú vzácne zlaté.
+  - **Odkiaľ nálepky:** balíček 🎴 za 80 mincí (3 nálepky), hra v herni s 3 hviezdami (s 2 hviezdami polovičná šanca), denný darček. Chýbajúce nálepky padajú častejšie.
+  - **Rovnaké nálepky:** 3 navyše urobia nálepku striebornou 🥈, 6 zlatou 🥇.
+  - **Plná stránka** dá raz 150 mincí.
+- **🎁 Denný darček:** raz za kalendárny deň pri príchode na domovskú obrazovku. Sedem škatuliek ukazuje dni za sebou; každý ďalší deň je darček väčší (mince, na 3. a 7. deň aj nálepky). Po prestávke sa začína znova od 1. dňa, nič sa nestratí. V úplne novej hre príde prvý darček až na druhý deň (aby nová hra začínala bez okna).
+- **Uloženie:** `city`, `album`, `daily` (schéma verzia 10).
+- **Úlohy a trofeje:** „Postav alebo vylepši dom“, „Otvor balíček“; trofeje Prvý dom, Celé mesto, Päť domov na najvyššej úrovni, Plná stránka, Celý album, Zlatá nálepka, Sedem dní za sebou.
+- **Testovacie menu:** denný darček znova, +30 nálepiek, nájom za 12 hodín.
 - **Prenos postupu z v1:** zatiaľ nie. Ak ho rodič bude chcieť, doplní sa ako samostatný bod.

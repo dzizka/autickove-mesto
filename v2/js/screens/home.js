@@ -11,6 +11,8 @@ import { activeBuddy, buddyLook } from "../systems/crew.js";
 import { getLook, resolveLook } from "../systems/tuning.js";
 import { playNotes } from "../core/audio.js";
 import { PILLARS } from "../data/menu.js";
+import { showDailyGift } from "./daily.js";
+import { dailyReady } from "../systems/daily.js";
 
 let greeted = false;
 
@@ -98,6 +100,12 @@ export default {
       ),
     );
 
+    if (dailyReady()) {
+      // once a day: the gift first, the greeting after it
+      greeted = true;
+      setTimeout(() => document.querySelector("[data-testid=screen-home]") && showDailyGift({ onDone: () => speak("Vyber si, čo chceš robiť.") }), 400);
+      return;
+    }
     if (!greeted) {
       greeted = true;
       speak("Ahoj! Vyber si, čo chceš robiť.");

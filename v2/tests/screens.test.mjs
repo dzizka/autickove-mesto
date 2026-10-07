@@ -5,7 +5,7 @@ import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
 import { setup, openGame, screenshot, passParentGate, WIDTHS } from "./helpers.mjs";
 
-const PILLARS = ["races", "garage", "tuning", "crew", "coloring"];
+const PILLARS = ["races", "garage", "tuning", "crew", "coloring", "city", "games"];
 let env;
 
 before(async () => {

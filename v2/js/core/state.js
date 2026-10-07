@@ -9,7 +9,13 @@ import { defaultColoring } from "../systems/coloring.js";
 import { defaultQuests } from "../systems/quests.js";
 
 export const STORAGE_KEY = "autickove-mesto-v2";
-export const CURRENT_VERSION = 9;
+export const CURRENT_VERSION = 10;
+
+/** Local date as YYYY-MM-DD (the same format as the play log). */
+export function todayKey(date = new Date()) {
+  const p = (n) => String(n).padStart(2, "0");
+  return `${date.getFullYear()}-${p(date.getMonth() + 1)}-${p(date.getDate())}`;
+}
 
 export function defaultState() {
   return {
@@ -50,6 +56,11 @@ export function defaultState() {
     quests: defaultQuests(),
     trophies: {},
     minigames: {}, // games room: { pexeso: { level, plays, good, best } }
+    // v10: town (building id → level, last rent time), sticker album, daily gift.
+    // The gift starts tomorrow, so a brand-new game opens without a dialog.
+    city: { buildings: {}, rentAt: {} },
+    album: { stickers: {}, tiers: {}, pagesDone: [] },
+    daily: { last: todayKey(), streak: 0 },
   };
 }
 
@@ -89,6 +100,8 @@ const MIGRATIONS = {
   7: (s) => ({ ...s, version: 8 }),
   // v8 → v9: games room progress (filled from defaults: every game on level 1).
   8: (s) => ({ ...s, version: 9 }),
+  // v9 → v10: town, album and daily gift (filled from defaults; the first gift comes tomorrow).
+  9: (s) => ({ ...s, version: 10 }),
 };
 
 const isPlainObject = (v) => v !== null && typeof v === "object" && !Array.isArray(v);

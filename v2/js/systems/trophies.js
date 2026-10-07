@@ -48,6 +48,16 @@ export function isEarned(t, s = getState()) {
       return MINIGAMES.every((g) => (s.minigames?.[g.id]?.plays || 0) > 0);
     case "miniLevel":
       return Object.values(s.minigames || {}).some((m) => (m.level || 1) >= c.n);
+    case "buildings":
+      return Object.values(s.city?.buildings || {}).filter((l) => l > 0).length >= c.n;
+    case "topBuildings":
+      return Object.values(s.city?.buildings || {}).filter((l) => l >= 3).length >= c.n;
+    case "albumPages":
+      return (s.album?.pagesDone || []).length >= c.n;
+    case "goldSticker":
+      return Object.values(s.album?.tiers || {}).some((t) => t >= 2);
+    case "dailyStreak":
+      return (s.daily?.streak || 0) >= c.n;
     case "level":
       return s.level >= c.n;
     default:

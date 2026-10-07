@@ -26,5 +26,12 @@ export const TROPHIES = [
   { id: "quests10", icon: "📜", name: "Desať splnených úloh", check: { kind: "quests", n: 10 } },
   { id: "miniAll", icon: "🎪", name: "Všetky hry v herni", check: { kind: "miniPlayed" } },
   { id: "miniMaster", icon: "🌟", name: "Najťažšia úroveň v hre", check: { kind: "miniLevel", n: 3 } },
+  { id: "firstBuilding", icon: "🏠", name: "Prvý dom v meste", check: { kind: "buildings", n: 1 } },
+  { id: "wholeTown", icon: "🏙️", name: "Celé mesto", check: { kind: "buildings", n: 12 } },
+  { id: "bigTown", icon: "🌆", name: "Päť domov na najvyššej úrovni", check: { kind: "topBuildings", n: 5 } },
+  { id: "albumPage", icon: "📒", name: "Plná stránka albumu", check: { kind: "albumPages", n: 1 } },
+  { id: "albumFull", icon: "📚", name: "Celý album", check: { kind: "albumPages", n: 11 } },
+  { id: "goldSticker", icon: "🥇", name: "Zlatá nálepka", check: { kind: "goldSticker" } },
+  { id: "daily7", icon: "🎁", name: "Sedem dní za sebou", check: { kind: "dailyStreak", n: 7 } },
   { id: "level10", icon: "🎖️", name: "Level desať", check: { kind: "level", n: 10 } },
 ];

@@ -33,6 +33,10 @@ import { recordFinished, addToGallery } from "./systems/coloring.js";
 import { tickEggs, addEgg, rollChestEgg, giveCrewXp } from "./systems/crew.js";
 import { demoGame, demoCrashGame } from "./games/demo/index.js";
 import gamesRoom from "./screens/games.js";
+import city from "./screens/city.js";
+import album from "./screens/album.js";
+import { giveStickers } from "./systems/album.js";
+import { ALBUM } from "./data/album.js";
 import pexeso from "./games/pexeso/index.js";
 import wash from "./games/wash/index.js";
 import repair from "./games/repair/index.js";
@@ -64,6 +68,8 @@ router.registerScreen(gallery);
 router.registerScreen(trophies);
 router.registerScreen(parents);
 router.registerScreen(gamesRoom);
+router.registerScreen(city);
+router.registerScreen(album);
 // The four pillars (DESIGN-v2 §1) plus the garage.
 for (const screen of [races, garage, tuning, crew, coloring]) router.registerScreen(screen);
 router.registerGame(raceGame);
@@ -101,7 +107,10 @@ router.addRewardHandler((gameId, result) => {
   const m = result.extra?.mini;
   if (!isMini(gameId) || !m) return null;
   const { levelUp } = recordMini(m);
-  return { miniLevelUp: levelUp };
+  // a good result sometimes brings a sticker for the album (§13)
+  const chance = ALBUM.miniSticker[m.stars] || 0;
+  const sticker = chance && rng.random() < chance ? giveStickers(1, rng).stickers[0] : null;
+  return { miniLevelUp: levelUp, sticker };
 });
 router.setRewardPresenter(presentReward);
 
@@ -123,6 +132,8 @@ events.on("partUpgraded", () => questEvent("upgrade"));
 events.on("itemBought", () => questEvent("buy"));
 events.on("buddyPetted", () => questEvent("pet"));
 events.on("buddyHatched", () => questEvent("hatch"));
+events.on("buildingBuilt", () => questEvent("build"));
+events.on("packOpened", () => questEvent("pack"));
 
 // Trophies (DESIGN-v2 §8): checked after rewards and screen changes, announced with a toast.
 const announce = [];

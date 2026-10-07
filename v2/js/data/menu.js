@@ -6,5 +6,6 @@ export const PILLARS = [
   { id: "tuning", icon: "🎨", label: "Vzhľad", say: "Vzhľad auta", color: "plum" },
   { id: "crew", icon: "🐣", label: "Kamaráti", say: "Kamaráti", color: "grass" },
   { id: "coloring", icon: "🖍️", label: "Omaľovánka", say: "Omaľovánka", color: "sun" },
+  { id: "city", icon: "🏙️", label: "Mesto", say: "Mesto", color: "grass" },
   { id: "games", icon: "🎪", label: "Hry", say: "Hry", color: "plum" },
 ];
