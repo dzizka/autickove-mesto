@@ -1,0 +1,361 @@
+<!doctype html>
+<html lang="sk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Náhľad: pseudo 3D závod</title>
+<style>
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #000; touch-action: none;
+    font-family: system-ui, sans-serif; user-select: none; -webkit-user-select: none; }
+  canvas { display: block; width: 100vw; height: 100vh; height: 100dvh; }
+  .bar { position: fixed; top: 10px; left: 10px; right: 10px; display: flex; gap: 8px;
+    justify-content: center; flex-wrap: wrap; pointer-events: none; }
+  .bar button, .bar a { pointer-events: auto; width: 56px; height: 56px; display: grid; place-items: center;
+    border: 0; border-radius: 18px; font-size: 30px; text-decoration: none; cursor: pointer;
+    background: rgba(255, 255, 255, .85); box-shadow: 0 3px 8px rgba(0, 0, 0, .3); }
+  .bar button.on { background: #ffd23f; outline: 3px solid #fff; }
+  .coins { position: fixed; left: 12px; bottom: 14px; display: flex; align-items: center; gap: 8px;
+    padding: 6px 12px; border-radius: 999px; background: rgba(255, 255, 255, .9); font-size: 30px; }
+  .coins i { display: block; width: 110px; height: 14px; border-radius: 7px; background: #ddd; overflow: hidden; }
+  .coins b { display: block; height: 100%; width: 0; background: #ffb800; transition: width .2s; }
+  .coins.pop { animation: pop .3s; }
+  .arrows { position: fixed; left: 0; right: 0; bottom: 18%; display: flex; justify-content: space-between;
+    padding: 0 18px; font-size: 64px; color: #fff; text-shadow: 0 2px 8px #0008; pointer-events: none; transition: opacity .6s; }
+  @keyframes pop { 50% { transform: scale(1.25); } }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div class="bar" id="bar"><a href="../" title="Domov">🏠</a></div>
+<div class="coins" id="coins">🪙<i><b></b></i></div>
+<div class="arrows" id="arrows"><span>◀</span><span>▶</span></div>
+<script>
+"use strict";
+// Pseudo-3D race preview (segment projection). Tap the left or right half of the screen to change lanes.
+const cv = document.getElementById("c"), g = cv.getContext("2d");
+const SEG = 200, RUMBLE = 3, CAM_H = 1000, DEPTH = 1 / Math.tan(Math.PI * 50 / 180), PLAYER_Z = CAM_H * DEPTH;
+const DRAW = 150, MAX = SEG * 50, ACCEL = MAX / 2.5, CAR_W = 520;
+
+const THEMES = [
+  { icon: "🏙️", name: "Mesto", lanes: 3, sky: ["#58b7ff", "#d4f0ff"], fog: "#d4f0ff", bg: "city", hill: ["#a9c0d3", "#86a0b6"],
+    grass: ["#62c162", "#59b559"], road: ["#6c7079", "#686b74"], rumble: ["#ffffff", "#e8463a"], line: "#ffffff",
+    side: ["house", "tree", "lamp", "house"], hazards: ["cone", "barrier"] },
+  { icon: "🌲", name: "Les", lanes: 2, sky: ["#7fd0ff", "#e3f6ff"], fog: "#cfe9d8", bg: "hills", hill: ["#6fae68", "#4a8a4e"],
+    grass: ["#3f8f3f", "#3a863a"], road: ["#a07a52", "#9a744d"], rumble: ["#7a5636", "#8b6644"], line: "#e9d6b0",
+    side: ["tree", "pine", "tree", "rock"], hazards: ["log", "puddle"] },
+  { icon: "🏜️", name: "Púšť", lanes: 4, sky: ["#ffb35c", "#ffe7b3"], fog: "#ffe3b0", bg: "dunes", hill: ["#eeb46a", "#dc9548"],
+    grass: ["#f0c773", "#e8bd68"], road: ["#8a7f76", "#857a71"], rumble: ["#ffffff", "#d9534f"], line: "#fff3c4",
+    side: ["cactus", "rock", "cactus"], hazards: ["rock", "tumbleweed"] },
+  { icon: "❄️", name: "Sneh", lanes: 3, sky: ["#a9cff0", "#eef6ff"], fog: "#eef6ff", bg: "mountains", hill: ["#c9dcef", "#a9c1da"],
+    grass: ["#ffffff", "#eef3fa"], road: ["#7d8899", "#788394"], rumble: ["#dd3333", "#ffffff"], line: "#ffffff",
+    side: ["pine", "snowman", "pine"], hazards: ["snowball", "ice"], snow: true },
+  { icon: "🌙", name: "Noc", lanes: 3, sky: ["#0b1033", "#2a2f6b"], fog: "#1d2250", bg: "city", hill: ["#1f2350", "#161a3c"],
+    grass: ["#1d3b2c", "#193426"], road: ["#3b3e48", "#373a44"], rumble: ["#ffd23f", "#22242b"], line: "#ffd23f",
+    side: ["lamp", "house", "lamp"], hazards: ["cone", "barrier"], night: true },
+  { icon: "🚀", name: "Vesmír", lanes: 5, sky: ["#05020f", "#1b0f40"], fog: "#140a33", bg: "space", hill: ["#2a1760", "#21124d"],
+    grass: ["#120a2e", "#160d38"], road: ["#3a2a70", "#35266a"], rumble: ["#00e5ff", "#ff3df2"], line: "#9ff6ff",
+    side: ["crystal", "planet", "crystal"], hazards: ["asteroid"], night: true },
+];
+const SIZE = { house: 1500, tree: 900, pine: 800, lamp: 200, cactus: 500, rock: 500, snowman: 500, crystal: 500, planet: 1400 };
+
+let W, H, KX, KY, horizon, th, half, segs = [], L = 0;
+let pos = 0, speed = 0, lane = 1, px = 0, tilt = 0, skyX = 0, bump = 0, coins = 0, t = 0, rivals = [], touched = false;
+
+// --- helpers -------------------------------------------------------------
+function rng(seed) { seed = (seed * 2654435761) % 2147483647 || 1; return () => ((seed = (seed * 16807) % 2147483647) - 1) / 2147483646; }
+const STARS = Array.from({ length: 140 }, (_, i, r = rng(i + 3)) => ({ x: r(), y: r(), s: r() }));
+const SKYLINE = Array.from({ length: 30 }, (_, i, r = rng(i + 50)) => ({ w: 0.04 + r() * 0.06, h: 0.05 + r() * 0.16 }));
+const FLAKES = Array.from({ length: 90 }, (_, i, r = rng(i + 99)) => ({ x: r(), y: r(), s: 0.5 + r() }));
+const lerp = (a, b, p) => a + (b - a) * p;
+const laneX = (l) => -1 + (2 * l + 1) / th.lanes;
+const segAt = (z) => segs[Math.floor(z / SEG) % segs.length];
+const fogAt = (n) => 1 - Math.exp(-((n / DRAW) ** 2) * 4);
+function poly(c, ...p) { g.fillStyle = c; g.beginPath(); g.moveTo(p[0], p[1]); for (let i = 2; i < p.length; i += 2) g.lineTo(p[i], p[i + 1]); g.fill(); }
+function circle(c, x, y, r) { g.fillStyle = c; g.beginPath(); g.arc(x, y, Math.max(0.5, r), 0, 7); g.fill(); }
+function ellipse(c, x, y, rx, ry) { g.fillStyle = c; g.beginPath(); g.ellipse(x, y, Math.max(0.5, rx), Math.max(0.5, ry), 0, 0, 7); g.fill(); }
+function rect(c, x, y, w, h, r = 0) {
+  if (w < 0) { x += w; w = -w; }
+  if (w < 0.5 || h < 0.5) return;
+  g.fillStyle = c; g.beginPath(); g.roundRect(x, y, w, h, Math.min(r, w / 2, h / 2)); g.fill(); }
+let ac;
+function beep(f, d, type = "sine", v = 0.12) {
+  try {
+    ac = ac || new AudioContext();
+    const o = ac.createOscillator(), gn = ac.createGain();
+    o.type = type; o.frequency.value = f;
+    gn.gain.setValueAtTime(v, ac.currentTime); gn.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + d);
+    o.connect(gn).connect(ac.destination); o.start(); o.stop(ac.currentTime + d);
+  } catch { /* no audio */ }
+}
+function say(text) {
+  try { speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(text); u.lang = "sk-SK"; speechSynthesis.speak(u); } catch { /* no voice */ }
+}
+
+// --- track -----------------------------------------------------------------
+const lastY = () => (segs.length ? segs[segs.length - 1].p2.w.y : 0);
+function addSeg(curve, y) {
+  const n = segs.length;
+  segs.push({ i: n, curve, sprites: [], color: Math.floor(n / RUMBLE) % 2, clip: 0,
+    p1: { w: { y: lastY(), z: n * SEG }, c: {}, s: {} }, p2: { w: { y, z: (n + 1) * SEG }, c: {}, s: {} } });
+}
+const easeIn = (a, b, p) => a + (b - a) * p * p;
+const easeOut = (a, b, p) => a + (b - a) * (1 - (1 - p) * (1 - p));
+const easeIO = (a, b, p) => a + (b - a) * (0.5 - Math.cos(p * Math.PI) / 2);
+function addRoad(e, hold, l, curve, hill) {
+  const y0 = lastY(), y1 = y0 + hill * SEG, tot = e + hold + l;
+  for (let i = 0; i < e; i++) addSeg(easeIn(0, curve, i / e), easeIO(y0, y1, i / tot));
+  for (let i = 0; i < hold; i++) addSeg(curve, easeIO(y0, y1, (e + i) / tot));
+  for (let i = 0; i < l; i++) addSeg(easeOut(curve, 0, i / l), easeIO(y0, y1, (e + hold + i) / tot));
+}
+function build(theme) {
+  th = theme; segs = []; half = th.lanes * 450 + 300;
+  const r = rng(7), pick = (a) => a[Math.floor(r() * a.length)];
+  addRoad(20, 30, 20, 0, 0);
+  for (const p of [[40, 60, 40, 3, 0], [30, 40, 30, 0, 8], [40, 70, 40, -4, -4], [25, 30, 25, 0, 0], [40, 50, 40, 5, 6],
+    [30, 60, 30, -2, -6], [40, 40, 40, -5, 4], [30, 50, 30, 3, -4], [30, 40, 30, 0, 0]]) addRoad(...p);
+  addRoad(30, 30, 30, 0, -lastY() / SEG);
+  L = segs.length * SEG;
+  for (let i = 8; i < segs.length; i += 4 + Math.floor(r() * 5)) {
+    for (const side of [-1, 1]) {
+      if (r() > 0.8) continue;
+      const type = pick(th.side);
+      segs[i].sprites.push({ type, off: side * (1.2 + SIZE[type] / (2 * half) + r() * 0.9), seed: r() });
+    }
+  }
+  // rows: hazards always leave a free lane, coins lead the way through it
+  for (let i = 50; i < segs.length - 20; i += 24) {
+    const lanes = [...Array(th.lanes).keys()].sort(() => r() - 0.5);
+    const nh = th.lanes >= 4 ? 2 : 1;
+    if (r() < 0.8) for (const l of lanes.slice(0, nh)) segs[i].sprites.push({ type: pick(th.hazards), off: laneX(l), kind: "hazard" });
+    const free = laneX(lanes[nh]);
+    for (let k = 0; k < 5; k++) segs[i - 10 + k * 3].sprites.push({ type: "coin", off: free, kind: "coin" });
+  }
+  pos = 0; speed = 0; lane = Math.floor(th.lanes / 2); px = laneX(lane);
+  const colors = ["#3a7bd5", "#2fb36d", "#9b51e0", "#ff8c1a"];
+  rivals = colors.map((col, k) => ({ z: PLAYER_Z + SEG * (25 + k * 30), lane: k % th.lanes, x: laneX(k % th.lanes), v: MAX * (0.55 + k * 0.07), col }));
+}
+
+// --- sprites ---------------------------------------------------------------
+function drawCar(x, y, u, col, lean = 0, glow = false) {
+  const w = CAR_W * u, h = 340 * u;
+  g.save(); g.translate(x, y); g.rotate(lean);
+  ellipse("rgba(0,0,0,.3)", 0, 0, w * 0.58, h * 0.09);
+  rect("#1d1d22", -w * 0.5, -h * 0.34, w * 0.2, h * 0.34, w * 0.05);
+  rect("#1d1d22", w * 0.3, -h * 0.34, w * 0.2, h * 0.34, w * 0.05);
+  poly(col, -w * 0.36, -h * 0.62, w * 0.36, -h * 0.62, w * 0.27, -h * 0.98, -w * 0.27, -h * 0.98);
+  poly("#9fd3ff", -w * 0.3, -h * 0.66, w * 0.3, -h * 0.66, w * 0.23, -h * 0.92, -w * 0.23, -h * 0.92);
+  poly("rgba(255,255,255,.5)", -w * 0.2, -h * 0.66, -w * 0.08, -h * 0.66, -w * 0.02, -h * 0.92, -w * 0.12, -h * 0.92);
+  rect(col, -w * 0.48, -h * 0.64, w * 0.96, h * 0.46, w * 0.1);
+  rect("rgba(0,0,0,.15)", -w * 0.48, -h * 0.32, w * 0.96, h * 0.14, w * 0.06);
+  if (glow) { g.shadowColor = "#ff2d2d"; g.shadowBlur = 18 * u * 40; }
+  rect("#ff2d2d", -w * 0.42, -h * 0.54, w * 0.18, h * 0.1, w * 0.03);
+  rect("#ff2d2d", w * 0.24, -h * 0.54, w * 0.18, h * 0.1, w * 0.03);
+  g.shadowBlur = 0;
+  rect("#fff", -w * 0.1, -h * 0.44, w * 0.2, h * 0.09, w * 0.02);
+  rect("#2b2b30", -w * 0.47, -h * 0.25, w * 0.94, h * 0.08, w * 0.03);
+  g.restore();
+}
+function drawSprite(sp, x, y, u) {
+  const s = (v) => v * u, night = th.night;
+  switch (sp.type) {
+    case "tree": rect("#7a5230", x - s(50), y - s(380), s(100), s(380));
+      circle("#2e8b3d", x, y - s(560), s(300)); circle("#3aa04a", x - s(150), y - s(450), s(200)); circle("#45b356", x + s(140), y - s(480), s(190)); break;
+    case "pine": rect("#6b4a2b", x - s(40), y - s(200), s(80), s(200));
+      for (let k = 0; k < 3; k++) poly(th.snow ? "#2f6f4f" : "#256b3a", x - s(400 - k * 90), y - s(180 + k * 230), x + s(400 - k * 90), y - s(180 + k * 230), x, y - s(560 + k * 230));
+      if (th.snow) poly("#fff", x - s(90), y - s(870), x + s(90), y - s(870), x, y - s(1020)); break;
+    case "house": { const cols = ["#f4a261", "#e9c46a", "#8ecae6", "#f28482", "#b5e48c"], c = cols[Math.floor(sp.seed * 5)];
+      const hh = 900 + sp.seed * 900;
+      rect(night ? "#2c3157" : c, x - s(700), y - s(hh), s(1400), s(hh));
+      for (let wy = 200; wy < hh - 150; wy += 280) for (let wx = -520; wx < 500; wx += 300)
+        rect(night ? ((wx + wy + Math.floor(sp.seed * 9)) % 3 ? "#ffd86b" : "#3a3f6b") : "#cfeeff", x + s(wx), y - s(hh - wy + 120), s(160), s(150), s(20));
+      break; }
+    case "lamp": rect("#555b66", x - s(25), y - s(1100), s(50), s(1100)); rect("#555b66", x - s(25), y - s(1100), s(sp.off < 0 ? 300 : -300), s(40));
+      { const lx = x + s(sp.off < 0 ? 280 : -280); if (night) circle("rgba(255,220,120,.25)", lx, y - s(1050), s(320)); circle("#ffe28a", lx, y - s(1050), s(60)); } break;
+    case "cactus": rect("#3f9b4b", x - s(70), y - s(700), s(140), s(700), s(70));
+      rect("#3f9b4b", x - s(250), y - s(520), s(110), s(300), s(55)); rect("#3f9b4b", x - s(250), y - s(330), s(250), s(100), s(50));
+      rect("#3f9b4b", x + s(150), y - s(600), s(110), s(260), s(55)); rect("#3f9b4b", x, y - s(440), s(260), s(100), s(50)); break;
+    case "rock": ellipse("#8d8d95", x, y - s(160), s(260), s(180)); ellipse("#a5a5ad", x - s(60), y - s(220), s(130), s(90)); break;
+    case "snowman": circle("#fff", x, y - s(170), s(170)); circle("#fff", x, y - s(430), s(120)); circle("#fff", x, y - s(610), s(85));
+      poly("#ff7a1a", x, y - s(620), x + s(110), y - s(605), x, y - s(590)); circle("#222", x - s(30), y - s(640), s(12)); circle("#222", x + s(25), y - s(640), s(12)); break;
+    case "crystal": g.globalCompositeOperation = "lighter";
+      poly(sp.seed < 0.5 ? "#00e5ff" : "#ff3df2", x - s(160), y, x - s(60), y - s(520), x + s(40), y - s(700), x + s(160), y);
+      g.globalCompositeOperation = "source-over"; break;
+    case "planet": { const py = y - s(1600 + sp.seed * 1200), c = sp.seed < 0.5 ? "#ff8c5a" : "#7ad7ff";
+      circle(c, x, py, s(450)); g.strokeStyle = "rgba(255,255,255,.7)"; g.lineWidth = s(50);
+      g.beginPath(); g.ellipse(x, py, s(750), s(170), -0.3, 0, 7); g.stroke(); break; }
+    case "cone": poly("#ff7a1a", x - s(130), y, x + s(130), y, x, y - s(320));
+      poly("#fff", x - s(75), y - s(130), x + s(75), y - s(130), x + s(48), y - s(200), x - s(48), y - s(200)); rect("#ff7a1a", x - s(160), y - s(30), s(320), s(30)); break;
+    case "barrier": rect("#555", x - s(260), y - s(260), s(30), s(260)); rect("#555", x + s(230), y - s(260), s(30), s(260));
+      rect("#fff", x - s(300), y - s(330), s(600), s(120), s(20));
+      for (let k = 0; k < 3; k++) poly("#e8463a", x + s(-280 + k * 200), y - s(210), x + s(-200 + k * 200), y - s(210), x + s(-120 + k * 200), y - s(330), x + s(-200 + k * 200), y - s(330)); break;
+    case "log": rect("#7a5230", x - s(380), y - s(200), s(760), s(200), s(100)); ellipse("#c99a62", x + s(330), y - s(100), s(70), s(95)); break;
+    case "puddle": ellipse("#5aa7e0", x, y - s(20), s(380), s(70)); ellipse("rgba(255,255,255,.5)", x - s(100), y - s(30), s(110), s(18)); break;
+    case "ice": ellipse("#bfe9ff", x, y - s(15), s(400), s(75)); ellipse("#fff", x + s(80), y - s(25), s(140), s(20)); break;
+    case "tumbleweed": g.strokeStyle = "#a0763f"; g.lineWidth = s(30); for (let k = 0; k < 4; k++) { g.beginPath(); g.ellipse(x, y - s(200), s(200), s(170), k + t * 3, 0, 7); g.stroke(); } break;
+    case "snowball": circle("#fff", x, y - s(230), s(230)); circle("#dfeaf5", x + s(60), y - s(180), s(120)); break;
+    case "asteroid": circle("#6f6a80", x, y - s(260), s(260)); circle("#5a566a", x - s(80), y - s(310), s(60)); circle("#5a566a", x + s(90), y - s(200), s(45)); break;
+    case "coin": { const cy = y - s(260 + Math.sin(t * 5 + sp.off * 3) * 40), wob = Math.abs(Math.cos(t * 4 + sp.off));
+      ellipse("#c98a00", x, cy, s(150) * wob + s(15), s(150)); ellipse("#ffd23f", x, cy, s(120) * wob + s(10), s(120)); ellipse("#fff6b0", x - s(30) * wob, cy - s(40), s(25) * wob + 1, s(30)); break; }
+  }
+}
+
+// --- frame -----------------------------------------------------------------
+function resize() {
+  const dpr = Math.min(2, devicePixelRatio || 1);
+  W = cv.width = Math.round(innerWidth * dpr); H = cv.height = Math.round(innerHeight * dpr);
+  const carPx = Math.min(W * 0.24, H * 0.17);
+  KX = carPx / (CAR_W * 0.001); KY = Math.max(KX * 1.3, H * 0.5); horizon = H - KY;
+}
+function project(p, camX, camY, camZ) {
+  p.c.x = -camX; p.c.y = p.w.y - camY; p.c.z = p.w.z - camZ;
+  p.s.scale = DEPTH / p.c.z;
+  p.s.x = W / 2 + p.s.scale * p.c.x * KX; p.s.y = horizon - p.s.scale * p.c.y * KY; p.s.w = p.s.scale * half * KX;
+}
+function update(dt) {
+  t += dt;
+  const before = Math.floor((pos + PLAYER_Z) / SEG) % segs.length;
+  speed = Math.min(MAX, speed + ACCEL * dt * (bump > 0 ? 0.4 : 1));
+  bump = Math.max(0, bump - dt);
+  const next = pos + speed * dt;
+  if (next >= L) segs.forEach((s) => s.sprites.forEach((sp) => (sp.hit = false)));
+  pos = next % L;
+  px += (laneX(lane) - px) * Math.min(1, dt * 9);
+  const pSeg = segAt(pos + PLAYER_Z);
+  tilt = (laneX(lane) - px) * 0.5 + (bump > 0 ? Math.sin(t * 40) * 0.08 : 0);
+  skyX += 0.0015 * pSeg.curve * speed * dt / SEG;
+  const lw = 1 / th.lanes;
+  for (let i = before; ; i = (i + 1) % segs.length) {
+    for (const sp of segs[i].sprites) {
+      if (!sp.kind || sp.hit || Math.abs(sp.off - px) > lw * 0.9) continue;
+      sp.hit = true; sp.hitT = t;
+      if (sp.kind === "coin") { coins++; beep(880 + (coins % 5) * 120, 0.12, "triangle"); hud(); }
+      else { speed *= 0.45; bump = 0.6; beep(110, 0.25, "square", 0.08); }
+    }
+    if (i === pSeg.i) break;
+  }
+  for (const r of rivals) {
+    r.z = (r.z + r.v * dt) % L;
+    let ahead = (r.z - pos - PLAYER_Z + L) % L;
+    if (ahead > L / 2) { r.z = (pos + PLAYER_Z + SEG * (DRAW - 10)) % L; ahead = SEG * (DRAW - 10); }
+    if (ahead < SEG * 14 && r.lane === lane) r.lane = lane > 0 && (lane === th.lanes - 1 || r.x < px) ? lane - 1 : lane + 1;
+    r.x += (laneX(r.lane) - r.x) * Math.min(1, dt * 3);
+  }
+}
+function drawBackground() {
+  const sky = g.createLinearGradient(0, 0, 0, horizon);
+  sky.addColorStop(0, th.sky[0]); sky.addColorStop(1, th.sky[1]);
+  g.fillStyle = sky; g.fillRect(0, 0, W, horizon + 2);
+  g.fillStyle = th.fog; g.fillRect(0, horizon, W, H - horizon);
+  if (th.night) for (const s of STARS) circle(`rgba(255,255,255,${0.4 + s.s * 0.6})`, ((s.x - skyX * 0.05) % 1 + 1) % 1 * W, s.y * horizon, 1 + s.s * 1.5);
+  if (th.night && th.bg !== "space") circle("#fff7d6", W * 0.78, horizon * 0.25, H * 0.04);
+  if (th.bg === "dunes") { circle("rgba(255,240,150,.5)", W * 0.7, horizon * 0.45, H * 0.09); circle("#fff3b0", W * 0.7, horizon * 0.45, H * 0.06); }
+  if (th.bg === "space") { circle("#ff8c5a", W * 0.2, horizon * 0.3, H * 0.07); circle("#ffb08a", W * 0.18, horizon * 0.27, H * 0.04); return; }
+  th.hill.forEach((col, layer) => {
+    const off = skyX * W * (0.3 + layer * 0.3), amp = H * (0.09 - layer * 0.03);
+    g.fillStyle = col; g.beginPath(); g.moveTo(0, horizon + 2);
+    if (th.bg === "city") {
+      let x = -((off % (W * 1.5)) + W * 1.5) % (W * 1.5), k = layer * 7;
+      while (x < W) { const b = SKYLINE[k++ % SKYLINE.length], bw = b.w * W * 0.7, bh = b.h * H * (1.1 - layer * 0.35);
+        g.lineTo(x, horizon - bh); g.lineTo(x + bw, horizon - bh); x += bw; }
+    } else {
+      for (let x = 0; x <= W + 8; x += 8) {
+        const p = (x + off) / W;
+        const y = th.bg === "mountains"
+          ? amp * 1.6 * Math.abs(((p * (3 + layer)) % 1) - 0.5) * 2 + amp * 0.2 * Math.sin(p * 17)
+          : amp * (0.6 + 0.3 * Math.sin(p * 6 + layer) + 0.2 * Math.sin(p * 13 + layer * 2));
+        g.lineTo(x, horizon - y);
+      }
+    }
+    g.lineTo(W, horizon + 2); g.fill();
+  });
+}
+function render() {
+  drawBackground();
+  const base = segAt(pos), basePct = (pos % SEG) / SEG;
+  const pSeg = segAt(pos + PLAYER_Z), pPct = ((pos + PLAYER_Z) % SEG) / SEG;
+  const camY = lerp(pSeg.p1.w.y, pSeg.p2.w.y, pPct) + CAM_H;
+  let maxy = H, x = 0, dx = -(base.curve * basePct);
+  for (let n = 0; n < DRAW; n++) {
+    const seg = segs[(base.i + n) % segs.length], camZ = pos - (seg.i < base.i ? L : 0);
+    project(seg.p1, px * half - x, camY, camZ);
+    project(seg.p2, px * half - x - dx, camY, camZ);
+    x += dx; dx += seg.curve; seg.clip = maxy; seg.n = n;
+    const a = seg.p1.s, b = seg.p2.s;
+    if (seg.p1.c.z <= DEPTH || b.y >= a.y || b.y >= maxy) continue;
+    const c = seg.color;
+    g.fillStyle = th.grass[c]; g.fillRect(0, b.y, W, a.y - b.y + 1);
+    poly(th.rumble[c], a.x - a.w * 1.1, a.y + 1, a.x + a.w * 1.1, a.y + 1, b.x + b.w * 1.1, b.y, b.x - b.w * 1.1, b.y);
+    poly(th.road[c], a.x - a.w, a.y + 1, a.x + a.w, a.y + 1, b.x + b.w, b.y, b.x - b.w, b.y);
+    if (c) for (let k = 1; k < th.lanes; k++) {
+      const lx = -1 + (2 * k) / th.lanes, l1 = a.w * 0.025, l2 = b.w * 0.025;
+      poly(th.line, a.x + a.w * lx - l1, a.y, a.x + a.w * lx + l1, a.y, b.x + b.w * lx + l2, b.y, b.x + b.w * lx - l2, b.y);
+    }
+    const f = fogAt(n);
+    if (f > 0.02) { g.globalAlpha = f; g.fillStyle = th.fog; g.fillRect(0, b.y, W, a.y - b.y + 1); g.globalAlpha = 1; }
+    maxy = b.y;
+  }
+  const bySeg = new Map();
+  for (const r of rivals) { const i = Math.floor(r.z / SEG) % segs.length; bySeg.set(i, [...(bySeg.get(i) || []), r]); }
+  for (let n = DRAW - 1; n > 0; n--) {
+    const seg = segs[(base.i + n) % segs.length], list = bySeg.get(seg.i);
+    if ((!seg.sprites.length && !list) || seg.p1.c.z <= DEPTH) continue;
+    g.save(); g.beginPath(); g.rect(0, 0, W, seg.clip); g.clip(); g.globalAlpha = 1 - fogAt(n);
+    const s = seg.p1.s;
+    for (const sp of seg.sprites) {
+      if (sp.hit && (sp.kind === "coin" || t - sp.hitT > 0.6)) continue;
+      const fly = sp.hit ? (t - sp.hitT) * 3 : 0;
+      g.save(); if (fly) { g.globalAlpha *= 1 - fly / 1.8; g.translate(0, -fly * s.scale * KX * 600); }
+      drawSprite(sp, s.x + s.w * sp.off, s.y, s.scale * KX); g.restore();
+    }
+    if (n > 5) for (const r of list || []) {
+      const p = (r.z % SEG) / SEG, e = seg.p2.s;
+      drawCar(lerp(s.x, e.x, p) + lerp(s.w, e.w, p) * r.x, lerp(s.y, e.y, p), lerp(s.scale, e.scale, p) * KX, r.col, 0, th.night);
+    }
+    g.restore();
+  }
+  const u = 0.001 * KX, carY = H - H * 0.03 + (bump ? Math.sin(t * 50) * 4 : Math.sin(t * 20) * speed / MAX);
+  if (th.night) {
+    g.globalCompositeOperation = "lighter";
+    poly("rgba(255,240,170,.13)", W / 2 - CAR_W * u * 0.4, carY - 300 * u, W / 2 + CAR_W * u * 0.4, carY - 300 * u, W / 2 + W * 0.25, horizon + KY * 0.15, W / 2 - W * 0.25, horizon + KY * 0.15);
+    g.globalCompositeOperation = "source-over";
+  }
+  drawCar(W / 2, carY, u, "#e8463a", tilt + pSeg.curve * 0.01, th.night);
+  if (th.snow) for (const f of FLAKES) circle("rgba(255,255,255,.9)", (((f.x + skyX * 0.2 + Math.sin(t + f.s * 9) * 0.01) % 1) + 1) % 1 * W, ((f.y + t * 0.08 * f.s) % 1) * H, 2 + f.s * 2);
+}
+
+// --- input and HUD ---------------------------------------------------------
+function hud() {
+  const el = document.getElementById("coins");
+  el.querySelector("b").style.width = `${((coins % 20) / 20) * 100}%`;
+  el.classList.remove("pop"); void el.offsetWidth; el.classList.add("pop");
+}
+function steer(dir) {
+  lane = Math.max(0, Math.min(th.lanes - 1, lane + dir));
+  if (!touched) { touched = true; document.getElementById("arrows").style.opacity = 0; }
+}
+cv.addEventListener("pointerdown", (e) => steer(e.clientX < innerWidth / 2 ? -1 : 1));
+addEventListener("keydown", (e) => { if (e.key === "ArrowLeft") steer(-1); if (e.key === "ArrowRight") steer(1); });
+addEventListener("resize", resize);
+const bar = document.getElementById("bar");
+THEMES.forEach((theme, i) => {
+  const b = document.createElement("button");
+  b.textContent = theme.icon; b.title = theme.name;
+  b.onclick = () => { build(theme); bar.querySelectorAll("button").forEach((x) => x.classList.toggle("on", x === b)); say(theme.name); };
+  bar.append(b);
+  if (!i) b.classList.add("on");
+});
+
+resize();
+build(THEMES[0]);
+let last = 0;
+function frame(now) {
+  requestAnimationFrame(frame);
+  const dt = Math.min(0.05, last ? (now - last) / 1000 : 0);
+  last = now;
+  try { update(dt); render(); } catch (err) { console.error(err); }
+}
+requestAnimationFrame(frame);
+window.__preview = { THEMES, build, steer, state: () => ({ pos, speed, lane, coins }) };
+</script>
+</body>
+</html>
