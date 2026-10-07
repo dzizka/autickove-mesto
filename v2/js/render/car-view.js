@@ -4,23 +4,11 @@
 
 import { carSide } from "./car-side.js";
 import { resolveLook } from "../systems/tuning.js";
+import { hasWebGL } from "./car-pics.js";
+
+export { hasWebGL };
 
 const LOOK_KEYS = ["car", "color", "pattern", "wheels", "wing", "sticker", "roof", "neon", "trail"];
-
-let webgl = null;
-/** True when the browser can draw WebGL. */
-export function hasWebGL() {
-  if (webgl === null) {
-    try {
-      const gl = document.createElement("canvas").getContext("webgl2") || document.createElement("canvas").getContext("webgl");
-      webgl = !!gl;
-      gl?.getExtension("WEBGL_lose_context")?.loseContext();
-    } catch {
-      webgl = false;
-    }
-  }
-  return webgl;
-}
 
 // what the car turns to when a tuning category changes: back, side or front corner
 const FACING = { wing: Math.PI, trail: Math.PI, sticker: Math.PI / 2, wheels: Math.PI / 2, pattern: Math.PI / 2, roof: 0.7, neon: 0.7, color: 0.7, car: 0.7 };
@@ -81,6 +69,9 @@ export function createCarView({ mode = "turntable" } = {}) {
       pending = [r, { passenger, trail, colorHex: look.colorHex || null }];
       if (stage) show(...pending);
     },
+    pause(on) {
+      stage?.pause(on);
+    },
     /** Turn the 3D car to show this tuning category. */
     focus(cat) {
       if (cat in FACING) stage?.face(FACING[cat]);
@@ -91,26 +82,4 @@ export function createCarView({ mode = "turntable" } = {}) {
       stage = null;
     },
   };
-}
-
-/**
- * Swap the 2D car inside `holder` for a 3D picture once it is ready (showroom tiles).
- * Does nothing without WebGL.
- */
-export function carPictureInto(holder, look) {
-  if (!hasWebGL()) return;
-  holder.classList.add("pic-loading");
-  const r = resolveLook(look);
-  const opts = { colorHex: look.colorHex || null };
-  import("./three/snapshot.js")
-    .then(({ carPicture }) => carPicture(lookKey(r, opts), r, opts))
-    .then((url) => {
-      const img = document.createElement("img");
-      img.className = "car-pic";
-      img.alt = "";
-      img.src = url;
-      holder.replaceChildren(img);
-      holder.classList.remove("pic-loading");
-    })
-    .catch((err) => console.warn("[car-view] car picture failed", err));
 }

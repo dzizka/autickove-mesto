@@ -3,6 +3,7 @@
 // neon and an optional trail. Every lookup falls back to a safe default.
 
 import { resolveLook } from "../systems/tuning.js";
+import { sideCarEl } from "./car-pics.js";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 let uid = 0;
@@ -180,4 +181,12 @@ export function carSide(look = {}, { passenger = null, trail = false } = {}) {
     ${side.wheels.map((x) => wheel(x, side.wheelY, wr, wheels)).join("")}
   `;
   return svg;
+}
+
+/**
+ * The car from the side for the page: the 2D drawing at once, the picture of the 3D car
+ * (part 15b) as soon as it is ready. Same options as carSide; el.picReady, el.geometry.
+ */
+export function carSidePic(look = {}, opts = {}) {
+  return sideCarEl(carSide(look, opts), look, opts);
 }

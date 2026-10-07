@@ -5,6 +5,7 @@
 import { resolveLook } from "../systems/tuning.js";
 import { shade } from "./car-side.js";
 import { bodyPaint, drawPattern, safeColor } from "./car-top.js";
+import { carPic, readyPic, scaledPic } from "./car-pics.js";
 
 const cache = new Map();
 const CATS = ["car", "color", "pattern", "wheels", "wing", "sticker", "roof"];
@@ -218,6 +219,9 @@ export function carBackSprite(look, width, dpr = 1) {
  */
 export function drawCarBack(g, look, x, y, width, { angle = 0, alpha = 1, dpr = 1 } = {}) {
   if (!Number.isFinite(x) || !Number.isFinite(y) || !(width > 2)) return null;
+  // the picture of the 3D car (part 15b) once it is ready, the 2D drawing until then
+  const pic = readyPic(carPic(look || {}, "back"));
+  if (pic) return drawPic(g, pic, x, y, width, angle, alpha, dpr);
   const step = width < 40 ? 4 : width < 120 ? 8 : 16;
   const sw = Math.max(8, Math.round(width / step) * step);
   const s = carBackSprite(look, sw, dpr);
@@ -229,4 +233,18 @@ export function drawCarBack(g, look, x, y, width, { angle = 0, alpha = 1, dpr = 
   g.drawImage(s.canvas, -s.ax * k, -s.ay * k, s.w * k, s.h * k);
   g.restore();
   return { sprite: s, k };
+}
+
+/** Draw a ready 3D picture with the same anchors as the 2D sprite (bottom centre, body width). */
+export function drawPic(g, pic, x, y, width, angle = 0, alpha = 1, dpr = 1) {
+  const m = pic.meta;
+  const f = width / m.bodyW; // picture pixels → canvas pixels
+  const s = scaledPic(pic, width * dpr);
+  g.save();
+  if (alpha !== 1) g.globalAlpha *= Math.max(0, Math.min(1, alpha));
+  g.translate(x, y);
+  if (angle) g.rotate(angle);
+  g.drawImage(s.canvas, -m.ax * f, -m.ay * f, pic.w * f, pic.h * f);
+  g.restore();
+  return { sprite: { win: m.win, lights: m.lights }, k: f };
 }

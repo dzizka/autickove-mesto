@@ -98,3 +98,75 @@ test("without WebGL the 2D car stays and everything still works", async () => {
   assert.deepEqual(page.errors, []);
   await page.context().close();
 });
+
+// ---------- part 15b: pictures of the 3D car everywhere ----------
+
+test("pictures: side, back and top views have sane anchors; props too", async () => {
+  const page = await openGame(env.browser, env.server.url, { width: 390, storage: quiet() });
+  const res = await page.evaluate(async () => {
+    const { carPic, propPic } = await import("./js/render/car-pics.js");
+    const out = {};
+    for (const car of ["sedan", "fire", "alien", "tractor"]) {
+      const [side, back, top] = await Promise.all(["side", "back", "top"].map((v) => carPic({ car }, v).promise));
+      out[car] = { side: side.meta, back: { ...back.meta, w: back.w, h: back.h }, top: { ...top.meta, w: top.w, h: top.h }, sideSize: [side.w, side.h] };
+    }
+    const cone = await propPic("carkit/cone").promise;
+    out.cone = { ...cone.meta, w: cone.w, h: cone.h };
+    return out;
+  });
+  for (const [car, m] of Object.entries(res)) {
+    if (car === "cone") continue;
+    assert.deepEqual(m.sideSize, [480, 248], `${car}: side picture has the 2D car's viewBox`);
+    assert.ok(m.side.wheels.length >= 2 && m.side.wheels.every((x) => x > 0 && x < 240), `${car}: wheels inside the picture`);
+    assert.ok(m.side.wheelY > 62 && m.side.wheelY < 124, `${car}: wheels at the bottom`);
+    assert.ok(m.side.front[0] > m.side.back[0], `${car}: front points right`);
+    assert.ok(m.back.bodyW > 50 && m.back.bodyW <= m.back.w, `${car}: body width`);
+    assert.ok(m.back.ay > m.back.h * 0.6 && Math.abs(m.back.ax - m.back.w / 2) < m.back.w * 0.1, `${car}: anchor at the bottom centre`);
+    assert.ok(m.top.h > m.top.w, `${car}: from the top the car is longer than wide`);
+  }
+  assert.ok(res.cone.bodyW > 20 && res.cone.ay > res.cone.h * 0.6);
+  assert.deepEqual(page.errors, []);
+  await page.context().close();
+});
+
+for (const width of WIDTHS) {
+  test(`${width}px: home, race and maze show the 3D car's pictures`, async () => {
+    const look = { car: "pickup", color: "blue", wing: "big", roof: "crown" };
+    const page = await openGame(env.browser, env.server.url, { width, storage: quiet({ look, level: 8 }) });
+    await page.locator('[data-testid=home-car] .car-pic-wrap[data-pic="3d"]').waitFor({ timeout: 30000 });
+    assert.equal(await page.locator("[data-testid=home-car] .car-pic-wrap").getAttribute("data-car"), "pickup");
+    await page.goto(env.server.url + "#/game/race/city/1");
+    await page.getByTestId("race-canvas").waitFor();
+    await page.waitForFunction(async () => {
+      const { carPic } = await import("./js/render/car-pics.js");
+      return carPic(window.__game.race.look, "back").ready;
+    }, null, { timeout: 30000, polling: 500 });
+    await page.waitForTimeout(4000);
+    await screenshot(page, `${width}-race-3d`);
+    await page.goto(env.server.url + "#/game/maze");
+    await page.getByTestId("screen-game-maze").waitFor();
+    await page.waitForTimeout(3000);
+    await screenshot(page, `${width}-maze-3d`);
+    assert.deepEqual(page.errors, []);
+    await page.context().close();
+  });
+}
+
+test("test drive: the car drives on an empty road, steers and the drive ends", async () => {
+  const page = await openGame(env.browser, env.server.url, { width: 390, storage: quiet(), hash: "#/tuning" });
+  await page.getByTestId("test-drive").click();
+  await page.getByTestId("test-drive-canvas").waitFor();
+  await page.waitForTimeout(1500);
+  const before = await page.evaluate(() => ({ d: window.__game.testDrive.player.d, lane: window.__game.testDrive.player.lane, rivals: window.__game.testDrive.rivals.length, objects: window.__game.testDrive.objects.length }));
+  assert.ok(before.d > 0, "the car moves");
+  assert.equal(before.rivals + before.objects, 0, "nothing on the road");
+  const box = await page.getByTestId("test-drive-canvas").boundingBox();
+  await page.mouse.click(box.x + box.width * 0.9, box.y + box.height * 0.7);
+  assert.equal(await page.evaluate(() => window.__game.testDrive.player.lane), before.lane + 1);
+  await screenshot(page, "390-test-drive");
+  await page.getByTestId("test-drive-close").click();
+  assert.equal(await page.getByTestId("test-drive-modal").count(), 0);
+  assert.equal(await page.evaluate(() => window.__game.testDrive), null);
+  assert.deepEqual(page.errors, []);
+  await page.context().close();
+});

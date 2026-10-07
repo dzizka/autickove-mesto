@@ -6,6 +6,7 @@ import { PUZZLE } from "../../data/minigames.js";
 import { miniDef, starsFor } from "../../systems/minigames.js";
 import { getLook } from "../../systems/tuning.js";
 import { carSide } from "../../render/car-side.js";
+import { carPic, preload } from "../../render/car-pics.js";
 import { drawRoadSprite } from "../../render/road-sprites.js";
 import { createShell, shake } from "../mini/shell.js";
 
@@ -38,6 +39,13 @@ async function makePicture(rng) {
   g.fillRect(0, 430, SIZE, 120);
   g.fillStyle = "#ffffff";
   for (let x = 10; x < SIZE; x += 90) g.fillRect(x, 486, 50, 8);
+  // the picture of the 3D car when it comes quickly, else the 2D car
+  const pic = carPic(getLook(), "side");
+  if (pic) await preload([pic], 1500);
+  if (pic?.ready) {
+    g.drawImage(pic.img, 80, 300, 440, 227);
+    return cv.toDataURL("image/png");
+  }
   const svg = carSide(getLook());
   svg.setAttribute("width", "440");
   svg.setAttribute("height", "227");

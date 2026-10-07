@@ -5,19 +5,22 @@
 import * as THREE from "three";
 import { GLTFLoader } from "../../../vendor/addons/loaders/GLTFLoader.js";
 
-const BASE = new URL("../../../models/carkit/", import.meta.url);
+const MODELS = new URL("../../../models/", import.meta.url);
 const loader = new GLTFLoader();
 const cache = new Map();
 
-/** The model's scene (shared; clone before changing it). */
-export function loadModel(name) {
-  if (!cache.has(name)) {
-    const p = loader.loadAsync(new URL(`${name}.glb`, BASE).href).then((g) => g.scene);
-    p.catch(() => cache.delete(name)); // a failed load may be tried again later
-    cache.set(name, p);
+/** Any model by its path under v2/models without .glb, e.g. "city/roads/construction-barrier". */
+export function loadAny(path) {
+  if (!cache.has(path)) {
+    const p = loader.loadAsync(new URL(`${path}.glb`, MODELS).href).then((g) => g.scene);
+    p.catch(() => cache.delete(path)); // a failed load may be tried again later
+    cache.set(path, p);
   }
-  return cache.get(name);
+  return cache.get(path);
 }
+
+/** A Car Kit model (shared; clone before changing it). */
+export const loadModel = (name) => loadAny(`carkit/${name}`);
 
 /** Kit models keep their real sizes (a kart is small, a fire truck big): one scale for all. */
 let kitScale = null;

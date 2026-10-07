@@ -6,7 +6,7 @@ import * as rng from "../core/rng.js";
 import { getState } from "../core/state.js";
 import { questDef, isDone, claimQuest, ensureQuests } from "../systems/quests.js";
 import { go } from "../core/router.js";
-import { carSide } from "../render/car-side.js";
+import { carSidePic } from "../render/car-side.js";
 import { activeBuddy, buddyLook } from "../systems/crew.js";
 import { getLook, resolveLook } from "../systems/tuning.js";
 import { playNotes } from "../core/audio.js";
@@ -21,7 +21,7 @@ export default {
   title: "Domov",
   render(view) {
     const look = getLook();
-    const car = carSide(look, { trail: look.trail !== "none", passenger: buddyLook(activeBuddy())?.icon });
+    const car = carSidePic(look, { trail: look.trail !== "none", passenger: buddyLook(activeBuddy())?.icon });
     const stage = h(
       "button",
       {

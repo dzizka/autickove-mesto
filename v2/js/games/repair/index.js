@@ -5,7 +5,7 @@ import { h } from "../../core/ui.js";
 import { REPAIR } from "../../data/minigames.js";
 import { miniDef, starsFor } from "../../systems/minigames.js";
 import { getLook, resolveLook } from "../../systems/tuning.js";
-import { carSide } from "../../render/car-side.js";
+import { carSidePic } from "../../render/car-side.js";
 import { createShell, shake } from "../mini/shell.js";
 
 /** Where a problem shows on the side view (viewBox 240 × 124). */
@@ -45,7 +45,17 @@ export default {
     const side = resolveLook(look).car.side;
     const problems = ctx.rng.shuffle(REPAIR.list).slice(0, REPAIR.problems[L]);
     const marks = h("div", { class: "rep-marks" });
-    const car = h("div", { class: "rep-car" }, carSide(look), marks);
+    const carEl = carSidePic(look);
+    const car = h("div", { class: "rep-car" }, carEl, marks);
+    // the 3D car's picture knows where its own wheels, lights and roof are
+    const place = (mark, at) => {
+      const [x, y] = spot(carEl.geometry || side, at);
+      Object.assign(mark.style, { left: `${(x / 240) * 100}%`, top: `${(y / 124) * 100}%` });
+    };
+    carEl.picReady.then(() => {
+      const mark = marks.firstElementChild;
+      if (mark) place(mark, mark.dataset.at);
+    });
     const tools = h("div", { class: "rep-tools", "data-testid": "rep-tools" });
     sh.stage.append(h("div", { class: "rep-wrap" }, h("div", { class: "rep-lift" }, car), tools));
     let step = 0;
@@ -64,8 +74,8 @@ export default {
         return;
       }
       const p = problems[step];
-      const [x, y] = spot(side, p.at);
-      const mark = h("span", { class: "rep-mark", "data-testid": "rep-mark", style: { left: `${(x / 240) * 100}%`, top: `${(y / 124) * 100}%` } }, p.mark, h("i", {}, "!"));
+      const mark = h("span", { class: "rep-mark", "data-testid": "rep-mark", "data-at": p.at }, p.mark, h("i", {}, "!"));
+      place(mark, p.at);
       marks.replaceChildren(mark);
       sh.stage.dataset.need = p.tool;
       const others = ctx.rng.shuffle(REPAIR.list.map((q) => q.tool).filter((t) => t !== p.tool)).slice(0, REPAIR.choices[L] - 1);

@@ -1,0 +1,137 @@
+// Pictures of the 3D cars for the whole game (part 15b, DESIGN-v2 §14): the same Car Kit
+// model seen from the side (home, games, town), from behind (races) and from the top (maze,
+// crossing). Pictures are made in the background and cached; until one is ready, and on
+// devices without WebGL, the old 2D drawing is used, so nothing ever waits for 3D.
+
+import "../core/state.js"; // first: state and tuning import each other (see core/state.js)
+import { resolveLook } from "../systems/tuning.js";
+
+const LOOK_KEYS = ["car", "color", "pattern", "wheels", "wing", "sticker", "roof", "neon", "trail"];
+const MAX_PICS = 160;
+
+let webgl = null;
+/** True when the browser can draw WebGL. Tests and the parents' switch can turn 3D off. */
+export function hasWebGL() {
+  if (window.__game?.no3d) return false;
+  if (webgl === null) {
+    try {
+      const cv = document.createElement("canvas");
+      const gl = cv.getContext("webgl2") || cv.getContext("webgl");
+      webgl = !!gl;
+      gl?.getExtension("WEBGL_lose_context")?.loseContext();
+    } catch {
+      webgl = false;
+    }
+  }
+  return webgl;
+}
+
+/** Cache key of a look (tuning ids or { colorHex, car }) plus picture options. */
+export function lookKey(look = {}, opts = {}) {
+  const r = resolveLook(look);
+  return [...LOOK_KEYS.map((k) => r[k].id), look.colorHex || "", opts.passenger || ""].join("|");
+}
+
+const pics = new Map(); // key → { ready, img, meta, w, h, promise, scaled: Map }
+
+function remember(key, make) {
+  let e = pics.get(key);
+  if (e) return e;
+  e = { ready: false, img: null, meta: null, scaled: new Map(), promise: null };
+  pics.set(key, e);
+  if (pics.size > MAX_PICS) pics.delete(pics.keys().next().value);
+  e.promise = make()
+    .then(async (res) => {
+      const img = new Image();
+      img.src = res.url;
+      await img.decode();
+      Object.assign(e, { ready: true, img, meta: res.meta, w: res.w, h: res.h, url: res.url });
+      return e;
+    })
+    .catch((err) => {
+      console.warn("[car-pics] picture failed, keeping the 2D drawing", err);
+      e.failed = true;
+      return null;
+    });
+  return e;
+}
+
+const snapshot = () => import("./three/snapshot.js");
+
+/** Picture of a car: view "side" | "back" | "top". Returns the cache entry (maybe not ready). */
+export function carPic(look, view, opts = {}) {
+  if (!hasWebGL()) return null;
+  const key = `${view}|${lookKey(look, opts)}`;
+  return remember(key, () => snapshot().then((m) => m.renderPicture("car", { r: resolveLook(look), opts: { colorHex: look?.colorHex || null, passenger: opts.passenger || null }, view })));
+}
+
+/** Picture of a prop (cone, box, barrier) from behind, like the race camera sees it. */
+export function propPic(path, scale = 1) {
+  if (!hasWebGL()) return null;
+  return remember(`prop|${path}|${scale}`, () => snapshot().then((m) => m.renderPicture("prop", { path, scale, view: "back" })));
+}
+
+/** A ready picture or null (and the picture is made in the background). */
+export function readyPic(entry) {
+  return entry?.ready ? entry : null;
+}
+
+/** Make these pictures now (e.g. before a race), resolve when ready or after `ms`. */
+export function preload(entries, ms = 2500) {
+  const list = entries.filter(Boolean).map((e) => e.promise);
+  return Promise.race([Promise.all(list), new Promise((r) => setTimeout(r, ms))]);
+}
+
+/**
+ * The picture scaled to `px` pixels of body width (snapped, cached): smooth when small.
+ * Returns { canvas, k } where k turns picture pixels into canvas pixels.
+ */
+export function scaledPic(e, px) {
+  const step = px < 48 ? 4 : px < 160 ? 12 : 32;
+  const target = Math.max(4, Math.min(e.meta.bodyW, Math.round(px / step) * step));
+  let c = e.scaled.get(target);
+  if (!c) {
+    const k = target / e.meta.bodyW;
+    c = document.createElement("canvas");
+    c.width = Math.max(1, Math.round(e.w * k));
+    c.height = Math.max(1, Math.round(e.h * k));
+    const g = c.getContext("2d");
+    g.imageSmoothingQuality = "high";
+    g.drawImage(e.img, 0, 0, c.width, c.height);
+    e.scaled.set(target, c);
+    if (e.scaled.size > 12) e.scaled.delete(e.scaled.keys().next().value);
+  }
+  return { canvas: c, k: c.width / e.w };
+}
+
+/**
+ * A car from the side for the page (home, podium, games, town). The 2D car shows at once and
+ * is swapped for the 3D picture when it is ready. el.picReady resolves with the picture (or null).
+ */
+export function sideCarEl(svg, look = {}, opts = {}) {
+  const el = document.createElement("span");
+  el.className = "car-pic-wrap";
+  for (const k of ["car", "color", "pattern", "wheels", "wing", "sticker", "roof", "neon", "trail"]) if (svg.dataset[k]) el.dataset[k] = svg.dataset[k];
+  if (opts.passenger) el.dataset.passenger = opts.passenger;
+  el.append(svg);
+  const entry = carPic(look, "side", opts);
+  el.dataset.pic = entry && !entry.failed ? "wait" : "2d";
+  el.picReady = entry
+    ? entry.promise.then((e) => {
+        if (!e) {
+          el.dataset.pic = "2d";
+          return null;
+        }
+        const img = document.createElement("img");
+        img.className = `car-pic ${svg.getAttribute("class") || ""}`;
+        img.alt = "";
+        img.src = e.url;
+        img.draggable = false;
+        el.replaceChildren(img);
+        el.dataset.pic = "3d";
+        el.geometry = e.meta;
+        return e;
+      })
+    : Promise.resolve(null);
+  return el;
+}

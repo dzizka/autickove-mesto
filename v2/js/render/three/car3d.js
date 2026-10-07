@@ -48,6 +48,7 @@ function swapWheel(o, wheelSrc, wheels) {
   tintWheel(w, wheels);
   parent.add(holder);
   o.visible = false;
+  return holder;
 }
 
 async function addWing(wrap, size, wing) {
@@ -122,7 +123,7 @@ function addTrail(wrap, size, trail) {
  * Build the car. r: resolved look (systems/tuning.js resolveLook); colorHex overrides the paint.
  * Returns { object, size, tick(t) } — tick animates neon and trail.
  */
-export async function buildCar(r, { colorHex = null, passenger = null, trail = false } = {}) {
+export async function buildCar(r, { colorHex = null, passenger = null, trail = false, neon = true } = {}) {
   const kind = r.car;
   const [base, scale, wheelSrc] = await Promise.all([loadModel(kind.model), getKitScale(), loadModel(r.wheels.model || "wheel-default")]);
   const src = base.clone(true);
@@ -141,10 +142,11 @@ export async function buildCar(r, { colorHex = null, passenger = null, trail = f
     o.add(new THREE.Mesh(parts.keep, o.material), paint);
     o.material = own(new THREE.MeshBasicMaterial({ visible: false }));
   }
-  for (const o of wheels) {
-    if (OWN_WHEELS.has(kind.model)) tintWheel(o, r.wheels);
-    else swapWheel(o, wheelSrc, r.wheels);
-  }
+  const wheelObjs = wheels.map((o) => {
+    if (!OWN_WHEELS.has(kind.model)) return swapWheel(o, wheelSrc, r.wheels);
+    tintWheel(o, r.wheels);
+    return o;
+  });
   shadowsOn(src);
 
   const car = new THREE.Group();
@@ -177,8 +179,17 @@ export async function buildCar(r, { colorHex = null, passenger = null, trail = f
     s.position.set(0, size.y * 0.72, size.z * 0.05);
     wrap.add(s);
   }
-  const ticks = [addNeon(wrap, size, r.neon), trail ? addTrail(wrap, size, r.trail) : null].filter(Boolean);
-  return { object: wrap, size, tick: (t) => ticks.forEach((f) => f(t)) };
+  const ticks = [neon ? addNeon(wrap, size, r.neon) : null, trail ? addTrail(wrap, size, r.trail) : null].filter(Boolean);
+  /** Wheel centres and radii in the car's own space (for pictures that mark the wheels). */
+  const wheelSpots = () => {
+    wrap.updateMatrixWorld(true);
+    const inv = new THREE.Matrix4().copy(wrap.matrixWorld).invert();
+    return wheelObjs.map((o) => {
+      const b = new THREE.Box3().setFromObject(o).applyMatrix4(inv);
+      return { center: b.getCenter(new THREE.Vector3()), r: b.getSize(new THREE.Vector3()).y / 2 };
+    });
+  };
+  return { object: wrap, size, wheelSpots, tick: (t) => ticks.forEach((f) => f(t)) };
 }
 
 /** Free what buildCar made for this car (shared models and textures stay cached). */

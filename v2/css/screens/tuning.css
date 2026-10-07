@@ -47,8 +47,7 @@
 .show-car .car-side { width: 100%; height: auto; overflow: visible; }
 /* the 3D car stands on its own turntable */
 .showroom:has(.car-view[data-mode="3d"]) .turntable { display: none; }
-.tile-car .car-pic { display: block; width: 100%; height: auto; }
-.tile-car.pic-loading { opacity: .35; }
+.tile-car [data-pic="wait"] > svg { opacity: .35; }
 .show-buttons { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
 
 .buy-bar {
@@ -116,3 +115,13 @@
 }
 
 
+
+/* 🛣️ Test drive (games/race/test-drive.js): the road fills the window. */
+.modal.test-drive { width: min(100%, 900px); height: min(100%, 640px); max-height: none; padding: 0; overflow: hidden; background: #2b2f52; }
+.drive-wrap { position: relative; width: 100%; height: 100%; }
+.drive-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+.drive-close, .drive-horn { position: absolute; top: 12px; min-width: 56px; min-height: 56px; font-size: 1.6rem; }
+.drive-close { right: 12px; }
+.drive-horn { left: 12px; }
+.drive-time { position: absolute; left: 84px; right: 84px; top: 30px; height: 12px; border-radius: 999px; background: rgba(255, 255, 255, .45); overflow: hidden; }
+.drive-time i { display: block; height: 100%; width: 100%; background: var(--sun, #ffd23f); }

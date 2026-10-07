@@ -2,6 +2,7 @@
 // kind, paint, pattern, wheels, wing, sticker and roof item. Neon and trail are animated,
 // so they live in render/effects.js. Sprites are cached per look and size (older tablets).
 
+import { carPic, readyPic, scaledPic } from "./car-pics.js";
 import { resolveLook } from "../systems/tuning.js";
 import { TRAFFIC_TOP } from "../data/cars.js";
 import { shade, luminance } from "./car-side.js";
@@ -228,6 +229,18 @@ const CATS = ["car", "color", "pattern", "wheels", "wing", "sticker", "roof"];
 /** Draw a car centred at (x, y). `look` as for carSprite; a plain hex string also works. */
 export function drawCarTop(g, look, x, y, width, opts = {}) {
   const l = typeof look === "string" ? { colorHex: look } : look;
+  // the 3D car seen from above (part 15b) once its picture is ready
+  const pic = l?.traffic ? null : readyPic(carPic(l || {}, "top"));
+  if (pic && Number.isFinite(x) && Number.isFinite(y)) {
+    const f = width / pic.meta.bodyW;
+    const sc = scaledPic(pic, width * (opts.dpr || 1));
+    g.save();
+    g.translate(x, y);
+    if (opts.angle) g.rotate(Number.isFinite(opts.angle) ? opts.angle : 0);
+    g.drawImage(sc.canvas, -pic.meta.ax * f, -pic.meta.ay * f, pic.w * f, pic.h * f);
+    g.restore();
+    return null;
+  }
   const s = carSprite(l, width, opts);
   const cx = Number.isFinite(x) ? x : 0;
   const cy = Number.isFinite(y) ? y : 0;

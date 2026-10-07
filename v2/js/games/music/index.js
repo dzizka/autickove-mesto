@@ -5,7 +5,7 @@ import { h } from "../../core/ui.js";
 import { MUSIC } from "../../data/minigames.js";
 import { miniDef, starsFor } from "../../systems/minigames.js";
 import { colorLook } from "../../systems/tuning.js";
-import { carSide } from "../../render/car-side.js";
+import { carSidePic } from "../../render/car-side.js";
 import { createShell, shake } from "../mini/shell.js";
 
 let shell = null;
@@ -32,7 +32,7 @@ export default {
         "button",
         { class: "mus-car", "data-i": String(i), "aria-label": "Auto", style: { "--mc": c.hex }, onclick: () => press(i) },
         h("span", { class: "mus-note", "aria-hidden": "true" }, "🎵"),
-        carSide({ ...colorLook(c.hex), car: ["sedan", "jeep", "taxi", "police"][i] }),
+        carSidePic({ ...colorLook(c.hex), car: ["sedan", "jeep", "taxi", "police"][i] }),
       ),
     );
     sh.stage.append(h("div", { class: "mus-wrap" }, sign, h("div", { class: "mus-cars" }, cars)));

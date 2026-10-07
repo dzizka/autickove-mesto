@@ -12,7 +12,9 @@ import { crewBonus, activeBuddy, buddyLook } from "../../systems/crew.js";
 import { createTrail } from "../../render/effects.js";
 import { createRace, step, steer, finalOrder } from "./physics.js";
 import { M, PLAYER_Z, SEG, buildRoad, makeView, renderRoad, createBackdrop, drawBackdrop, fogDensity, segIndex } from "./road.js";
-import { drawScene, drawPlayer, drawHeadlights, drawSpeedLines, laneOffset } from "./scene.js";
+import { drawScene, drawPlayer, drawHeadlights, drawSpeedLines, laneOffset, rivalKind, trafficKind, BOSS_KIND } from "./scene.js";
+import { carPic, propPic } from "../../render/car-pics.js";
+import { PROPS } from "../../render/road-sprites.js";
 import { createWeather, drawWeather } from "./weather.js";
 import { createHud, showPodium } from "./hud.js";
 
@@ -66,6 +68,11 @@ export default {
     const looks = resolveLook(look);
     const buddy = buddyLook(activeBuddy());
     const fx = { look, neon: looks.neon, trail: createTrail(looks.trail), sparkle: abilities.size > 0, popups: [], buddy };
+    // pictures of the 3D cars and props are made during the countdown (2D until they are ready)
+    carPic(look, "back");
+    for (const r of race.rivals) carPic({ colorHex: r.color, car: r.isBoss ? BOSS_KIND : rivalKind(r.color) }, "back");
+    for (const c of track.traffic || []) carPic({ colorHex: c, car: trafficKind(track, c) }, "back");
+    for (const id of track.obstacles || []) if (PROPS[id]) propPic(PROPS[id].path);
     race.look = look;
     race.buddy = buddy; // test hook: the buddy rides along
 

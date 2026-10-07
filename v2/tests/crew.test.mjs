@@ -172,7 +172,7 @@ test("races give eggs: the first one is sure in race 3, eggs tick and the buddy 
 
   // visible in the car: home, garage, and in the race
   await page.getByTestId("topbar-home").click();
-  assert.equal(await page.locator("[data-testid=home-car] svg").getAttribute("data-passenger"), icon);
+  assert.equal(await page.locator("[data-testid=home-car] .car-pic-wrap").getAttribute("data-passenger"), icon);
   await page.getByTestId("home-garage").click();
   assert.equal(await page.locator(".lift-car [data-testid=car-view]").getAttribute("data-passenger"), icon);
   await page.evaluate(() => (location.hash = "#/game/race/city/1"));

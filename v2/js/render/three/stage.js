@@ -125,6 +125,12 @@ export function createStage(host, { mode = "turntable", onReady, onLost } = {}) 
 
   return {
     canvas,
+    /** Stop drawing while something covers the stage (e.g. the test drive). */
+    pause(on) {
+      if (lost) return;
+      if (on) loop.stop();
+      else loop.start();
+    },
     /** Turn the car so this angle faces the camera (0 = the front). */
     face(a) {
       target = a;

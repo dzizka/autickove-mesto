@@ -10,7 +10,13 @@ import { drawNeon, updateTrail, drawTrail } from "../../render/effects.js";
 
 // Things on the road are drawn larger than life, so a child spots them early (§4.1).
 const BIG = { obstacle: 1.7, coin: 1.4, fuel: 1.4, star: 1.4, powerup: 1.4 };
-const TRAFFIC_KINDS = ["sedan", "jeep", "truck", "taxi", "sedan"];
+// Car Kit models for the other cars (part 15b); one kind per colour keeps the pictures few
+export const TRAFFIC_KINDS = ["van", "taxi", "pickup", "truck", "jeep", "garbage", "sedan"];
+export const RIVAL_KINDS = ["sports", "hatch", "sedan", "luxury"];
+export const BOSS_KIND = "truck";
+const colourIndex = (list, c) => Math.max(0, (list || []).indexOf(c));
+export const rivalKind = (color) => RIVAL_KINDS[[...String(color)].reduce((t, ch) => t + ch.charCodeAt(0), 0) % RIVAL_KINDS.length];
+export const trafficKind = (track, color) => TRAFFIC_KINDS[colourIndex(track.traffic, color) % TRAFFIC_KINDS.length];
 const lerp = (a, b, t) => a + (b - a) * t;
 const clamp01 = (v) => Math.max(0, Math.min(1, v));
 const finite = (v, f = 0) => (Number.isFinite(v) ? v : f);
@@ -112,7 +118,7 @@ function drawObject(g, R, V, o, p0, t, night) {
     g.translate(-p.x, -p.y);
   }
   if (o.kind === "traffic") {
-    const r = drawCarBack(g, { colorHex: o.color, car: TRAFFIC_KINDS[o.id % TRAFFIC_KINDS.length] }, p.x, p.y, CAR_W * 0.95 * p.u);
+    const r = drawCarBack(g, { colorHex: o.color, car: trafficKind(R.track, o.color) }, p.x, p.y, CAR_W * 0.95 * p.u);
     if (night && r) tailGlow(g, p.x, p.y, r, CAR_W * p.u);
   } else if (o.kind === "coin" || o.kind === "fuel" || o.kind === "star") {
     drawRoadSprite(g, o.kind, p.x, p.y, p.u, { t, seed: (o.id % 97) / 97 });
@@ -150,12 +156,12 @@ function drawRival(g, R, V, r, p, t, night, near) {
   const lean = (r.lane - r.x) * 0.12;
   if (r.isBoss) {
     const w = CAR_W * 1.35 * p.u;
-    const res = drawCarBack(g, { colorHex: r.color, car: "truck" }, p.x, p.y, w, { angle: Math.sin(t * 3) * 0.04, alpha: near });
+    const res = drawCarBack(g, { colorHex: r.color, car: BOSS_KIND }, p.x, p.y, w, { angle: Math.sin(t * 3) * 0.04, alpha: near });
     emojiAt(g, r.icon, p.x, p.y - w * 1.45, w * 0.7, near);
     if (night && res) tailGlow(g, p.x, p.y, res, w);
     return;
   }
-  const res = drawCarBack(g, { colorHex: r.color, car: "sedan" }, p.x, p.y, CAR_W * p.u, { angle: lean, alpha: near });
+  const res = drawCarBack(g, { colorHex: r.color, car: rivalKind(r.color) }, p.x, p.y, CAR_W * p.u, { angle: lean, alpha: near });
   if (night && res) tailGlow(g, p.x, p.y, res, CAR_W * p.u);
 }
 

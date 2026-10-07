@@ -8,8 +8,10 @@ import * as rng from "../core/rng.js";
 import { TUNING, CARS_TAB } from "../data/tuning.js";
 import { canAfford } from "../systems/economy.js";
 import { itemsOf, getLook, resolveLook, isOwned, priceOf, select, buy, randomLook } from "../systems/tuning.js";
-import { carSide } from "../render/car-side.js";
-import { createCarView, carPictureInto } from "../render/car-view.js";
+import { carSidePic } from "../render/car-side.js";
+import { createCarView } from "../render/car-view.js";
+import { openTestDrive } from "../games/race/test-drive.js";
+import { setLook } from "../systems/stats.js";
 import { activeBuddy, buddyLook } from "../systems/crew.js";
 
 const TABS = [CARS_TAB, ...TUNING];
@@ -27,10 +29,7 @@ function swatch(item) {
 function tileFace(cat, item, look) {
   if (cat === "color") return swatch(item);
   if (MINI_CAR.has(cat)) {
-    const tileLook = { ...look, [cat]: item.id };
-    const holder = h("span", { class: "tile-car" }, carSide(tileLook));
-    carPictureInto(holder, tileLook);
-    return holder;
+    return h("span", { class: "tile-car" }, carSidePic({ ...look, [cat]: item.id }));
   }
   return h("span", { class: "tile-icon", "aria-hidden": "true" }, item.icon || "🚫");
 }
@@ -61,6 +60,20 @@ export default {
         "div",
         { class: "show-buttons" },
         h("button", { class: "btn sun", "data-testid": "horn", "aria-label": "Trúbiť", onclick: () => playNotes(resolveLook(look).horn.notes) }, "📯 Trúbiť"),
+        h(
+          "button",
+          {
+            class: "btn sky",
+            "data-testid": "test-drive",
+            "aria-label": "Skúšobná jazda",
+            onclick: () => {
+              sfx.open();
+              carView.pause(true);
+              openTestDrive({ ...shownLook(), ...setLook() }, { onClose: () => carView?.pause(false) });
+            },
+          },
+          "🛣️ Jazda",
+        ),
         h(
           "button",
           {

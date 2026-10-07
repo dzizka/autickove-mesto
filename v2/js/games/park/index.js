@@ -5,7 +5,7 @@ import { h } from "../../core/ui.js";
 import { PARK } from "../../data/minigames.js";
 import { miniDef, starsFor } from "../../systems/minigames.js";
 import { colorLook } from "../../systems/tuning.js";
-import { carSide } from "../../render/car-side.js";
+import { carSidePic } from "../../render/car-side.js";
 import { createShell, shake, dotsEl } from "../mini/shell.js";
 
 const KINDS = ["sedan", "jeep", "taxi", "police"];
@@ -50,7 +50,7 @@ export default {
         return;
       }
       spot.classList.add("full");
-      spot.replaceChildren(car.querySelector("svg"));
+      spot.replaceChildren(car.querySelector(".car-pic-wrap"));
       car.remove();
       select(null);
       ctx.audio.sfx.coin();
@@ -88,7 +88,7 @@ export default {
       );
       queue.replaceChildren(
         ...ctx.rng.shuffle(pairs).map((p) => {
-          const car = h("button", { class: "park-car", "data-key": p.key, "data-mode": byDots ? "dots" : "color", "aria-label": "Auto" }, carSide({ ...colorLook(p.hex), car: ctx.rng.pick(KINDS) }), byDots ? dots(p.n) : null);
+          const car = h("button", { class: "park-car", "data-key": p.key, "data-mode": byDots ? "dots" : "color", "aria-label": "Auto" }, carSidePic({ ...colorLook(p.hex), car: ctx.rng.pick(KINDS) }), byDots ? dots(p.n) : null);
           car.addEventListener("pointerdown", (e) => startDrag(e, car));
           return car;
         }),

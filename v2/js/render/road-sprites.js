@@ -3,6 +3,11 @@
 // (300 per metre); `u` is pixels per unit at the sprite's distance. (x, y) = bottom centre.
 
 import { emojiSprite } from "./emoji.js";
+import { propPic, readyPic } from "./car-pics.js";
+import { drawPic } from "./car-back.js";
+
+/** Obstacles that are Kenney models (part 15b): model path and width in sprite units. */
+export const PROPS = { cone: { path: "carkit/cone", w: 360 }, crate: { path: "carkit/box", w: 480 }, barrier: { path: "city/roads/construction-barrier", w: 680 } };
 
 /** Rough widths in sprite units, used to keep scenery off the road. */
 export const SPRITE_WIDTH = { house: 1500, tower: 1200, tree: 900, pine: 800, snowPine: 800, palm: 900, lamp: 300, cactus: 600, rock: 550, bush: 600, snowman: 500, crystal: 500, planet: 1500, ufo: 1200, mushroom: 500 };
@@ -67,6 +72,11 @@ export function drawRoadSprite(g, id, x, y, u, o = {}) {
   const s = (v) => v * u;
   const seed = o.seed ?? 0.5;
   const t = o.t || 0;
+  const prop = PROPS[id] && readyPic(propPic(PROPS[id].path));
+  if (prop) {
+    drawPic(g, prop, x, y, s(PROPS[id].w));
+    return true;
+  }
   switch (id) {
     case "tree":
       rect(g, "#7a5230", x - s(50), y - s(380), s(100), s(380));

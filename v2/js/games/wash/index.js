@@ -5,7 +5,7 @@ import { h } from "../../core/ui.js";
 import { WASH } from "../../data/minigames.js";
 import { miniDef, starsFor } from "../../systems/minigames.js";
 import { getLook, resolveLook } from "../../systems/tuning.js";
-import { carSide } from "../../render/car-side.js";
+import { carSidePic } from "../../render/car-side.js";
 import { createShell } from "../mini/shell.js";
 
 const VB_W = 240; // car-side viewBox
@@ -32,7 +32,8 @@ export default {
     const mud = h("canvas", { class: "wash-layer", "data-testid": "wash-canvas" });
     const foam = h("canvas", { class: "wash-layer foam" });
     const tool = h("span", { class: "wash-tool", "aria-hidden": "true" }, TOOLS[0]);
-    const box = h("div", { class: "wash-car" }, carSide(look), foam, mud);
+    const carEl = carSidePic(look);
+    const box = h("div", { class: "wash-car" }, carEl, foam, mud);
     const bubbles = h("div", { class: "wash-fx", "aria-hidden": "true" });
     sh.stage.append(h("div", { class: "wash-wrap" }, box, bubbles, tool));
 
@@ -42,23 +43,47 @@ export default {
     }
     const gm = mud.getContext("2d", { willReadFrequently: true });
     const gf = foam.getContext("2d", { willReadFrequently: true });
-    // mud only on the car: body and wheels
+    // mud only on the car: the 2D body and wheels, or the shape of the 3D car's picture
     const shape = new Path2D(side.body);
     for (const x of side.wheels) shape.addPath(circlePath(x, side.wheelY, side.wheelR + 2));
-    gm.save();
-    gm.scale(K, K);
-    gm.clip(shape);
-    for (let i = 0; i < WASH.blobs[L]; i++) {
-      gm.fillStyle = ctx.rng.pick(WASH.mud);
-      gm.beginPath();
-      gm.arc(10 + ctx.rng.random() * 220, 10 + ctx.rng.random() * 105, 7 + ctx.rng.random() * 16, 0, 6.29);
-      gm.fill();
-    }
-    for (let i = 0; i < 10; i++) {
-      gm.fillStyle = ctx.rng.pick(WASH.mud);
-      gm.fillRect(20 + ctx.rng.random() * 200, 50 + ctx.rng.random() * 20, 4, 14 + ctx.rng.random() * 16);
-    }
-    gm.restore();
+    let picture = null;
+    const onCar = (g, paint) => {
+      g.save();
+      if (!picture) {
+        g.scale(K, K);
+        g.clip(shape);
+        paint();
+      } else {
+        g.scale(K, K);
+        paint();
+        g.setTransform(1, 0, 0, 1, 0, 0);
+        g.globalCompositeOperation = "destination-in";
+        g.drawImage(picture, 0, 0, VB_W * K, VB_H * K);
+      }
+      g.restore();
+    };
+    const paintMud = () =>
+      onCar(gm, () => {
+        for (let i = 0; i < WASH.blobs[L]; i++) {
+          gm.fillStyle = ctx.rng.pick(WASH.mud);
+          gm.beginPath();
+          gm.arc(10 + ctx.rng.random() * 220, 10 + ctx.rng.random() * 105, 7 + ctx.rng.random() * 16, 0, 6.29);
+          gm.fill();
+        }
+        for (let i = 0; i < 10; i++) {
+          gm.fillStyle = ctx.rng.pick(WASH.mud);
+          gm.fillRect(20 + ctx.rng.random() * 200, 50 + ctx.rng.random() * 20, 4, 14 + ctx.rng.random() * 16);
+        }
+      });
+    paintMud();
+    // the 3D picture came before the first scrub: the mud follows its shape
+    carEl.picReady.then((e) => {
+      if (!e || moves || sh.over) return;
+      picture = e.img;
+      gm.clearRect(0, 0, mud.width, mud.height);
+      paintMud();
+      mudTotal = Math.max(1, dirt(gm));
+    });
 
     const dirt = (g) => {
       const d = g.getImageData(0, 0, VB_W * K, VB_H * K).data;
@@ -66,7 +91,7 @@ export default {
       for (let i = 3; i < d.length; i += 16) if (d[i] > 40) n++;
       return n;
     };
-    const mudTotal = Math.max(1, dirt(gm));
+    let mudTotal = Math.max(1, dirt(gm));
     let foamTotal = 1;
     let phase = 0; // 0 sponge, 1 shower, 2 done
     let last = null;
@@ -93,17 +118,15 @@ export default {
 
     function addFoam(p) {
       // foam where the mud was (only on the car)
-      gf.save();
-      gf.scale(K, K);
-      gf.clip(shape);
-      gf.setTransform(1, 0, 0, 1, 0, 0);
-      gf.fillStyle = "rgba(255,255,255,.92)";
-      for (let i = 0; i < 3; i++) {
-        gf.beginPath();
-        gf.arc(p.x + (Math.random() - 0.5) * radius * 1.6, p.y + (Math.random() - 0.5) * radius * 1.6, radius * (0.35 + Math.random() * 0.35), 0, 6.29);
-        gf.fill();
-      }
-      gf.restore();
+      onCar(gf, () => {
+        gf.setTransform(1, 0, 0, 1, 0, 0);
+        gf.fillStyle = "rgba(255,255,255,.92)";
+        for (let i = 0; i < 3; i++) {
+          gf.beginPath();
+          gf.arc(p.x + (Math.random() - 0.5) * radius * 1.6, p.y + (Math.random() - 0.5) * radius * 1.6, radius * (0.35 + Math.random() * 0.35), 0, 6.29);
+          gf.fill();
+        }
+      });
     }
 
     function fx(e, icon) {

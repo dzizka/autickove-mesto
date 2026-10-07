@@ -9,7 +9,7 @@ import { go, startGame, getGames, isUnlocked } from "../core/router.js";
 import { BUILDINGS, CITY } from "../data/city.js";
 import { buildingLevel, nextPrice, isBuildingOpen, buildOrUpgrade, rentWaiting, collectRent } from "../systems/city.js";
 import { getLook, resolveLook, colorLook } from "../systems/tuning.js";
-import { carSide } from "../render/car-side.js";
+import { carSidePic } from "../render/car-side.js";
 
 const COLORS = ["#ff5a5f", "#2f80ed", "#ffd23f", "#3ebd4a", "#8f5bd8", "#ff8c42"];
 
@@ -147,7 +147,7 @@ export default {
       return h(
         "button",
         { class: `city-car${i % 2 ? " back" : ""}`, "aria-label": "Auto", style: { animationDuration: `${14 + i * 5}s`, animationDelay: `${-i * 4}s` }, onclick: () => playNotes(resolveLook(look).horn.notes) },
-        carSide(look),
+        carSidePic(look),
       );
     });
 

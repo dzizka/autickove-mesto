@@ -4,7 +4,7 @@
 
 import { h } from "../../core/ui.js";
 import { MEDALS } from "../../data/tracks.js";
-import { carSide } from "../../render/car-side.js";
+import { carSidePic } from "../../render/car-side.js";
 import { currentPlace } from "./physics.js";
 
 const PLAYER_COLOR = "#ff5a5f";
@@ -81,7 +81,7 @@ export function showPodium(root, order, { place, unlocks, look, buddy }) {
   const steps = [1, 0, 2].map((i) => {
     const row = order[i];
     if (!row) return h("div");
-    const car = row.isPlayer ? carSide(look || {}, { passenger: buddy?.icon }) : carSide({ colorHex: row.color });
+    const car = row.isPlayer ? carSidePic(look || {}, { passenger: buddy?.icon }) : carSidePic({ colorHex: row.color });
     return h(
       "div",
       { class: `pd-step pd-${i + 1}${row.isPlayer ? " me" : ""}` },
@@ -99,7 +99,7 @@ export function showPodium(root, order, { place, unlocks, look, buddy }) {
     "div",
     { class: "podium", "data-testid": "podium", "data-place": String(place) },
     h("div", { class: "pd-stage" }, steps),
-    fourth && h("div", { class: `pd-fourth${fourth.isPlayer ? " me" : ""}` }, h("div", { class: "pd-car small" }, fourth.isPlayer ? carSide(look || {}, { passenger: buddy?.icon }) : carSide({ colorHex: fourth.color })), "🏁"),
+    fourth && h("div", { class: `pd-fourth${fourth.isPlayer ? " me" : ""}` }, h("div", { class: "pd-car small" }, fourth.isPlayer ? carSidePic(look || {}, { passenger: buddy?.icon }) : carSidePic({ colorHex: fourth.color })), "🏁"),
     extras,
   );
   root.append(el);
