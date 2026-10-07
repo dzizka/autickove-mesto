@@ -9,6 +9,7 @@ import { TUNING, CARS_TAB } from "../data/tuning.js";
 import { canAfford } from "../systems/economy.js";
 import { itemsOf, getLook, resolveLook, isOwned, priceOf, select, buy, randomLook } from "../systems/tuning.js";
 import { carSide } from "../render/car-side.js";
+import { activeBuddy, buddyLook } from "../systems/crew.js";
 
 const TABS = [CARS_TAB, ...TUNING];
 const MINI_CAR = new Set(["car", "pattern", "wheels", "wing", "neon"]);
@@ -44,7 +45,7 @@ export default {
         { class: "showroom", "data-testid": "showroom" },
         h("div", { class: "spotlight", "aria-hidden": "true" }),
         h("div", { class: "turntable", "aria-hidden": "true" }),
-        h("div", { class: "show-car", "data-testid": "show-car" }, carSide(look, { trail: look.trail !== "none" })),
+        h("div", { class: "show-car", "data-testid": "show-car" }, carSide(look, { trail: look.trail !== "none", passenger: buddyLook(activeBuddy())?.icon })),
       );
 
       const buttons = h(

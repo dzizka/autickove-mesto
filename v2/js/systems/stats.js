@@ -1,10 +1,11 @@
-// Car stats: sum of equipped parts (sets and crew buddy join in parts 4 and 5),
+// Car stats: sum of equipped parts, set bonuses and the crew buddy,
 // stat bars, car power, and how stats turn into race effects.
 
 import { STATS, STAT_IDS, EFFECTS } from "../data/stats.js";
 import { RACE, TRACKS } from "../data/tracks.js";
 import { getState } from "../core/state.js";
 import { SETS } from "../data/sets.js";
+import { crewBonus } from "./crew.js";
 
 const num = (v) => (Number.isFinite(v) ? v : 0);
 
@@ -43,8 +44,11 @@ export function setLook(equipped = getState().car.equipped) {
   return Object.assign({}, ...activeSetBonuses(equipped).filter((b) => b.pieces >= 3).map((b) => b.set.look));
 }
 
-/** Total stats of the car: equipped parts plus set bonuses (crew buddy joins in part 5). */
-export function carStats(equipped = getState().car.equipped) {
+/**
+ * Total stats of the car: equipped parts, set bonuses and the crew buddy's stat ability.
+ * The buddy counts only for the player's own car (default argument), not for test cars.
+ */
+export function carStats(equipped = getState().car.equipped, withCrew = equipped === getState().car.equipped) {
   const total = Object.fromEntries(STAT_IDS.map((id) => [id, 0]));
   for (const part of Object.values(equipped || {})) {
     const ps = partStats(part);
@@ -53,6 +57,7 @@ export function carStats(equipped = getState().car.equipped) {
   for (const { bonus } of activeSetBonuses(equipped)) {
     for (const b of bonus) if (b.stat in total) total[b.stat] = total[b.stat] * (1 + (b.pct || 0)) + (b.flat || 0);
   }
+  if (withCrew) for (const [stat, v] of Object.entries(crewBonus().stats)) if (stat in total) total[stat] += v;
   for (const id of STAT_IDS) total[id] = Math.round(total[id]);
   return total;
 }
@@ -81,7 +86,7 @@ export function statBarFill(statId, value) {
  * Race effects derived from stats and legendary abilities. All values finite by construction.
  * Abilities that change numbers live here; abilities with events live in games/race/abilities.js.
  */
-export function raceEffects(stats = carStats(), abilities = new Set()) {
+export function raceEffects(stats = carStats(), abilities = new Set(), crew = { shields: 0, coinMult: 1 }) {
   const s = Object.fromEntries(STAT_IDS.map((id) => [id, Math.max(0, num(stats[id]))]));
   const a = abilities instanceof Set ? abilities : new Set(abilities || []);
   const fx = {
@@ -94,7 +99,9 @@ export function raceEffects(stats = carStats(), abilities = new Set()) {
     magnetLanes: s.magnet * EFFECTS.magnetLanesPerPoint,
     luck: s.luck * EFFECTS.luckPerPoint,
     lightRange: 1,
+    coinMult: Math.max(1, num(crew.coinMult) || 1), // crew buddy: more coins
   };
+  fx.shields += Math.max(0, Math.floor(num(crew.shields))); // crew buddy: extra start shield
   if (a.has("iceShield")) fx.gripOnSnow = 1;
   if (a.has("headlight")) fx.lightRange = 2;
   if (a.has("superMagnet")) fx.magnetLanes += 2.5;

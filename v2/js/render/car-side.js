@@ -157,6 +157,7 @@ export function carSide(look = {}, { passenger = null, trail = false } = {}) {
   svg.setAttribute("role", "img");
   svg.setAttribute("aria-label", "Tvoje auto");
   for (const c of ["car", "color", "pattern", "wheels", "wing", "sticker", "roof", "neon", "trail"]) svg.dataset[c] = r[c].id;
+  if (passenger) svg.dataset.passenger = passenger;
   svg.innerHTML = `
     <defs>${p.defs}<clipPath id="${id}-clip"><path d="${side.body}"/></clipPath></defs>
     <ellipse cx="122" cy="114" rx="106" ry="7" fill="rgba(0,0,0,.18)"/>
@@ -169,8 +170,8 @@ export function carSide(look = {}, { passenger = null, trail = false } = {}) {
       ${patternShapes(r.pattern, p.base, r.color.special)}
     </g>
     ${side.windows.map((w) => `<path d="${w}" fill="#bfe9ff" stroke="${p.outline}" stroke-width="2.5"/>`).join("")}
-    ${passenger && side.windows.length ? `<text x="${side.wheels[side.wheels.length - 1] - 22}" y="${side.wheelY - 43}" font-size="20" text-anchor="middle">${passenger}</text>` : ""}
     ${kind.extra !== "fins" ? extraSvg(kind, side) : ""}
+    ${passenger ? `<text class="passenger" x="${side.windows.length ? side.wheels[side.wheels.length - 1] - 22 : 130}" y="${side.windows.length ? side.wheelY - 43 : 60}" font-size="${side.windows.length ? 20 : 22}" text-anchor="middle">${passenger}</text>` : ""}
     ${wingSvg(r.wing, side.wing, p.outline)}
     <circle cx="${side.front[0]}" cy="${side.front[1]}" r="4" fill="#fff6b0" stroke="${p.outline}" stroke-width="1.5"/>
     <rect x="${side.back[0]}" y="${side.back[1] - 4}" width="7" height="8" rx="2" fill="#ff6060"/>

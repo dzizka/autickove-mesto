@@ -9,6 +9,7 @@ import { rarityIndex, rarityDef, generateDrops, generateBossPrize } from "./loot
 import { TRACKS } from "../data/tracks.js";
 import * as rng from "../core/rng.js";
 import { spendCoins, canAfford } from "./economy.js";
+import { candyFromDismantle } from "./crew.js";
 
 export const partPower = (part) => (part ? Math.round(STAT_IDS.reduce((sum, id) => sum + partStats(part)[id], 0)) : 0);
 export const partIcon = (part) => part?.icon || PART_BASES[part?.slot]?.[0]?.icon || SLOTS.find((s) => s.id === part?.slot)?.icon || "❓";
@@ -117,18 +118,21 @@ export function toggleLock(uid) {
   return f.part.locked;
 }
 
-/** Dismantle a bag part (not mounted, not locked). Returns scrap gained. */
+/** Dismantle a bag part (not mounted, not locked). Returns { scrap, candy } gained. */
 export function dismantle(uid) {
   let gained = 0;
+  let removed = null;
   update((s) => {
     const i = s.inventory.findIndex((p) => p.uid === uid && !p.locked);
     if (i < 0) return;
-    gained = scrapValue(s.inventory[i]);
+    removed = s.inventory[i];
+    gained = scrapValue(removed);
     s.inventory.splice(i, 1);
     s.scrap += gained;
   });
-  if (gained) emit("partsDismantled", { count: 1, scrap: gained });
-  return gained;
+  const candy = removed ? candyFromDismantle([removed], rng) : 0;
+  if (gained) emit("partsDismantled", { count: 1, scrap: gained, candy });
+  return { scrap: gained, candy };
 }
 
 /** "Dismantle all grey and green": unlocked common + good parts in the bag. */
@@ -138,15 +142,16 @@ export function dismantleableLow(s = getState()) {
 
 export function dismantleLow() {
   const list = dismantleableLow();
-  if (!list.length) return { count: 0, scrap: 0 };
+  if (!list.length) return { count: 0, scrap: 0, candy: 0 };
   const ids = new Set(list.map((p) => p.uid));
   const scrap = list.reduce((sum, p) => sum + scrapValue(p), 0);
   update((s) => {
     s.inventory = s.inventory.filter((p) => !ids.has(p.uid));
     s.scrap += scrap;
   });
-  emit("partsDismantled", { count: list.length, scrap });
-  return { count: list.length, scrap };
+  const candy = candyFromDismantle(list, rng);
+  emit("partsDismantled", { count: list.length, scrap, candy });
+  return { count: list.length, scrap, candy };
 }
 
 export function upgradeCost(part) {

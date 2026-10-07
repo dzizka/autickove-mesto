@@ -28,8 +28,8 @@ for (const width of WIDTHS) {
     for (const id of PILLARS) {
       await page.getByTestId(`home-${id}`).click();
       await page.getByTestId(`screen-${id}`).waitFor();
-      if (id === "crew") await screenshot(page, `${width}-soon`);
-      const built = ["races", "garage", "tuning"].includes(id);
+      if (id === "coloring") await screenshot(page, `${width}-soon`);
+      const built = ["races", "garage", "tuning", "crew"].includes(id);
       await page.getByTestId(built ? "topbar-home" : "back-home").click();
       await page.getByTestId("screen-home").waitFor();
     }

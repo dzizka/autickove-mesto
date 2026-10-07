@@ -87,6 +87,14 @@ export function absorbHit(race) {
 }
 
 export function coinValue(race, value) {
+  const mult = race.effects.coinMult > 1 ? race.effects.coinMult : 1;
+  if (mult > 1) {
+    // crew buddy bonus: fractions add up so every coin counts
+    race.ab.coinFrac = (race.ab.coinFrac || 0) + value * (mult - 1);
+    const extra = Math.floor(race.ab.coinFrac);
+    race.ab.coinFrac -= extra;
+    value += extra;
+  }
   if (race.abilities.has("goldCat")) {
     if (!race.ab.catSaid) {
       race.ab.catSaid = true;

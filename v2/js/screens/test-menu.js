@@ -11,6 +11,7 @@ import { LEGENDARIES } from "../data/legendaries.js";
 import { SETS } from "../data/sets.js";
 import { addParts } from "../systems/garage.js";
 import { ownAll } from "../systems/tuning.js";
+import { addEgg, hatchEggsNow, ownAllCrew, crewLevelUp } from "../systems/crew.js";
 import * as rng from "../core/rng.js";
 import { go } from "../core/router.js";
 
@@ -57,6 +58,11 @@ const CHEATS = [
   { id: "bosses", label: "👑 Bossovia pripravení", color: "tomato", run: readyAllBosses },
   { id: "scrap", label: "+500 🔩", color: "sun", run: () => update((s) => (s.scrap += 500)) },
   { id: "looks", label: "🎨 Celý vzhľad", color: "plum", run: ownAll },
+  { id: "eggs3", label: "🥚 +3 vajíčka", color: "grass", run: () => [1, 2, 3].forEach(() => addEgg("chest")) },
+  { id: "hatchNow", label: "🐣 Vajíčka hneď", color: "grass", run: hatchEggsNow },
+  { id: "crewAll", label: "🐾 Všetci kamaráti", color: "grass", run: ownAllCrew },
+  { id: "crewLvl", label: "⬆ Kamarát +5 levelov", color: "grass", run: () => crewLevelUp(5) },
+  { id: "candy", label: "+50 🍬", color: "sun", run: () => update((s) => (s.crew.candy += 50)) },
   { id: "tracks", label: "🛣️ Všetky trate a úrovne", color: "grass", run: unlockAllTracks },
   { id: "demo", label: "🚗 Skúšobná jazda", color: "sky", run: () => go("game/demo"), close: true },
   { id: "demoCrash", label: "💥 Test zaseknutia slučky", color: "tomato", run: () => go("game/demo-crash"), close: true },

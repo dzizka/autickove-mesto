@@ -134,7 +134,7 @@ export function openPartDetail(uid, { onChange } = {}) {
           const gained = dismantle(uid);
           closeModal();
           sfx.coin();
-          toast(`+${gained}`, { icon: "🔩" });
+          toast(`+${gained.scrap}${gained.candy ? `  🍬 +${gained.candy}` : ""}`, { icon: "🔩" });
           speak("Rozobrané na súčiastky.");
           onChange?.();
         },

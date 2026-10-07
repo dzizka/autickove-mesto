@@ -22,6 +22,8 @@ import { grantRaceLoot } from "./systems/garage.js";
 import raceGame from "./games/race/index.js";
 import { recordRace, recordBoss } from "./systems/progress.js";
 import { BOSSES } from "./data/bosses.js";
+import crew from "./screens/crew.js";
+import { tickEggs, addEgg, rollChestEgg, giveCrewXp } from "./systems/crew.js";
 import { demoGame, demoCrashGame } from "./games/demo/index.js";
 
 state.load();
@@ -40,7 +42,7 @@ mountTopbar(document.querySelector("[data-topbar]"), document.querySelector("[da
 router.registerScreen(home);
 router.registerScreen(settings);
 // Pillars that are built get their real screen; the rest say "being built".
-const built = { races, garage, tuning };
+const built = { races, garage, tuning, crew };
 for (const p of PILLARS) router.registerScreen(built[p.id] || makeSoonScreen(p));
 router.registerGame(raceGame);
 router.registerGame(demoGame);
@@ -50,17 +52,16 @@ router.registerGame(demoCrashGame);
 router.addRewardHandler((gameId, result) => {
   if (gameId !== "race" || !result.extra) return null;
   const unlocks = recordRace(result.extra);
+  // crew (DESIGN-v2 §6): eggs get closer to hatching, the buddy in the car gains XP
+  tickEggs();
+  const buddyLevels = giveCrewXp(result.extra.place === 1);
+  if (result.extra.boss) recordBoss(result.extra);
+  // eggs: a beaten boss always leaves one, the chest sometimes (the first one is sure in race 3)
   let egg = null;
-  if (result.extra.boss) {
-    recordBoss(result.extra);
-    // a beaten boss also leaves an egg with a crew buddy (hatches in part 5)
-    if (result.extra.bossWin) {
-      egg = { id: `egg${Date.now().toString(36)}`, from: result.extra.boss, races: 0, at: Date.now() };
-      state.update((s) => s.eggs.push(egg));
-    }
-  }
+  if (result.extra.bossWin) egg = addEgg(result.extra.boss);
+  else if (rollChestEgg(rng)) egg = addEgg("chest");
   const boss = BOSSES.find((b) => b.id === result.extra.boss) || null;
-  return { unlocks, loot: grantRaceLoot(result.extra), egg, boss };
+  return { unlocks, loot: grantRaceLoot(result.extra), egg, boss, buddyLevels };
 });
 router.setRewardPresenter(presentReward);
 

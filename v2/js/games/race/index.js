@@ -8,6 +8,7 @@ import { isLevelUnlocked, previewUnlocks, isBossReady } from "../../systems/prog
 import { LEGENDARIES } from "../../data/legendaries.js";
 import { BOSSES } from "../../data/bosses.js";
 import { getLook, resolveLook } from "../../systems/tuning.js";
+import { crewBonus, activeBuddy, buddyLook } from "../../systems/crew.js";
 import { createTrail } from "../../render/effects.js";
 import { createRace, step, steer, finalOrder } from "./physics.js";
 import { makeLayout, drawBackground, createWeather, drawWeather } from "./track.js";
@@ -56,14 +57,16 @@ export default {
     const g = canvas.getContext("2d");
 
     const abilities = carAbilities();
-    const race = createRace({ track, level, effects: raceEffects(carStats(), abilities), rng: ctx.rng, short: !!ctx.state().cheats.shortRaces, abilities, boss });
+    const race = createRace({ track, level, effects: raceEffects(carStats(), abilities, crewBonus()), rng: ctx.rng, short: !!ctx.state().cheats.shortRaces, abilities, boss });
     const hud = createHud(wrap, race, { onExit: ctx.exit });
     // The car looks exactly like in the showroom (plus the look of a complete set):
     // kind, paint, wheels, roof… and neon and trail.
     const look = { ...getLook(), ...setLook() };
     const looks = resolveLook(look);
-    const fx = { look, neon: looks.neon, trail: createTrail(looks.trail), sparkle: abilities.size > 0, popups: [] };
+    const buddy = buddyLook(activeBuddy());
+    const fx = { look, neon: looks.neon, trail: createTrail(looks.trail), sparkle: abilities.size > 0, popups: [], buddy };
     race.look = look;
+    race.buddy = buddy; // test hook: the buddy rides along
 
     // boss music: a short bass loop while the boss race runs
     let musicTimer = null;
@@ -185,7 +188,7 @@ export default {
       ctx.speak(boss ? BOSS_SAY[race.place === 1 ? 0 : 1] : PLACE_SAY[race.place - 1]);
       await new Promise((r) => setTimeout(r, 900));
       if (!wrap.isConnected) return;
-      await showPodium(wrap, finalOrder(race), { place: race.place, unlocks, look });
+      await showPodium(wrap, finalOrder(race), { place: race.place, unlocks, look, buddy });
       if (unlocks.level) ctx.speak("Odomkol si ďalšiu úroveň!", { interrupt: false });
       else if (unlocks.track) ctx.speak("Odomkol si novú trať!", { interrupt: false });
       ctx.finish(result);

@@ -146,6 +146,8 @@ export function drawPlayer(g, L, race, time, fx = {}, dt = 1 / 60) {
   if (ghost) g.globalAlpha = 0.4 + 0.2 * Math.sin(time * 20);
   drawCarTop(g, fx.look || "#ff5a5f", x, y - air * 20, w, { angle: tilt + wobble });
   g.globalAlpha = 1;
+  // the crew buddy rides along: its face in the car window (DESIGN-v2 §6)
+  if (fx.buddy?.icon) drawEmoji(g, fx.buddy.icon, x, y - air * 20 - w * 0.12, w * 0.5);
   // a legendary part shows as a small spark on the car (DESIGN-v2 §4.2)
   if (fx.sparkle) drawEmoji(g, "✨", x + w * 0.45, y - w * 0.9 - air * 20, w * 0.35, 0.6 + 0.4 * Math.sin(time * 5));
   // ability popups rise above the car

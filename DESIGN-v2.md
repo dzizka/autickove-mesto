@@ -211,6 +211,12 @@ Kamarát sedí v aute ako spolujazdec (vidno ho v okne) a pomáha v pretekoch.
 - **Schopnosť:** každý kamarát má jednu schopnosť v pretekoch, napríklad +⚡, +🍀, viac mincí alebo štít navyše. Silnie s levelom.
 - **Level a vývoj:** kamarát rastie jazdením (level 1 až 20) a vyvíja sa až v 3 stupňoch (napr. 🦎→🦕→🦖) za cukríky 🍬. Cukríky sú z dvojitých vajíčok a z rozoberania dielov.
 - **Starostlivosť:** pohladkanie a oblečenie (čiapka, okuliare). Bez hladovania a smútenia, aby dieťa nemalo pocit viny.
+- **Podrobnosti:**
+  - Prvé vajíčko padne isto z truhlice v 3. pretekoch, aby dieťa malo kamaráta skoro. Potom padá z truhlice zriedka (6 %) a isto od bossov. Vajíčko od bossa má menšiu šancu na obyčajného kamaráta.
+  - Z vajíčka sa prednostne liahnu kamaráti, ktorých dieťa ešte nemá. Dvojitý kamarát sa zmení na cukríky 🍬.
+  - Cukríky sú aj z rozoberania dielov: modrý a lepší diel dá 1 isto, sivý a zelený s 25 % šancou.
+  - Vývoj na 2. stupeň je od levelu 7 za 5 🍬, na 3. stupeň od levelu 14 za 15 🍬. Level rastie jazdením kamaráta v aute.
+  - Kamarát sa ukazuje v okne auta doma, v Garáži, v showroome, v pretekoch aj na pódiu. Oblečenie sa kupuje za mince a nemá štatistiky.
 
 ---
 

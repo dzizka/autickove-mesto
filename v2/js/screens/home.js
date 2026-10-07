@@ -4,6 +4,7 @@ import { h, bigButton } from "../core/ui.js";
 import { speak } from "../core/audio.js";
 import { go } from "../core/router.js";
 import { carSide } from "../render/car-side.js";
+import { activeBuddy, buddyLook } from "../systems/crew.js";
 import { getLook, resolveLook } from "../systems/tuning.js";
 import { playNotes } from "../core/audio.js";
 import { PILLARS } from "../data/menu.js";
@@ -15,7 +16,7 @@ export default {
   title: "Domov",
   render(view) {
     const look = getLook();
-    const car = carSide(look, { trail: look.trail !== "none" });
+    const car = carSide(look, { trail: look.trail !== "none", passenger: buddyLook(activeBuddy())?.icon });
     const stage = h(
       "button",
       {

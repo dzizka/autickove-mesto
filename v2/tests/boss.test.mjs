@@ -181,7 +181,7 @@ test("set book: found pieces light up, a full set shows its bonus and look in th
   await page.context().close();
 });
 
-test("version-4 saves migrate with empty set book, bosses and eggs", async () => {
+test("version-4 saves migrate to the current schema with empty set book, bosses and eggs", async () => {
   const page = await openGame(env.browser, env.server.url, { storage: { version: 4, coins: 12 } });
   const s = await page.evaluate(() => window.__game.state.getState());
   assert.equal(s.version, await page.evaluate(() => window.__game.state.CURRENT_VERSION));
