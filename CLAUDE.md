@@ -6,7 +6,7 @@ Detská hra v prehliadači pre 6-ročné dieťa, ktoré ešte nevie čítať. Ho
 - `v2/`: verzia 2 je **nová hra od začiatku**. Z v1 sa nekopíruje obsah ani kód. Zadanie je v `DESIGN-v2.md` a je záväzné. Pri odchýlke najprv upraviť zadanie.
 
 ## Pravidlá pre v2
-- **Bez kompilácie:** čisté HTML, CSS a ES moduly, ktoré bežia priamo na GitHub Pages. Žiadny framework.
+- **Bez kompilácie:** čisté HTML, CSS a ES moduly, ktoré bežia priamo na GitHub Pages. Žiadny UI framework. **Knižnice sú povolené** (rozhodnutie rodiča), ale uložené priamo v repozitári v `v2/vendor/` s licenciou, nie z cudzieho servera. Prvá je three.js (MIT) pre 3D autá.
 - **Štruktúra podľa `DESIGN-v2.md`, bod 2.** Súbor najviac ~400 riadkov, dáta len v `js/data/`, jedna hra = jeden modul s rozhraním `{ id, title, icon, unlockLevel, start(view, ctx), stop() }`.
 - **Texty pre hráča:** po slovensky a predčítané hlasom. Kód a komentáre po anglicky.
 - **Pre dieťa:** žiadny text, ktorý musí čítať. Čísla len pri štatistikách, vždy so šípkou ⬆⬇ alebo farbou (`DESIGN-v2.md`, bod 4.3). Veľké tlačidlá. Prehra neexistuje.

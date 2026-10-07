@@ -171,18 +171,28 @@ function paintMaterial(box) {
   return m;
 }
 
-/** Build the car with the look: returns a group facing +z, standing on y = 0, about 2.4 long. */
+/** Kit models keep their real sizes (a kart is small, a fire truck big): one scale for all. */
+let KIT_SCALE = null;
+async function kitScale() {
+  if (KIT_SCALE === null) {
+    const ref = new THREE.Box3().setFromObject(await load("sedan")).getSize(new THREE.Vector3());
+    KIT_SCALE = 2.4 / Math.max(ref.x, ref.z); // a sedan is 2.4 units long
+  }
+  return KIT_SCALE;
+}
+// vehicles whose own wheels must stay (different sizes front and back, or part of the model)
+const OWN_WHEELS = new Set(["tractor", "tractor-police", "tractor-shovel", "kart-oobi", "kart-oozi"]);
+
+/** Build the car with the look: returns a group facing +z, standing on y = 0. */
 async function buildCar() {
   const src = (await load(look.car)).clone(true);
-  const size0 = new THREE.Box3().setFromObject(src).getSize(new THREE.Vector3());
-  const k = 2.4 / Math.max(size0.x, size0.z);
-  src.scale.setScalar(k);
+  src.scale.setScalar(await kitScale());
+  src.updateMatrixWorld(true);
   const wheelSrc = await load(look.wheel);
   const tasks = [];
   src.traverse((o) => {
-    if (!o.isMesh && !o.isGroup && !o.isObject3D) return;
     if (o.name === "body" && o.isMesh) tasks.push(["body", o]);
-    else if (o.name.startsWith("wheel")) tasks.push(["wheel", o]);
+    else if (/^wheel/.test(o.name) && o.parent && !/^wheel/.test(o.parent.name)) tasks.push(["wheel", o]);
   });
   for (const [kind, o] of tasks) {
     if (kind === "body") {
@@ -195,11 +205,10 @@ async function buildCar() {
         o.add(m);
       }
       o.geometry = new THREE.BufferGeometry();
-    } else {
-      // swap the wheel model, tint the rim, monster wheels are bigger
-      o.clear();
-      const w = wheelSrc.clone(true);
-      w.traverse((m) => {
+      continue;
+    }
+    const tint = (root) =>
+      root.traverse((m) => {
         if (!m.isMesh) return;
         m.castShadow = true;
         if (RIMS[look.rim]) {
@@ -207,15 +216,36 @@ async function buildCar() {
           m.material.color = new THREE.Color(RIMS[look.rim]).lerp(new THREE.Color("#ffffff"), 0.35);
         }
       });
-      if (o.isMesh) o.geometry = new THREE.BufferGeometry();
-      if (o.name.includes("left")) w.rotation.y = Math.PI;
-      if (look.monster) w.scale.setScalar(1.45);
-      o.add(w);
+    if (OWN_WHEELS.has(look.car)) {
+      tint(o);
+      continue;
     }
+    // swap the wheel: the new one gets exactly the size and place of the old one
+    const parent = o.parent;
+    const inv = new THREE.Matrix4().copy(parent.matrixWorld).invert();
+    const old = new THREE.Box3().setFromObject(o).applyMatrix4(inv);
+    const oc = old.getCenter(new THREE.Vector3());
+    const os = old.getSize(new THREE.Vector3());
+    const w = wheelSrc.clone(true);
+    const wb = new THREE.Box3().setFromObject(w);
+    const ws = wb.getSize(new THREE.Vector3());
+    const wc = wb.getCenter(new THREE.Vector3());
+    const big = look.monster ? 1.3 : 1;
+    const sx = (os.x / ws.x) * big;
+    const sd = (Math.max(os.y, os.z) / Math.max(ws.y, ws.z)) * big;
+    const holder = new THREE.Group();
+    w.position.sub(wc); // centre the wheel in its holder
+    holder.add(w);
+    holder.scale.set(sx, sd, sd);
+    if (oc.x < 0) holder.rotation.y = Math.PI; // hub faces outwards on both sides
+    holder.position.copy(oc);
+    tint(w);
+    parent.add(holder);
+    o.visible = false;
   }
   const car = new THREE.Group();
   car.add(src);
-  if (look.monster) src.position.y += 0.12;
+
   const box = new THREE.Box3().setFromObject(car);
   const size = box.getSize(new THREE.Vector3());
   car.position.set(-(box.min.x + box.max.x) / 2, -box.min.y, -(box.min.z + box.max.z) / 2);
@@ -283,8 +313,8 @@ function snapshots(car) {
   snapScene.add(copy);
   VIEWS.forEach((v, i) => {
     const cam = new THREE.PerspectiveCamera(v.fov, 1.5, 0.1, 50);
-    cam.position.set(...v.pos);
-    cam.lookAt(0, v.id === "top" ? 0 : 0.6, 0);
+    cam.position.set(...v.pos.map((c) => c * zoom));
+    cam.lookAt(0, v.id === "top" ? 0 : 0.6 * zoom, 0);
     snapR.render(snapScene, cam);
     const g = canvases[i].getContext("2d");
     g.clearRect(0, 0, 300, 200);
@@ -301,10 +331,14 @@ async function rebuild() {
   if (me !== ticket) return;
   holder.clear();
   holder.add(car);
+  const sz = new THREE.Box3().setFromObject(car).getSize(new THREE.Vector3());
+  zoom = Math.max(0.7, Math.max(sz.z, sz.x * 1.5, sz.y * 1.6) / 2.4); // big trucks need the camera further back
+  resize();
   snapshots(car);
   ui();
 }
 let angle = 2.3;
+let zoom = 1;
 let vel = 0;
 let drag = null;
 let idle = 0;
@@ -320,8 +354,8 @@ addEventListener("pointerup", () => (drag = null));
 function resize() {
   renderer.setSize(innerWidth, innerHeight);
   camera.aspect = innerWidth / innerHeight;
-  camera.position.set(0, 2.5, innerWidth < innerHeight ? 9.5 : 6.2);
-  camera.lookAt(0, 0.55, 0);
+  camera.position.set(0, 2.5 * zoom, (innerWidth < innerHeight ? 9.5 : 6.2) * zoom);
+  camera.lookAt(0, 0.55 * zoom, 0);
   camera.updateProjectionMatrix();
 }
 addEventListener("resize", resize);

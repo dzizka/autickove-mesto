@@ -31,7 +31,7 @@ Iné hry a systémy z v1 (mesto, album, minihry…) pôvodne do v2 nepatrili. **
 
 ## 2. Štruktúra kódu
 
-Bez inštalácie a bez kompilácie: čisté HTML, CSS a JavaScript moduly (`<script type="module">`), ktoré GitHub Pages servíruje priamo. Hra je na adrese `/v2/`. Kým nie je hotová, `/` ďalej vedie na `v1/`.
+Bez inštalácie a bez kompilácie: čisté HTML, CSS a JavaScript moduly (`<script type="module">`), ktoré GitHub Pages servíruje priamo. Knižnice sú povolené (rodič ich pôvodne nechcel, lebo plánoval hru v jednom súbore; na GitHube to už neplatí). Ukladajú sa priamo do `v2/vendor/` aj s licenciou, nič sa nesťahuje z cudzích serverov. Modely áut sú z balíka Kenney Car Kit (CC0) v `v2/models/`. Hra je na adrese `/v2/`. Kým nie je hotová, `/` ďalej vedie na `v1/`.
 
 ```
 v2/
@@ -426,7 +426,10 @@ Každá hra má 3 obtiažnosti, ktoré si dieťa vyberá samo (od časti 13), a 
 - **Domov (časť 14):** za tlačidlami beží pseudo 3D cesta, po ktorej jazdí auto dieťaťa zozadu (so všetkým tuningom a kamarátom). Trate sa po chvíli striedajú, obloha sa riadi skutočným časom dňa. Ťuknutie na auto zatrúbi. Tlačidlá sú na polopriehľadných paneloch. Pozadie beží úspornejšie ako preteky a zastaví sa pri otvorenom okne. V nastaveniach pre rodičov je vypínač „Pohyblivé pozadie“.
 - **3D auto (časť 15):** skutočne otočné auto vo Vzhľade (samo sa pomaly otáča, dá sa točiť prstom, pri výbere sa natočí k tomu, čo sa mení) a na zdviháku v Garáži. Tlačidlo „Skúšobná jazda“ ukáže auto na ceste v pseudo 3D.
   - Rodič chce porovnať dve možnosti: vlastný model vytvorený z tvaru auta z boku, a hotový voľne dostupný model (Kenney, licencia CC0). Náhľad: `/v2/preview/car3d.html`.
-  - Ak sa použije hotový model, potrebuje 3D knižnicu (three.js, licencia MIT) uloženú priamo v repozitári. Je to výnimka z pravidla „bez knižníc“, ktorú musí rodič odsúhlasiť.
-- **Mesto (časť 16):** dve možnosti v náhľade `/v2/preview/town.html`:
+  - **Rozhodnutie rodiča:** všetky autá v hre budú z balíka **Kenney Car Kit** (CC0), aby grafika bola jednotná. Raketa odpadne (kto ju vlastní, dostane futuristickú formulu). Ponechajú sa všetky autá z balíka, pri skúšaní sa niektoré odoberú alebo pridajú.
+  - 3D sa kreslí knižnicou three.js. Vo Vzhľade a v Garáži je otočné 3D auto; všade inde sa z toho istého modelu vyrobí obrázok zboku (domov, hry, mesto), zozadu (preteky) alebo zhora (Bludisko, Križovatka).
+  - Všetky autá majú skutočný pomer veľkostí z balíka (motokára je malá, hasiči veľkí). Kolesá sa pri výmene prispôsobia veľkosti a miestu pôvodných kolies; traktory a motokáry si nechávajú svoje.
+  - Náhľad: `/v2/preview/carkit.html`.
+- **Mesto (časť 16):** rodič zvažuje tretiu možnosť: mesto zhora alebo mierne z uhla, ulice v mriežke, dieťa jazdí hore, dole, doľava a doprava a cestou zbiera mince z kúpených pozemkov. Náhľad `/v2/preview/town3d.html` (prepínač „Z uhla“ / „Zhora“). Pôvodné dve možnosti v náhľade `/v2/preview/town.html`:
   - **D1 jazda ulicou:** pohľad zozadu ako v pretekoch, domy po oboch stranách, šípky ◀ ▶ presunú auto k ďalšiemu domu, dom pred autom je veľký a ťuká sa naň.
   - **D2 bočná ulica s vrstvami:** súčasná ulica, ale krajšia: viac vrstiev pozadia, ktoré sa pri posúvaní hýbu rôzne rýchlo, a lepšie kreslené domy.
