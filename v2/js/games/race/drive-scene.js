@@ -24,7 +24,7 @@ export function createDriveScene(canvas, { track, look, buddy = null, dprMax = 2
   const g = canvas.getContext("2d");
   const looks = resolveLook(look);
   const fx = { look, neon: looks.neon, trail: createTrail(looks.trail), sparkle: false, popups: [], buddy };
-  carPic(look, "back"); // the 3D car's picture from behind (2D until it is ready)
+  carPic(look, "back"); // the 3D car from behind (2D until it is ready)
 
   let race;
   let road;

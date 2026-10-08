@@ -15,7 +15,7 @@ const MAX_PX = 1024;
 // where the camera looks from (towards the model's centre); the car faces +z
 const VIEWS = {
   side: { dir: [-0.84, 0.36, 0.41], up: [0, 1, 0] }, // left side, a little from the front: front points right
-  back: { dir: [0, 0.44, -0.9], up: [0, 1, 0], ppu: 200 }, // from behind and a bit above, like in the races
+  back: { dir: [0, 0.56, -0.83], up: [0, 1, 0], ppu: 200 }, // from behind and above (34°), like the race camera looks at the road
   top: { dir: [0, 1, 0], up: [0, 0, 1], ppu: 150 }, // from above, the front points up
 };
 
@@ -40,14 +40,19 @@ function setup() {
   scene.add(ground);
 }
 
-/** Orthographic camera fitted around the object for this view. Returns { cam, w, h }. */
-function fitCamera(object, view) {
+// cars off to the side of the road are seen a little from the side (yaw −1, 0, 1)
+const YAW = 0.26; // 15°
+
+/** Orthographic camera fitted around the object for this view. Returns { cam, w, h, ppu }. */
+function fitCamera(object, view, yaw = 0) {
   const v = VIEWS[view];
+  const dir = new THREE.Vector3(...v.dir);
+  if (yaw) dir.applyAxisAngle(new THREE.Vector3(0, 1, 0), -yaw * YAW);
   const box = new THREE.Box3().setFromObject(object);
   const centre = box.getCenter(new THREE.Vector3());
   const cam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 100);
   cam.up.set(...v.up);
-  cam.position.copy(centre).addScaledVector(new THREE.Vector3(...v.dir).normalize(), 30);
+  cam.position.copy(centre).addScaledVector(dir.normalize(), 30);
   cam.lookAt(centre);
   cam.updateMatrixWorld(true);
   // the box corners in camera space give the picture's extent
@@ -74,7 +79,7 @@ function fitCamera(object, view) {
   }
   Object.assign(cam, { left: x0, right: x1, bottom: y0, top: y1 });
   cam.updateProjectionMatrix();
-  return { cam, w, h };
+  return { cam, w, h, ppu: w / (x1 - x0) };
 }
 
 function projector(cam, w, h) {
@@ -85,12 +90,16 @@ function projector(cam, w, h) {
 }
 
 /** The places 2D code needs, in picture pixels (side: in viewBox units). */
-function metaFor(view, at, s, car, w) {
+function metaFor(view, at, s, car, w, ppu) {
   const rel = (a, b) => [b[0] - a[0], b[1] - a[1]];
   if (view === "back") {
     const anchor = at(0, 0, -s.z / 2);
-    const bodyW = Math.abs(at(s.x / 2, 0, -s.z / 2)[0] - at(-s.x / 2, 0, -s.z / 2)[0]); // seen from behind, +x is on the left
-    return { ax: anchor[0], ay: anchor[1], bodyW, lights: [-1, 1].map((k) => rel(anchor, at(k * s.x * 0.36, s.y * 0.42, -s.z / 2))), win: rel(anchor, at(0, s.y * 0.8, -s.z * 0.1)) };
+    // the car's footprint on the road: shadow and neon go there, not behind the bumper
+    const c = at(0, 0, 0);
+    const front = at(0, 0, s.z / 2);
+    const side = Math.abs(at(s.x / 2, 0, 0)[0] - at(-s.x / 2, 0, 0)[0]) / 2;
+    const foot = { cx: c[0] - anchor[0], cy: c[1] - anchor[1], rx: Math.max(side, (s.x / 2) * ppu * 0.9), ry: Math.abs(front[1] - anchor[1]) / 2 };
+    return { ax: anchor[0], ay: anchor[1], bodyW: s.x * ppu, foot, lights: [-1, 1].map((k) => rel(anchor, at(k * s.x * 0.36, s.y * 0.42, -s.z / 2))), win: rel(anchor, at(0, s.y * 0.8, -s.z * 0.1)), top: rel(anchor, at(0, s.y, 0)) };
   }
   if (view === "top") {
     const c = at(0, 0, 0);
@@ -132,11 +141,11 @@ async function draw(kind, payload) {
   scene.add(item.object);
   ground.visible = payload.view === "side"; // races, maze and crossing draw their own shadow
   try {
-    const { cam, w, h } = fitCamera(item.object, payload.view);
+    const { cam, w, h, ppu } = fitCamera(item.object, payload.view, payload.yaw || 0);
     renderer.setSize(w, h, false);
     renderer.render(scene, cam);
     const url = renderer.domElement.toDataURL("image/png");
-    return { url, w, h, meta: metaFor(payload.view, projector(cam, w, h), item.size, item.wheelSpots ? item : null, w) };
+    return { url, w, h, meta: metaFor(payload.view, projector(cam, w, h), item.size, item.wheelSpots ? item : null, w, ppu) };
   } finally {
     scene.remove(item.object);
     if (kind === "car") disposeCar(item.object);

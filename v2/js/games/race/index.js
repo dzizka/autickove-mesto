@@ -69,9 +69,8 @@ export default {
     const buddy = buddyLook(activeBuddy());
     const fx = { look, neon: looks.neon, trail: createTrail(looks.trail), sparkle: abilities.size > 0, popups: [], buddy };
     // pictures of the 3D cars and props are made during the countdown (2D until they are ready)
-    carPic(look, "back");
-    for (const r of race.rivals) carPic({ colorHex: r.color, car: r.isBoss ? BOSS_KIND : rivalKind(r.color) }, "back");
-    for (const c of track.traffic || []) carPic({ colorHex: c, car: trafficKind(track, c) }, "back");
+    const others = [...race.rivals.map((r) => ({ colorHex: r.color, car: r.isBoss ? BOSS_KIND : rivalKind(r.color) })), ...(track.traffic || []).map((c) => ({ colorHex: c, car: trafficKind(track, c) }))];
+    for (const l of [look, ...others]) carPic(l, "back");
     for (const id of track.obstacles || []) if (PROPS[id]) propPic(PROPS[id].path);
     race.look = look;
     race.buddy = buddy; // test hook: the buddy rides along

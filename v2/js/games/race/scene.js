@@ -5,8 +5,8 @@
 import { RACE } from "../../data/tracks.js";
 import { M, SEG, CAM_H, DEPTH, PLAYER_Z, DRAW, LANE, CAR_W, segIndex, fogAt } from "./road.js";
 import { drawRoadSprite, emojiAt } from "../../render/road-sprites.js";
-import { drawCarBack } from "../../render/car-back.js";
-import { drawNeon, updateTrail, drawTrail } from "../../render/effects.js";
+import { drawCarBack, backFoot } from "../../render/car-back.js";
+import { neonColor, updateTrail, drawTrail } from "../../render/effects.js";
 
 // Things on the road are drawn larger than life, so a child spots them early (§4.1).
 const BIG = { obstacle: 1.7, coin: 1.4, fuel: 1.4, star: 1.4, powerup: 1.4 };
@@ -118,7 +118,9 @@ function drawObject(g, R, V, o, p0, t, night) {
     g.translate(-p.x, -p.y);
   }
   if (o.kind === "traffic") {
-    const r = drawCarBack(g, { colorHex: o.color, car: trafficKind(R.track, o.color) }, p.x, p.y, CAR_W * 0.95 * p.u);
+    const look = { colorHex: o.color, car: trafficKind(R.track, o.color) };
+    groundShadow(g, p.x, p.y, backFoot(look, CAR_W * 0.95 * p.u), 0.28);
+    const r = drawCarBack(g, look, p.x, p.y, CAR_W * 0.95 * p.u);
     if (night && r) tailGlow(g, p.x, p.y, r, CAR_W * p.u);
   } else if (o.kind === "coin" || o.kind === "fuel" || o.kind === "star") {
     drawRoadSprite(g, o.kind, p.x, p.y, p.u, { t, seed: (o.id % 97) / 97 });
@@ -156,12 +158,16 @@ function drawRival(g, R, V, r, p, t, night, near) {
   const lean = (r.lane - r.x) * 0.12;
   if (r.isBoss) {
     const w = CAR_W * 1.35 * p.u;
-    const res = drawCarBack(g, { colorHex: r.color, car: BOSS_KIND }, p.x, p.y, w, { angle: Math.sin(t * 3) * 0.04, alpha: near });
+    const look = { colorHex: r.color, car: BOSS_KIND };
+    groundShadow(g, p.x, p.y, backFoot(look, w), 0.3 * near);
+    const res = drawCarBack(g, look, p.x, p.y, w, { angle: Math.sin(t * 3) * 0.04, alpha: near });
     emojiAt(g, r.icon, p.x, p.y - w * 1.45, w * 0.7, near);
     if (night && res) tailGlow(g, p.x, p.y, res, w);
     return;
   }
-  const res = drawCarBack(g, { colorHex: r.color, car: rivalKind(r.color) }, p.x, p.y, CAR_W * p.u, { angle: lean, alpha: near });
+  const look = { colorHex: r.color, car: rivalKind(r.color) };
+  groundShadow(g, p.x, p.y, backFoot(look, CAR_W * p.u), 0.28 * near);
+  const res = drawCarBack(g, look, p.x, p.y, CAR_W * p.u, { angle: lean, alpha: near });
   if (night && res) tailGlow(g, p.x, p.y, res, CAR_W * p.u);
 }
 
@@ -240,20 +246,20 @@ export function drawPlayer(g, V, R, race, fx, camX, time, dt) {
   const y = ground - air * w * 0.9;
   const lean = Math.max(-0.3, Math.min(0.3, finite(p.vx) * 0.05)) + (p.slowT > 0 ? Math.sin(time * 30) * 0.12 : 0);
 
-  // shadow, magnet field and neon on the ground
-  g.fillStyle = `rgba(0,0,0,${0.3 - air * 0.15})`;
-  g.beginPath();
-  g.ellipse(x, ground, w * (0.62 - air * 0.15), w * 0.1, 0, 0, 6.29);
-  g.fill();
+  // shadow, magnet field and neon on the ground, under the car's footprint (not behind it)
+  const foot = backFoot(fx.look || {}, w);
+  const fx0 = x + foot.cx;
+  const fy0 = ground + foot.cy;
   if (p.magnetT > 0 || race.effects.magnetLanes > 0.5) {
     const reach = Math.min(2.5, 0.5 + race.effects.magnetLanes + (p.magnetT > 0 ? 2.5 : 0));
     g.strokeStyle = `rgba(255,90,95,${p.magnetT > 0 ? 0.55 : 0.25})`;
     g.lineWidth = 3;
     g.beginPath();
-    g.ellipse(x, ground, w * 0.6 * reach * (0.95 + 0.05 * Math.sin(time * 4)), w * 0.14 * reach, 0, 0, 6.29);
+    g.ellipse(fx0, fy0, foot.rx * reach * (0.95 + 0.05 * Math.sin(time * 4)), foot.ry * reach, 0, 0, 6.29);
     g.stroke();
   }
-  if (fx.neon) drawNeon(g, fx.neon, x, ground - w * 0.04, w * 0.75, w * 0.2, time);
+  groundShadow(g, x, ground, foot, 0.42 * (1 - air * 0.6), 1 - air * 0.25);
+  if (fx.neon) neonGlow(g, fx.neon, fx0, fy0, foot, time);
   if (fx.trail) {
     updateTrail(fx.trail, dt, x, ground - w * 0.15, 140 + Math.max(0, p.speed) * 6, w * 0.6);
     drawTrail(g, fx.trail);
@@ -286,14 +292,8 @@ export function drawPlayer(g, V, R, race, fx, camX, time, dt) {
     emojiAt(g, pop.icon, x, y - w * 1.2 - pop.t * 80, w * 0.5, Math.max(0, 1 - pop.t / 1.2));
   }
   if (fx.popups) fx.popups = fx.popups.filter((pop) => pop.t < 1.2);
-  // Odolnosť is visible: one bubble ring per shield around the car
-  for (let i = 0; i < Math.min(6, p.shields); i++) {
-    g.strokeStyle = `rgba(120,200,255,${0.8 - i * 0.1})`;
-    g.lineWidth = 3;
-    g.beginPath();
-    g.ellipse(x, y - w * 0.4, w * (0.68 + i * 0.07), w * (0.52 + i * 0.07), 0, 0, 6.29);
-    g.stroke();
-  }
+  // Odolnosť is visible: a soft soap bubble round the car, stronger with more shields
+  if (p.shields > 0) shieldBubble(g, x, y, foot, Math.min(6, p.shields), time);
   if (p.slowT > 0) emojiAt(g, "💫", x, y - w * 1.05, w * 0.35);
   return x;
 }
@@ -335,4 +335,77 @@ export function drawSpeedLines(g, V, race, time) {
     g.lineTo(cx + Math.cos(ang) * r2, cy + Math.sin(ang) * r2);
     g.stroke();
   }
+}
+
+/** A soft shadow where the car touches the road (darker in the middle). */
+function groundShadow(g, x, y, foot, alpha, size = 1) {
+  if (!(alpha > 0) || !(foot.rx > 0)) return;
+  const cx = x + foot.cx;
+  const cy = y + foot.cy;
+  const rx = foot.rx * 1.02 * size;
+  const ry = Math.max(2, foot.ry * 0.95 * size);
+  g.save();
+  g.translate(cx, cy);
+  g.scale(1, ry / rx);
+  const grad = g.createRadialGradient(0, 0, rx * 0.55, 0, 0, rx);
+  grad.addColorStop(0, `rgba(0,0,0,${alpha})`);
+  grad.addColorStop(1, "rgba(0,0,0,0)");
+  g.fillStyle = grad;
+  g.beginPath();
+  g.arc(0, 0, rx, 0, 6.29);
+  g.fill();
+  g.restore();
+}
+
+/** Neon under the car: a coloured glow that shows round the car's footprint. */
+function neonGlow(g, neon, cx, cy, foot, time) {
+  const color = neonColor(neon, time);
+  if (!color || !(foot.rx > 0)) return;
+  const rx = foot.rx * 1.3;
+  const ry = Math.max(3, foot.ry * 1.2);
+  g.save();
+  g.globalCompositeOperation = "lighter";
+  g.translate(cx, cy);
+  g.scale(1, ry / rx);
+  const grad = g.createRadialGradient(0, 0, rx * 0.55, 0, 0, rx);
+  grad.addColorStop(0, color);
+  grad.addColorStop(1, "rgba(0,0,0,0)");
+  g.globalAlpha = 0.85 + 0.1 * Math.sin(time * 4);
+  g.fillStyle = grad;
+  g.beginPath();
+  g.arc(0, 0, rx, 0, 6.29);
+  g.fill();
+  g.restore();
+}
+
+/** The shield: a see-through bubble over the car that shimmers a little. */
+function shieldBubble(g, x, y, foot, n, time) {
+  const top = y + foot.top;
+  const bottom = y + foot.cy + foot.ry;
+  const cx = x + foot.cx * 0.5;
+  const cy = (top + bottom) / 2 - foot.ry * 0.2;
+  const ry = (bottom - top) / 2 + foot.ry * 0.6;
+  const rx = Math.max(foot.rx * 1.35, ry * 1.05); // round, not a tall egg
+  const a = 0.16 + 0.05 * n + 0.04 * Math.sin(time * 3);
+  g.save();
+  g.translate(cx, cy);
+  g.scale(1, ry / rx);
+  const grad = g.createRadialGradient(-rx * 0.3, -rx * 0.35, rx * 0.1, 0, 0, rx);
+  grad.addColorStop(0, "rgba(255,255,255,0)");
+  grad.addColorStop(0.75, `rgba(150,215,255,${a * 0.4})`);
+  grad.addColorStop(1, `rgba(150,215,255,${a})`);
+  g.fillStyle = grad;
+  g.beginPath();
+  g.arc(0, 0, rx, 0, 6.29);
+  g.fill();
+  g.strokeStyle = `rgba(220,245,255,${a + 0.15})`;
+  g.lineWidth = Math.max(1.5, rx * 0.025);
+  g.stroke();
+  // a little shine on the top left
+  g.strokeStyle = `rgba(255,255,255,${0.35 + 0.1 * Math.sin(time * 2)})`;
+  g.lineWidth = Math.max(2, rx * 0.05);
+  g.beginPath();
+  g.arc(0, 0, rx * 0.82, Math.PI * 1.1, Math.PI * 1.4);
+  g.stroke();
+  g.restore();
 }

@@ -217,10 +217,10 @@ export function carBackSprite(look, width, dpr = 1) {
  * Draw a car from behind with its bottom centre at (x, y), body width `width` (CSS px).
  * Small sizes snap to steps, so far-away cars reuse a few cached sprites.
  */
-export function drawCarBack(g, look, x, y, width, { angle = 0, alpha = 1, dpr = 1 } = {}) {
+export function drawCarBack(g, look, x, y, width, { angle = 0, alpha = 1, dpr = 1, yaw = 0 } = {}) {
   if (!Number.isFinite(x) || !Number.isFinite(y) || !(width > 2)) return null;
   // the picture of the 3D car (part 15b) once it is ready, the 2D drawing until then
-  const pic = readyPic(carPic(look || {}, "back"));
+  const pic = backPic(look, yaw);
   if (pic) return drawPic(g, pic, x, y, width, angle, alpha, dpr);
   const step = width < 40 ? 4 : width < 120 ? 8 : 16;
   const sw = Math.max(8, Math.round(width / step) * step);
@@ -246,5 +246,23 @@ export function drawPic(g, pic, x, y, width, angle = 0, alpha = 1, dpr = 1) {
   if (angle) g.rotate(angle);
   g.drawImage(s.canvas, -m.ax * f, -m.ay * f, pic.w * f, pic.h * f);
   g.restore();
-  return { sprite: { win: m.win, lights: m.lights }, k: f };
+  return { sprite: { win: m.win, lights: m.lights, top: m.top }, k: f };
+}
+
+/**
+ * Where the car meets the road, relative to its bottom centre, in canvas pixels:
+ * { cx, cy, rx, ry }. The 3D picture knows its footprint; the 2D drawing sits on its line.
+ */
+export function backFoot(look, width, yaw = 0) {
+  const pic = backPic(look, yaw);
+  if (!pic?.meta.foot) return { cx: 0, cy: 0, rx: width * 0.62, ry: width * 0.1, top: -width * 0.9 };
+  const f = width / pic.meta.bodyW;
+  const m = pic.meta.foot;
+  return { cx: m.cx * f, cy: m.cy * f, rx: m.rx * f, ry: m.ry * f, top: (pic.meta.top?.[1] ?? -pic.meta.bodyW) * f };
+}
+
+/** The picture seen from this side, or straight from behind while that one is being made. */
+function backPic(look, yaw) {
+  const l = look || {};
+  return (yaw && readyPic(carPic(l, "back", { yaw }))) || readyPic(carPic(l, "back"));
 }

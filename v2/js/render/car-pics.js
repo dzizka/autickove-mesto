@@ -34,13 +34,24 @@ export function lookKey(look = {}, opts = {}) {
 
 const pics = new Map(); // key → { ready, img, meta, w, h, promise, scaled: Map }
 
-function remember(key, make) {
+// pictures that can wait (cars seen a little from the side) are made one by one with pauses,
+// so a race keeps running smoothly while they are made
+let later = Promise.resolve();
+const LATER_GAP_MS = 150;
+const pause = () => new Promise((r) => (window.requestIdleCallback ? requestIdleCallback(() => r(), { timeout: 600 }) : setTimeout(r, LATER_GAP_MS)));
+
+function remember(key, make, lazy = false) {
   let e = pics.get(key);
   if (e) return e;
   e = { ready: false, img: null, meta: null, scaled: new Map(), promise: null };
   pics.set(key, e);
   if (pics.size > MAX_PICS) pics.delete(pics.keys().next().value);
-  e.promise = make()
+  let start = make;
+  if (lazy) {
+    const turn = later.then(() => new Promise((r) => setTimeout(r, LATER_GAP_MS))).then(pause);
+    start = () => turn.then(make);
+  }
+  e.promise = start()
     .then(async (res) => {
       const img = new Image();
       img.src = res.url;
@@ -53,6 +64,7 @@ function remember(key, make) {
       e.failed = true;
       return null;
     });
+  if (lazy) later = e.promise; // the next one waits until this one is done
   return e;
 }
 
@@ -61,8 +73,9 @@ const snapshot = () => import("./three/snapshot.js");
 /** Picture of a car: view "side" | "back" | "top". Returns the cache entry (maybe not ready). */
 export function carPic(look, view, opts = {}) {
   if (!hasWebGL()) return null;
-  const key = `${view}|${lookKey(look, opts)}`;
-  return remember(key, () => snapshot().then((m) => m.renderPicture("car", { r: resolveLook(look), opts: { colorHex: look?.colorHex || null, passenger: opts.passenger || null }, view })));
+  const yaw = view === "back" ? Math.sign(opts.yaw || 0) : 0; // −1, 0, 1: seen a little from the side
+  const key = `${view}${yaw || ""}|${lookKey(look, opts)}`;
+  return remember(key, () => snapshot().then((m) => m.renderPicture("car", { r: resolveLook(look), opts: { colorHex: look?.colorHex || null, passenger: opts.passenger || null }, view, yaw })), yaw !== 0);
 }
 
 /** Picture of a prop (cone, box, barrier) from behind, like the race camera sees it. */
