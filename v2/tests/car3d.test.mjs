@@ -90,7 +90,7 @@ test("without WebGL the 2D car stays and everything still works", async () => {
   assert.equal(await view.getAttribute("data-mode"), "2d");
   assert.equal(await view.getAttribute("data-car"), "tractor");
   assert.ok(await view.locator("svg.car-side").isVisible());
-  assert.equal(await page.locator("canvas").count(), 0);
+  assert.equal(await page.locator("canvas.car-3d").count(), 0, "no 3D canvas");
   assert.equal(await page.locator(".tile-car img").count(), 0);
   await page.getByTestId("tab-wing").click();
   await page.getByTestId("item-wing-none").click();

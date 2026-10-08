@@ -64,6 +64,10 @@ body[data-screen="home"] .home-btn { visibility: hidden; }
   padding: 8px 16px calc(var(--nav-h) + 24px + var(--safe-bottom));
 }
 body[data-screen="home"] .view { padding-bottom: calc(24px + var(--safe-bottom)); }
+/* the calm moving sky behind the screens (screens/backdrop.js) */
+.backdrop { position: fixed; inset: 0; width: 100vw; height: 100dvh; z-index: 0; display: block; pointer-events: none; }
+.backdrop[hidden] { display: none; }
+.view { position: relative; z-index: 1; }
 
 .screen { animation: screen-in .25s ease-out; }
 .screen-title { font-size: 1.8rem; text-align: center; }

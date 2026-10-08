@@ -10,6 +10,7 @@ import { loopStats, frameTiming } from "./core/loop.js";
 import { exportCode, parseCode } from "./core/save-transfer.js";
 import { startPlayClock } from "./systems/progress.js";
 import { mountTopbar } from "./screens/topbar.js";
+import { startBackdrop } from "./screens/backdrop.js";
 import home from "./screens/home.js";
 import settings from "./screens/settings.js";
 import races from "./screens/races.js";
@@ -159,6 +160,7 @@ events.on("gameFinished", () => checkTrophies());
 window.__game = { state, events, rng, audio, ui, router, loopStats, frameTiming, exportCode, parseCode };
 
 startPlayClock();
+startBackdrop(); // the calm moving sky behind the menu screens
 router.startRouter(document.querySelector("main"));
 
 

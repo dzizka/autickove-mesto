@@ -98,7 +98,7 @@ export default {
       const dpr = Math.min(2, window.devicePixelRatio || 1);
       const r = sh.stage.getBoundingClientRect();
       const wide = r.width > r.height;
-      S = Math.max(160, Math.floor(Math.min(wide ? r.width - 260 : r.width - 8, wide ? r.height - 8 : r.height - 200, 640)));
+      S = Math.max(160, Math.floor(Math.min(wide ? r.width - 260 : r.width - 8, wide ? r.height - 8 : r.height - 200, 1000)));
       canvas.width = S * dpr;
       canvas.height = S * dpr;
       canvas.style.width = `${S}px`;
