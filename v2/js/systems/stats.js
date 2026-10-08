@@ -30,7 +30,7 @@ export const activeLevels = (s = getState()) => levelsOf(activeCarId(s), s);
 /** Every part on `level` (test cars, simulations). */
 export const evenLevels = (level) => Object.fromEntries(SLOT_IDS.map((id) => [id, clampLevel(level)]));
 
-/** Abilities of the parts (§4.4): each part gets one at level 10 and one at level 20. */
+/** Abilities of the parts (§4.4): each part gets one at level 11 and one at level 27. */
 export function carAbilities(levels = activeLevels()) {
   const out = new Set();
   for (const id of SLOT_IDS) GARAGE.abilityLevels.forEach((at, i) => clampLevel(levels?.[id]) >= at && out.add(SLOT_ABILITIES[id][i]));

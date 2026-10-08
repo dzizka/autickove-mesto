@@ -252,7 +252,7 @@ export const EN_DATA = {
   "Vesmír na piatej úrovni": "Space on level five",
   "Prvý boss": "First boss",
   "Všetci bossovia": "All bosses",
-  "Diel na úrovni päť": "A part on level five",
+  "Diel na úrovni desať": "A part on level ten",
   "Prvá schopnosť auta": "First car ability",
   "Šesť schopností": "Six abilities",
   "Diel na najvyššej úrovni": "A part on the top level",

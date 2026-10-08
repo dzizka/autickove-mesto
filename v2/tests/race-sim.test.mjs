@@ -12,7 +12,7 @@ import { runRace, carefulBot, randomBot } from "./race-bot.mjs";
 
 const SEEDS = Array.from({ length: 16 }, (_, i) => 1000 + i * 7);
 const starter = raceEffects(carStats(evenLevels(1)));
-const strong = raceEffects(carStats(evenLevels(20)));
+const strong = raceEffects(carStats(evenLevels(40)));
 const track = (id) => TRACKS.find((t) => t.id === id);
 
 function stats(trackId, level, effects, driverFactory) {
@@ -61,7 +61,7 @@ test("recommended power: green for the starter on City 1, red on Space 5", () =>
   const p = carPower(carStats(evenLevels(1)));
   assert.equal(difficulty(p, recommendedPower("city", 1)), "green");
   assert.equal(difficulty(p, recommendedPower("space", 5)), "red");
-  const strongPower = carPower(carStats(evenLevels(20)));
+  const strongPower = carPower(carStats(evenLevels(40)));
   assert.equal(difficulty(strongPower, recommendedPower("space", 5)), "green");
 });
 

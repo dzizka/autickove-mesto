@@ -8,11 +8,12 @@ import { SLOTS } from "../data/stats.js";
 import { GARAGE, SLOT_ABILITIES, CHEST } from "../data/garage.js";
 import { TRACKS } from "../data/tracks.js";
 import * as rng from "../core/rng.js";
+import { addCoins } from "./economy.js";
 import { SLOT_IDS, clampLevel, levelsOf, activeCarId, activeLevels, carStats, carPower, raceEffects } from "./stats.js";
 
 export const slotDef = (slot) => SLOTS.find((s) => s.id === slot);
 
-/** 🔩 for the upgrade from `level` to the next one; null when the part is done (level 20). */
+/** 🔩 for the upgrade from `level` to the next one; null when the part is done (top level). */
 export function upgradeCost(level) {
   const l = clampLevel(level);
   if (l >= GARAGE.maxLevel) return null;
@@ -27,7 +28,7 @@ export function nextAbility(slot, level) {
   return { id: SLOT_ABILITIES[slot][i], at: GARAGE.abilityLevels[i], from: i ? GARAGE.abilityLevels[i - 1] : 1 };
 }
 
-/** The ability a part gets exactly on `level` (10 or 20), else null. */
+/** The ability a part gets exactly on `level` (11 or 27), else null. */
 export function abilityAt(slot, level) {
   const i = GARAGE.abilityLevels.indexOf(level);
   return i < 0 ? null : SLOT_ABILITIES[slot][i];
@@ -96,30 +97,59 @@ export function weakestSlot(levels = activeLevels()) {
   return open.sort((a, b) => levels[a] - levels[b])[0] || null;
 }
 
+/** True when every part of the chosen car is on the top level. */
+export const carFinished = (s = getState()) => weakestSlot(activeLevels(s)) === null;
+
 /**
- * The chest after a race. Returns { scrap, golden: { slot, level, ability } | null, candy }.
- * The golden part upgrades the weakest part of the chosen car for free.
+ * Scrap 🔩 from anywhere (chest, games room, daily present). A finished car does not need it:
+ * then it becomes coins (part 22), so scrap never piles up and a new car starts from zero.
+ * Returns { scrap, coins }.
+ */
+export function giveScrap(n) {
+  const amount = Math.max(0, Math.round(Number(n) || 0));
+  if (!amount) return { scrap: 0, coins: 0 };
+  if (carFinished()) return { scrap: 0, coins: addCoins(amount * CHEST.finishedCoinsPerScrap) };
+  update((s) => (s.scrap += amount));
+  return { scrap: amount, coins: 0 };
+}
+
+/** How far the scrap goes toward the cheapest next upgrade: { slot, cost } or null. */
+export function nextUpgrade(s = getState()) {
+  const lv = activeLevels(s);
+  const slot = SLOT_IDS.filter((id) => upgradeCost(lv[id]) !== null).sort((a, b) => lv[a] - lv[b])[0];
+  return slot ? { slot, cost: upgradeCost(lv[slot]) } : null;
+}
+
+/**
+ * The chest after a race. Returns { scrap, coins, golden: { slot, level, ability } | null,
+ * candy, bar: { before, after, cost, slot } | null }. The golden part upgrades the weakest part
+ * of the chosen car for free (+2 levels).
  */
 export function grantRaceLoot({ track, level, place, bossWin = false }) {
   const luck = raceEffects(carStats()).luck;
   let scrap = raceScrap({ track, level, place, bossWin, luck });
   let golden = null;
   const goldenChance = Math.min(CHEST.goldenMax, CHEST.goldenChance + luck * CHEST.goldenLuck);
+  const before = getState().scrap;
   if (bossWin || rng.random() < goldenChance) {
     const car = activeCarId();
     const slot = weakestSlot(levelsOf(car));
     if (slot) {
-      const lv = levelsOf(car)[slot] + 1;
-      const before = carPower();
+      const from = levelsOf(car)[slot];
+      const lv = Math.min(GARAGE.maxLevel, from + GARAGE.goldenLevels);
+      const p0 = carPower();
       setLevel(car, slot, lv);
-      golden = { slot, level: lv, ability: abilityAt(slot, lv) };
-      emit("carChanged", { before, after: carPower() });
-    } else scrap += upgradeCost(GARAGE.maxLevel - 1) || 0; // a finished car: scrap instead
+      // an ability on any of the levels it jumped over counts
+      let ability = null;
+      for (let l = from + 1; l <= lv; l++) ability = abilityAt(slot, l) || ability;
+      golden = { slot, level: lv, ability };
+      emit("carChanged", { before: p0, after: carPower() });
+    } else scrap += CHEST.goldenScrap; // a finished car: becomes coins below
   }
+  const got = giveScrap(scrap);
   const candy = bossWin || rng.random() < CHEST.candyChance ? 1 : 0;
-  update((s) => {
-    s.scrap += scrap;
-    if (candy) s.crew.candy += candy;
-  });
-  return { scrap, golden, candy };
+  if (candy) update((s) => (s.crew.candy += candy));
+  const next = nextUpgrade();
+  const bar = next && got.scrap ? { before: Math.min(before, next.cost), after: Math.min(getState().scrap, next.cost), cost: next.cost, slot: next.slot } : null;
+  return { scrap: got.scrap, coins: got.coins, golden, candy, bar };
 }

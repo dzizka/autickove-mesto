@@ -120,3 +120,13 @@
 .chest-item.golden { background: radial-gradient(circle at 50% 35%, #fff 0 40%, #ffe48a); box-shadow: 0 3px 0 #e0a800, 0 0 22px rgba(255, 194, 26, .8); }
 .ci-ability { position: absolute; top: -10px; right: -10px; font-size: 1.5rem; }
 .chest-item.egg { background: none; box-shadow: none; animation: pop-in .5s cubic-bezier(.2, 1.5, .4, 1) both, wiggle .8s ease-in-out 1.5s infinite; }
+
+/* part 22: the chest shows how far the spare parts go toward the next upgrade */
+.chest-bar { display: flex; align-items: center; gap: 8px; max-width: 320px; margin: 4px auto 8px; font-size: 1.5rem; }
+.cb-track { flex: 1; height: 16px; overflow: hidden; border-radius: 8px; background: #e4e9f0; }
+.cb-track i { display: block; height: 100%; border-radius: 8px; background: linear-gradient(90deg, #9aa0a6, var(--grass)); transition: width 1s ease-out; }
+.cb-part { position: relative; display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; background: #fff; box-shadow: 0 2px 6px rgba(0, 0, 0, .15); }
+.cb-part .up { position: absolute; top: -8px; right: -8px; display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--grass); color: #fff; font-size: .8rem; }
+.chest-bar.full .cb-part { animation: hint-bounce 1s ease-in-out infinite; box-shadow: 0 0 0 3px var(--grass), 0 0 16px rgba(62, 189, 74, .6); }
+/* the price on a part fills with colour as spare parts come in */
+.part-btn .pb-cost { background: linear-gradient(90deg, #cdeccf var(--got, 0%), #eef1f5 0); }

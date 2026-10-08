@@ -117,7 +117,7 @@ test("stats are visible in the race: a strong car starts with shields and is fas
     return r;
   };
   const weak = await measure();
-  await page.evaluate(async () => (await import("./js/systems/garage.js")).setAllLevels(20));
+  await page.evaluate(async () => (await import("./js/systems/garage.js")).setAllLevels(40));
   await page.evaluate(() => (location.hash = "#/game/race/city/1"));
   await page.waitForFunction(() => window.__game.race?.phase === "racing");
   await page.waitForTimeout(1200);

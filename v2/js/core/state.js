@@ -10,7 +10,7 @@ import { defaultQuests } from "../systems/quests.js";
 import { RENAMED_CARS } from "../data/cars.js";
 
 export const STORAGE_KEY = "autickove-mesto-v2";
-export const CURRENT_VERSION = 17;
+export const CURRENT_VERSION = 18;
 
 /** Local date as YYYY-MM-DD (the same format as the play log). */
 export function todayKey(date = new Date()) {
@@ -150,6 +150,17 @@ const MIGRATIONS = {
   // v16 → v17: buddy care (part 21). Buddies may have petDay, playDay and plays; a buddy without
   // them has not been patted or played with today yet, so nothing needs filling in.
   16: (s) => ({ ...s, version: 17 }),
+  // v17 → v18: 40 smaller part levels instead of 20 (part 22). Level L becomes 2L − 1: the same
+  // strength (8 + 4(L − 1) = 8 + 2(2L − 2)) and the same abilities, nothing is lost.
+  17: (s) => {
+    const out = { ...s, version: 18 };
+    if (isPlainObject(s.cars)) {
+      out.cars = Object.fromEntries(
+        Object.entries(s.cars).map(([car, lv]) => [car, isPlainObject(lv) ? Object.fromEntries(Object.entries(lv).map(([slot, l]) => [slot, Math.max(1, Math.min(40, 2 * (Math.floor(Number(l)) || 1) - 1))])) : lv]),
+      );
+    }
+    return out;
+  },
 };
 
 const isPlainObject = (v) => v !== null && typeof v === "object" && !Array.isArray(v);

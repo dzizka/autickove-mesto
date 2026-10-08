@@ -112,10 +112,10 @@ test("12 part abilities, two per part, each one shows up in a race", () => {
   }
 });
 
-test("abilities come with the part level: none at 5, six at 6, all twelve at 14", () => {
-  assert.equal(carAbilities(evenLevels(5)).size, 0);
-  assert.deepEqual([...carAbilities(evenLevels(6))].sort(), Object.values(SLOT_ABILITIES).map((a) => a[0]).sort());
-  assert.equal(carAbilities(evenLevels(13)).size, 6);
-  assert.equal(carAbilities(evenLevels(14)).size, 12);
-  assert.deepEqual([...carAbilities({ ...evenLevels(1), engine: 14 })].sort(), [...SLOT_ABILITIES.engine].sort());
+test("abilities come with the part level: none at 10, six at 11, all twelve at 27", () => {
+  assert.equal(carAbilities(evenLevels(10)).size, 0);
+  assert.deepEqual([...carAbilities(evenLevels(11))].sort(), Object.values(SLOT_ABILITIES).map((a) => a[0]).sort());
+  assert.equal(carAbilities(evenLevels(26)).size, 6);
+  assert.equal(carAbilities(evenLevels(27)).size, 12);
+  assert.deepEqual([...carAbilities({ ...evenLevels(1), engine: 27 })].sort(), [...SLOT_ABILITIES.engine].sort());
 });

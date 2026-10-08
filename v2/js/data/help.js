@@ -27,8 +27,8 @@ export const HELP = {
   garage: {
     icon: "🔧",
     text: [
-      "Garáž. Za súčiastky 🔩 z pretekov sa ťuknutím vylepší diel auta (motor, pneumatiky, nárazník, nádrž, magnet, maskot). Číslo je úroveň dielu, krúžok ukazuje, ako ďaleko je nová schopnosť (na úrovni 6 a 14).",
-      "Diel, ktorý svieti, je najlacnejší, na ktorý dieťa má. Každé auto má vlastné vylepšenia, nové auto začína od začiatku.",
+      "Garáž. Za súčiastky 🔩 z pretekov sa ťuknutím vylepší diel auta (motor, pneumatiky, nárazník, nádrž, magnet, maskot). Číslo je úroveň dielu (1 až 40), krúžok ukazuje, ako ďaleko je nová schopnosť (na úrovni 11 a 27). Cena sa plní farbou, keď pribúdajú súčiastky.",
+      "Diel, ktorý svieti, je najlacnejší, na ktorý dieťa má. Každé auto má vlastné vylepšenia, nové auto začína od začiatku. Keď je auto celé hotové, súčiastky sa menia na mince.",
     ],
   },
   tuning: {

@@ -208,6 +208,7 @@ export function rewardModal(result, { onHome, onAgain, onGames, gamesIcon = "�
       // part 21: what the buddy learnt (its face, ⬆ and a ⭐ for a new level) and candy
       result.buddyXp?.xp > 0 && h("div", { class: "reward-row buddy-xp", "data-testid": "reward-buddy", "aria-label": "Kamarát" }, result.buddyXp.icon || "🐾", " ⬆ +", String(result.buddyXp.xp), result.buddyXp.levels?.length ? " ⭐" : ""),
       result.candy > 0 && h("div", { class: "reward-row candy", "data-testid": "reward-candy", "aria-label": "Cukrík" }, "🍬 +", String(result.candy)),
+      result.scrap > 0 && h("div", { class: "reward-row scrap", "data-testid": "reward-scrap", "aria-label": "Súčiastky" }, "🔩 +", String(result.scrap)),
       h(
         "div",
         { class: "modal-row" },

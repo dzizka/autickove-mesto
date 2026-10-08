@@ -5,6 +5,7 @@ import { h, modal, closeModal, flyCoins, confetti } from "../core/ui.js";
 import { speak, sfx } from "../core/audio.js";
 import * as rng from "../core/rng.js";
 import { DAILY } from "../data/album.js";
+import { CHEST } from "../data/garage.js";
 import { dailyReady, dailyDay, claimDaily } from "../systems/daily.js";
 import { showStickers } from "./album.js";
 
@@ -12,7 +13,7 @@ export function showDailyGift({ onDone } = {}) {
   if (!dailyReady()) return false;
   const day = dailyDay();
   const days = DAILY.coins.map((_, i) =>
-    h("span", { class: `day-box${i + 1 < day ? " past" : i + 1 === day ? " today" : ""}`, "aria-hidden": "true" }, i + 1 < day ? "✅" : DAILY.packs[i] ? "🎴" : DAILY.candy?.[i] ? "🍬" : "🪙"),
+    h("span", { class: `day-box${i + 1 < day ? " past" : i + 1 === day ? " today" : ""}`, "aria-hidden": "true" }, i + 1 < day ? "✅" : DAILY.packs[i] ? "🎴" : DAILY.candy?.[i] ? "🍬" : CHEST.dailyScrap[i] ? "🔩" : "🪙"),
   );
   const gift = h(
     "button",
@@ -28,7 +29,7 @@ export function showDailyGift({ onDone } = {}) {
         flyCoins(e.currentTarget, Math.min(15, res.coins / 10));
         gift.classList.add("open");
         gift.textContent = "🪙";
-        coins.textContent = `🪙 +${res.coins}${res.candy ? `  🍬 +${res.candy}` : ""}`;
+        coins.textContent = `🪙 +${res.coins}${res.candy ? `  🍬 +${res.candy}` : ""}${res.scrap ? `  🔩 +${res.scrap}` : ""}`;
         coins.hidden = false;
         speak(res.packs ? "Mince a nálepky! Príď aj zajtra." : "Mince! Príď aj zajtra, darček bude väčší.");
         setTimeout(() => {

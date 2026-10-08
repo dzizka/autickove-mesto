@@ -1,19 +1,21 @@
-// Garage B (DESIGN-v2 §4.3–4.7): every car has 6 parts with a level 1..20, upgraded with
-// scrap 🔩 from the chest. Abilities come at levels 6 and 14. Data only.
+// Garage B (DESIGN-v2 §4.3–4.7): every car has 6 parts with a level 1..40, upgraded with
+// scrap 🔩 from the chest. Abilities come at levels 11 and 27. Data only.
+// Part 22: 40 small steps instead of 20 big ones, so an upgrade comes about every 2–3 races.
 
 export const GARAGE = {
-  maxLevel: 20,
-  // stat of a part: base at level 1, + perLevel for every level above (level 20 = 84)
+  maxLevel: 40,
+  // stat of a part: base at level 1, + perLevel for every level above (level 40 = 86)
   statBase: 8,
-  statPerLevel: 4,
+  statPerLevel: 2,
   // upgrade from level L costs round(costBase × costGrowth^(L − 1)) 🔩, at most costMax
-  costBase: 3,
-  costGrowth: 1.4,
-  costMax: 75,
-  abilityLevels: [6, 14],
+  costBase: 2,
+  costGrowth: 1.2,
+  costMax: 28,
+  abilityLevels: [11, 27],
+  goldenLevels: 2, // a golden part from the chest: this many levels for free
 };
 
-/** The ability a part gets at level 6 and at level 14 (ids from data/legendaries.js). */
+/** The ability a part gets at level 11 and at level 27 (ids from data/legendaries.js). */
 export const SLOT_ABILITIES = {
   engine: ["rocketStart", "starTurbo"],
   tires: ["springs", "iceShield"],
@@ -38,6 +40,11 @@ export const CHEST = {
   goldenLuck: 0.08,
   goldenMax: 0.25,
   candyChance: 0.3, // a candy 🍬 for the buddies (a boss gives one surely)
+  // part 22: a finished car (every part on the top level) turns scrap into coins
+  finishedCoinsPerScrap: 5,
+  goldenScrap: 28, // … and a golden part counts as this much scrap
+  miniScrap: [2, 4, 6], // games room, 3 stars: 🔩 by difficulty
+  dailyScrap: [0, 10, 0, 10, 0, 10, 0], // the daily present, day 1 … 7
   // old saves (v12 → v13): bag parts become scrap by rarity
   oldPartScrap: { common: 1, good: 2, rare: 4, epic: 8, legendary: 16 },
 };

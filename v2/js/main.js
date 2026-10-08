@@ -19,7 +19,8 @@ import races from "./screens/races.js";
 import garage from "./screens/garage.js";
 import tuning from "./screens/tuning.js";
 import { presentReward } from "./screens/chest.js";
-import { grantRaceLoot } from "./systems/garage.js";
+import { grantRaceLoot, giveScrap } from "./systems/garage.js";
+import { CHEST } from "./data/garage.js";
 import raceGame from "./games/race/index.js";
 import { recordRace, recordBoss } from "./systems/progress.js";
 import { BOSSES } from "./data/bosses.js";
@@ -126,7 +127,9 @@ router.addRewardHandler((gameId, result) => {
   const buddyXp = learnt && { ...learnt, icon: buddyIcon(state.getState().crew.owned[learnt.id]) };
   const candy = m.stars >= 3 && rng.random() < MINI.candy3 ? 1 : 0;
   if (candy) state.update((s) => (s.crew.candy += candy));
-  return { miniLevelUp: levelUp, sticker, buddyXp, candy };
+  // part 22: 3 stars also bring spare parts 🔩 for the car (coins when the car is finished)
+  const got = m.stars >= 3 ? giveScrap(CHEST.miniScrap[Math.max(0, Math.min(2, (m.level || 1) - 1))]) : { scrap: 0, coins: 0 };
+  return { miniLevelUp: levelUp, sticker, buddyXp, candy, scrap: got.scrap, coins: (result.coins || 0) + got.coins };
 });
 // ⭐ Playing with a buddy (part 21): XP and coins while plays are left today.
 router.addRewardHandler((gameId, result) => {

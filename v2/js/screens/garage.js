@@ -36,7 +36,8 @@ function partButton(slot, level, scrap, { hint, onTap }) {
       "data-level": String(level),
       "data-can": can ? "1" : "0",
       "aria-label": `${t(slot.name)} ${level}`,
-      style: { "--ring": `${Math.round(ring * 100)}%`, "--stat": STATS[slot.main].color },
+      // --got: how much of the price the spare parts already cover (part 22)
+      style: { "--ring": `${Math.round(ring * 100)}%`, "--stat": STATS[slot.main].color, "--got": `${cost ? Math.round(Math.min(1, scrap / cost) * 100) : 100}%` },
       onclick: (e) => onTap(slot, e.currentTarget),
     },
     h("span", { class: "pb-ring", "aria-hidden": "true" }, h("span", { class: "pb-icon" }, slot.icon)),

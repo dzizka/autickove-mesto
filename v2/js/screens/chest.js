@@ -15,6 +15,25 @@ const GOLD = "#ffc21a";
 const slotDef = (id) => SLOTS.find((s) => s.id === id);
 const abilityDef = (id) => LEGENDARIES.find((l) => l.id === id);
 
+/**
+ * How far the spare parts go toward the next upgrade (part 22): the bar fills from before to
+ * after; when it is full, the part's icon glows with ⬆ (the garage can upgrade it now).
+ */
+function scrapBar({ before, after, cost, slot }, delay) {
+  const pct = (v) => `${Math.round(Math.min(1, v / Math.max(1, cost)) * 100)}%`;
+  const fill = h("i", { style: { width: pct(before) } });
+  const full = after >= cost;
+  const el = h(
+    "div",
+    { class: `chest-bar${full ? " full" : ""}`, "data-testid": "chest-bar", "data-full": String(full), "aria-hidden": "true" },
+    h("span", { class: "cb-icon" }, "🔩"),
+    h("span", { class: "cb-track" }, fill),
+    h("span", { class: "cb-part" }, slotDef(slot)?.icon || "🔧", full ? h("b", { class: "up" }, "⬆") : null),
+  );
+  setTimeout(() => (fill.style.width = pct(after)), delay * 1000);
+  return el;
+}
+
 /** One thing out of the chest: a big icon and a small number or arrow. */
 function chestItem(icon, label, { testId, cls = "", aria } = {}) {
   return h("div", { class: `chest-item ${cls}`, "data-testid": testId, "aria-label": aria }, h("span", { class: "ci-icon", "aria-hidden": "true" }, icon), label && h("span", { class: "ci-label" }, label));
@@ -67,7 +86,10 @@ export function presentReward(granted, { onHome, onAgain, onGames, gamesIcon, ga
     opened = true;
     chest.classList.add("open");
     sfx.open();
-    const items = [chestItem("🔩", `+${loot.scrap}`, { testId: "chest-scrap", cls: "scrap", aria: "Súčiastky" })];
+    const items = [];
+    if (loot.scrap > 0) items.push(chestItem("🔩", `+${loot.scrap}`, { testId: "chest-scrap", cls: "scrap", aria: "Súčiastky" }));
+    // a finished car turns spare parts into coins (part 22)
+    if (loot.coins > 0) items.push(chestItem("🔩➡🪙", `+${loot.coins}`, { testId: "chest-scrap-coins", cls: "scrap-coins", aria: "Mince" }));
     if (golden) {
       const slot = slotDef(golden.slot);
       items.push(
@@ -86,6 +108,7 @@ export function presentReward(granted, { onHome, onAgain, onGames, gamesIcon, ga
       el.style.animationDelay = `${0.25 + i * 0.35}s`;
       itemsRow.append(el);
     });
+    if (loot.bar) itemsRow.after(scrapBar(loot.bar, 0.4 + items.length * 0.35));
     if (golden) confetti(ability ? 90 : 50);
     if (golden || hintSlot()) garageBtn.classList.add("pulse");
     setTimeout(() => {
@@ -93,7 +116,7 @@ export function presentReward(granted, { onHome, onAgain, onGames, gamesIcon, ga
       sfx.win();
       if (granted.coins > 0) flyCoins(coinsRow, granted.coins / 5);
     }, 400 + items.length * 350);
-    const what = golden ? t("Zlatý diel! {name} je silnejší.", { name: t(slotDef(golden.slot).name) }) + (ability ? ` ${t("Nová schopnosť: {name}!", { name: t(ability.name) })}` : "") : t("Súčiastky do garáže!");
+    const what = golden ? t("Zlatý diel! {name} je silnejší.", { name: t(slotDef(golden.slot).name) }) + (ability ? ` ${t("Nová schopnosť: {name}!", { name: t(ability.name) })}` : "") : loot.coins > 0 ? t("Auto je hotové, súčiastky sú mince!") : t("Súčiastky do garáže!");
     if (granted.boss && granted.extra?.bossWin) speak(t("Poklad od bossa! {what} A vajíčko s kamarátom!", { what }));
     else speak(what);
   };

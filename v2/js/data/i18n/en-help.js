@@ -10,10 +10,10 @@ export const EN_HELP = {
   "Preteky. Auto ide samo, ťuknutím na ľavú alebo pravú polovicu obrazovky zmení pruh. Treba sa vyhýbať prekážkam a zbierať mince, benzín ⛽ a hviezdy.":
     "The race. The car drives by itself; a tap on the left or right half of the screen changes lane. Avoid the obstacles and collect coins, fuel ⛽ and stars.",
   "Prehrať sa nedá: aj 4. miesto dá mince a súčiastky. Na konci sa ťukne na truhlicu.": "Nobody loses: even 4th place gives coins and spare parts. At the end the child taps the treasure chest.",
-  "Garáž. Za súčiastky 🔩 z pretekov sa ťuknutím vylepší diel auta (motor, pneumatiky, nárazník, nádrž, magnet, maskot). Číslo je úroveň dielu, krúžok ukazuje, ako ďaleko je nová schopnosť (na úrovni 6 a 14).":
-    "Garage. Spare parts 🔩 from races upgrade a car part with a tap (engine, tyres, bumper, tank, magnet, mascot). The number is the part's level; the ring shows how close the next ability is (at levels 6 and 14).",
-  "Diel, ktorý svieti, je najlacnejší, na ktorý dieťa má. Každé auto má vlastné vylepšenia, nové auto začína od začiatku.":
-    "The glowing part is the cheapest one the child can afford. Every car has its own upgrades; a new car starts from the beginning.",
+  "Garáž. Za súčiastky 🔩 z pretekov sa ťuknutím vylepší diel auta (motor, pneumatiky, nárazník, nádrž, magnet, maskot). Číslo je úroveň dielu (1 až 40), krúžok ukazuje, ako ďaleko je nová schopnosť (na úrovni 11 a 27). Cena sa plní farbou, keď pribúdajú súčiastky.":
+    "Garage. Spare parts 🔩 from races upgrade a car part with a tap (engine, tyres, bumper, tank, magnet, mascot). The number is the part's level (1 to 40); the ring shows how close the next ability is (at levels 11 and 27). The price fills with colour as spare parts come in.",
+  "Diel, ktorý svieti, je najlacnejší, na ktorý dieťa má. Každé auto má vlastné vylepšenia, nové auto začína od začiatku. Keď je auto celé hotové, súčiastky sa menia na mince.":
+    "The glowing part is the cheapest one the child can afford. Every car has its own upgrades; a new car starts from the beginning. When a car is completely finished, spare parts turn into coins.",
   "Vzhľad auta: druh auta, farba, vzor, kolesá, spojler, nálepky, vec na streche, neón, stopa a klaksón. Kupuje sa za mince a nemení silu auta.":
     "Car looks: the kind of car, colour, pattern, wheels, spoiler, stickers, roof item, neon, trail and horn. They cost coins and do not change the car's power.",
   "Ťuknutie na vec, ktorú dieťa nemá, ju ukáže na aute a ponúkne kúpu. 🛣️ je skúšobná jazda, 🎲 náhodný vzhľad z vecí, ktoré už má.":

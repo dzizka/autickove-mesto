@@ -33,7 +33,7 @@ test("lanes and the car are big enough on every screen", () => {
 });
 
 test("a strong car moves on screen no faster than the cap, but still wins by more", () => {
-  const strong = raceEffects(carStats(evenLevels(20)));
+  const strong = raceEffects(carStats(evenLevels(40)));
   const starter = raceEffects(carStats(evenLevels(1)));
   assert.ok(strong.topSpeed > RACE.baseSpeed * RACE.visibleCap * 1.2, "the test car really is fast");
   assert.equal(visibleScale(starter.topSpeed), 1);

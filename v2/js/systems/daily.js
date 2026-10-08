@@ -4,6 +4,8 @@ import { getState, update, todayKey } from "../core/state.js";
 import { DAILY } from "../data/album.js";
 import { addCoins } from "./economy.js";
 import { giveStickers } from "./album.js";
+import { giveScrap } from "./garage.js";
+import { CHEST } from "../data/garage.js";
 
 const DAY = 86400000;
 
@@ -31,5 +33,6 @@ export function claimDaily(rng, now = new Date()) {
   const album = packs ? giveStickers(packs * 3, rng) : null;
   const candy = DAILY.candy?.[day - 1] || 0;
   if (candy) update((s) => (s.crew.candy += candy));
-  return { day, coins, packs, album, candy };
+  const got = giveScrap(CHEST.dailyScrap[day - 1] || 0); // part 22
+  return { day, coins: coins + got.coins, packs, album, candy, scrap: got.scrap };
 }

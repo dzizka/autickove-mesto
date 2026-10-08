@@ -7,7 +7,7 @@ import * as state from "../js/core/state.js";
 import * as rng from "../js/core/rng.js";
 import { GARAGE, CHEST, SLOT_ABILITIES } from "../js/data/garage.js";
 import { slotStat, levelsOf, activeLevels, carStats, carPower, carAbilities, evenLevels } from "../js/systems/stats.js";
-import { upgrade, upgradeCost, canUpgrade, hintSlot, nextAbility, raceScrap, grantRaceLoot, weakestSlot, setAllLevels } from "../js/systems/garage.js";
+import { upgrade, upgradeCost, canUpgrade, hintSlot, nextAbility, raceScrap, grantRaceLoot, weakestSlot, setAllLevels, giveScrap } from "../js/systems/garage.js";
 import { setup, openGame, screenshot, WIDTHS } from "./helpers.mjs";
 
 const quiet = { settings: { sound: false, voice: false } };
@@ -18,10 +18,10 @@ const fresh = (extra = {}) => {
 
 // ---------- rules (Node) ----------
 
-test("levels: stat 8 on level 1, +4 per level; costs grow, level 20 is the end", () => {
+test("levels: stat 8 on level 1, +2 per level; costs grow, level 40 is the end", () => {
   assert.equal(slotStat(1), GARAGE.statBase);
-  assert.equal(slotStat(20), GARAGE.statBase + 19 * GARAGE.statPerLevel);
-  assert.equal(slotStat(99), slotStat(20), "clamped");
+  assert.equal(slotStat(40), GARAGE.statBase + 39 * GARAGE.statPerLevel);
+  assert.equal(slotStat(99), slotStat(40), "clamped");
   assert.equal(slotStat(-3), slotStat(1));
   let last = 0;
   for (let l = 1; l < GARAGE.maxLevel; l++) {
@@ -32,8 +32,8 @@ test("levels: stat 8 on level 1, +4 per level; costs grow, level 20 is the end",
   assert.equal(upgradeCost(GARAGE.maxLevel), null);
   assert.equal(carPower(carStats(evenLevels(1))), 48, "starter car power");
   assert.equal(nextAbility("engine", 1).id, SLOT_ABILITIES.engine[0]);
-  assert.equal(nextAbility("engine", 6).id, SLOT_ABILITIES.engine[1]);
-  assert.equal(nextAbility("engine", 14), null);
+  assert.equal(nextAbility("engine", 11).id, SLOT_ABILITIES.engine[1]);
+  assert.equal(nextAbility("engine", 27), null);
 });
 
 test("a tap upgrades one part of the chosen car for scrap; no scrap, no upgrade", () => {
@@ -55,14 +55,14 @@ test("the glowing hint is the cheapest part the child can pay for", () => {
   state.update((s) => (s.cars[s.look.car] = { ...evenLevels(5), tank: 2 }));
   assert.equal(hintSlot(), "tank");
   assert.equal(weakestSlot(), "tank");
-  setAllLevels(20);
+  setAllLevels(40);
   assert.equal(hintSlot(), null, "nothing left to upgrade");
 });
 
-test("the ability comes on level 6 and 14 of a part", () => {
+test("the ability comes on level 11 and 27 of a part", () => {
   fresh({ scrap: 10000 });
   let got = [];
-  for (let i = 0; i < 13; i++) got.push(upgrade("mascot").ability);
+  for (let i = 0; i < 26; i++) got.push(upgrade("mascot").ability);
   assert.deepEqual(got.filter(Boolean), SLOT_ABILITIES.mascot);
   assert.ok(carAbilities().has("goldCat") && carAbilities().has("ghost"));
 });
@@ -95,7 +95,7 @@ test("a golden part upgrades the weakest part for free; a beaten boss always giv
   state.update((s) => (s.cars[s.look.car] = { ...evenLevels(4), magnet: 2 }));
   rng.setSeed(2);
   const r = grantRaceLoot({ track: "city", level: 1, place: 1, bossWin: true });
-  assert.deepEqual(r.golden, { slot: "magnet", level: 3, ability: null });
+  assert.deepEqual(r.golden, { slot: "magnet", level: 4, ability: null }, "a golden part: +2 levels");
   assert.equal(r.candy, 1);
   assert.equal(state.getState().scrap, r.scrap);
   let golden = 0;
@@ -103,7 +103,25 @@ test("a golden part upgrades the weakest part for free; a beaten boss always giv
   assert.ok(golden > 10 && golden < 80, `golden parts in 500 chests: ${golden}`);
 });
 
-test("v12 → v13: the chosen car gets levels from its parts, bag parts become scrap", () => {
+test("part 22: a finished car turns spare parts into coins; the chest shows the way to the next upgrade", () => {
+  fresh({ scrap: 0 });
+  const r = grantRaceLoot({ track: "space", level: 3, place: 1 });
+  assert.ok(r.bar && r.bar.after > r.bar.before && r.bar.cost === upgradeCost(1), "a bar toward the cheapest part");
+  assert.deepEqual(giveScrap(7), { scrap: 7, coins: 0 });
+  setAllLevels(40);
+  const coins0 = state.getState().coins;
+  const scrap0 = state.getState().scrap;
+  assert.deepEqual(giveScrap(7), { scrap: 0, coins: 7 * CHEST.finishedCoinsPerScrap });
+  const done = grantRaceLoot({ track: "space", level: 3, place: 1, bossWin: true });
+  assert.equal(done.scrap, 0);
+  assert.equal(done.golden, null);
+  assert.ok(done.coins > CHEST.goldenScrap, "the golden part became coins too");
+  assert.equal(state.getState().scrap, scrap0, "no scrap piles up");
+  assert.ok(state.getState().coins > coins0);
+  assert.equal(done.bar, null);
+});
+
+test("v12 → v13 → v18: the chosen car gets levels from its parts, bag parts become scrap", () => {
   const part = (slot, value, plus = 0) => ({ uid: slot, slot, rarity: "rare", main: { stat: "x", value }, subs: [], plus });
   const old = {
     version: 12,
@@ -120,8 +138,9 @@ test("v12 → v13: the chosen car gets levels from its parts, bag parts become s
   const s = state.migrate(old);
   assert.equal(s.version, state.CURRENT_VERSION);
   // 50 × (1 + 0.08 × 5) = 70 → 1 + round(62 / 6) = 11
-  assert.deepEqual(s.cars.police, { engine: 1, tires: 11, bumper: 1, tank: 20 });
-  assert.deepEqual(levelsOf("police", s), { engine: 1, tires: 11, bumper: 1, tank: 20, magnet: 1, mascot: 1 });
+  // … and v17 → v18 doubles the levels (40 small steps): L → 2L − 1
+  assert.deepEqual(s.cars.police, { engine: 1, tires: 21, bumper: 1, tank: 39 });
+  assert.deepEqual(levelsOf("police", s), { engine: 1, tires: 21, bumper: 1, tank: 39, magnet: 1, mascot: 1 });
   assert.equal(s.scrap, 10 + 1 + 8 + 16);
   for (const k of ["car", "inventory", "bagSize", "setsFound", "legendariesFound", "loot"]) assert.ok(!(k in s), `${k} removed`);
   assert.deepEqual(s.trophies, { firstWin: 1 });
@@ -182,8 +201,8 @@ for (const width of WIDTHS) {
     const p0 = await power(page);
     await page.getByTestId(`part-${slot}`).click();
     assert.equal(await level(page, slot), 2);
-    assert.equal(await power(page), p0 + 4);
-    assert.equal(await page.evaluate(() => window.__game.state.getState().scrap), 40 - 3);
+    assert.equal(await power(page), p0 + GARAGE.statPerLevel);
+    assert.equal(await page.evaluate(() => window.__game.state.getState().scrap), 40 - GARAGE.costBase);
     await page.locator(".pb-gain").first().waitFor();
 
     // spend everything: the buttons turn grey and a tap changes nothing
@@ -206,9 +225,9 @@ for (const width of WIDTHS) {
   });
 }
 
-test("level 6 gives an ability with confetti; it shows in the garage and in the race", async () => {
+test("level 11 gives an ability with confetti; it shows in the garage and in the race", async () => {
   const page = await openGame(env.browser, env.server.url, { width: 1280, storage: { ...quiet, scrap: 500 }, hash: "#/garage" });
-  await page.evaluate(() => window.__game.state.update((s) => (s.cars[s.look.car] = { engine: 5 })));
+  await page.evaluate(() => window.__game.state.update((s) => (s.cars[s.look.car] = { engine: 10 })));
   await page.evaluate(() => (location.hash = "#/home"));
   await page.evaluate(() => (location.hash = "#/garage"));
   await page.getByTestId("screen-garage").waitFor();
@@ -228,7 +247,7 @@ test("level 6 gives an ability with confetti; it shows in the garage and in the 
 
 test("the showroom shows the power of every car kind: a new car is weaker", async () => {
   const page = await openGame(env.browser, env.server.url, { storage: { ...quiet, owned: { car: ["sedan", "taxi"] } }, hash: "#/tuning" });
-  await page.evaluate(async () => (await import("./js/systems/garage.js")).setAllLevels(10));
+  await page.evaluate(async () => (await import("./js/systems/garage.js")).setAllLevels(20));
   await page.evaluate(() => (location.hash = "#/home"));
   await page.evaluate(() => (location.hash = "#/tuning"));
   await page.getByTestId("show-power").waitFor();

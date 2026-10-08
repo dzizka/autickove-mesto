@@ -56,7 +56,7 @@ test("boss button: locked until the challenge bar is full, then it glows", async
 
 test("every boss: race, win, sure golden part and an egg", async () => {
   const page = await openGame(env.browser, env.server.url, { width: 390, storage: quiet });
-  await carLevel(page, 19);
+  await carLevel(page, 38);
   for (const track of TRACKS) {
     await page.evaluate((track) => {
       window.__game.state.update((s) => {
@@ -83,7 +83,7 @@ test("every boss: race, win, sure golden part and an egg", async () => {
     assert.equal(s.bosses[track], 1, `${track} boss counted as beaten`);
     assert.equal(s.races.tracks[track].challenge, 0, "challenge bar emptied");
     assert.equal(await page.getByTestId("chest-golden").count(), 1, `${track}: a golden part`);
-    await carLevel(page, 19); // the golden part upgraded one part to 20: back for the next boss
+    await carLevel(page, 38); // the golden part upgraded one part to 40: back for the next boss
     await page.getByTestId("reward-home").click();
     await page.getByTestId("screen-home").waitFor();
   }
@@ -96,8 +96,8 @@ test("every boss: race, win, sure golden part and an egg", async () => {
 
 test("all 12 part abilities in real races without a single error", async () => {
   const page = await openGame(env.browser, env.server.url, { width: 390, storage: { ...quiet, cheats: { shortRaces: false } } });
-  // level 6: the first ability of every part; level 14: both abilities of every part
-  for (const [i, level] of [6, 14].entries()) {
+  // level 11: the first ability of every part; level 27: both abilities of every part
+  for (const [i, level] of [11, 27].entries()) {
     for (const track of ["night", "snow"]) {
       await carLevel(page, level);
       const ids = await page.evaluate(async (level) => {
@@ -106,7 +106,7 @@ test("all 12 part abilities in real races without a single error", async () => {
           for (const t of ["city", "forest", "desert", "night", "snow"]) s.races.tracks[t] = { unlocked: 1, best: { 1: 1 }, challenge: 0, races: 0 };
         });
         window.__game.testTimeScale = 8;
-        return Object.values(SLOT_ABILITIES).flatMap((a) => (level >= 14 ? a : [a[0]]));
+        return Object.values(SLOT_ABILITIES).flatMap((a) => (level >= 27 ? a : [a[0]]));
       }, level);
       await page.evaluate((t) => (location.hash = `#/game/race/${t}/1`), track);
       await page.locator(`[data-testid=screen-game-race][data-track=${track}]`).waitFor();
