@@ -1,14 +1,13 @@
-// Part 8: fixes after the first play-test (DESIGN-v2 §4.1, §4.3, §4.5, §4.6).
+// Part 8: fixes after the first play-test (DESIGN-v2 §4.1, §4.3, §4.5).
 
 import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
 import { RACE, TRACKS } from "../js/data/tracks.js";
 import { makeView, clearViewMetres, LANE, CAM_H } from "../js/games/race/road.js";
 import { createRace, step, visibleScale } from "../js/games/race/physics.js";
-import { raceEffects, carStats } from "../js/systems/stats.js";
-import { starterParts, testParts } from "../js/systems/loot.js";
+import { raceEffects, carStats, evenLevels } from "../js/systems/stats.js";
 import * as rng from "../js/core/rng.js";
-import { setup, openGame, screenshot, WIDTHS } from "./helpers.mjs";
+import { setup, openGame } from "./helpers.mjs";
 
 const quiet = { settings: { sound: false, voice: false } };
 
@@ -34,8 +33,8 @@ test("lanes and the car are big enough on every screen", () => {
 });
 
 test("a strong car moves on screen no faster than the cap, but still wins by more", () => {
-  const strong = raceEffects(carStats(testParts(150)));
-  const starter = raceEffects(carStats(starterParts()));
+  const strong = raceEffects(carStats(evenLevels(20)));
+  const starter = raceEffects(carStats(evenLevels(1)));
   assert.ok(strong.topSpeed > RACE.baseSpeed * RACE.visibleCap * 1.2, "the test car really is fast");
   assert.equal(visibleScale(starter.topSpeed), 1);
   for (const effects of [strong, starter]) {
@@ -74,50 +73,8 @@ test("the chest waits for the child's tap", async () => {
   await page.waitForTimeout(3000);
   assert.equal(await page.locator(".chest.open").count(), 0, "still closed after 3 s");
   await page.getByTestId("chest").click();
-  await page.locator("[data-testid=chest-parts] .part-card").first().waitFor();
-  assert.ok((await page.locator("[data-testid=chest-parts] [data-testid=part-power]").count()) >= 1, "cards show the part power");
+  await page.getByTestId("chest-scrap").waitFor();
+  assert.match(await page.getByTestId("chest-scrap").textContent(), /\+\d+/, "scrap as a number with +");
   assert.deepEqual(page.errors, []);
   await page.context().close();
 });
-
-for (const width of WIDTHS) {
-  test(`${width}px: numbers with +/− in the part detail, and a part can be taken off`, async () => {
-    const page = await openGame(env.browser, env.server.url, { width, storage: quiet });
-    await page.evaluate(async () => {
-      const loot = await import("./js/systems/loot.js");
-      const garage = await import("./js/systems/garage.js");
-      window.__game.rng.setSeed(9);
-      garage.addParts([loot.generatePart({ rarity: "rare", budget: 30, slot: "engine", rng: window.__game.rng })]);
-      location.hash = "#/garage";
-    });
-    await page.getByTestId("screen-garage").waitFor();
-    assert.equal(await page.locator("[data-testid=stat-panel] .stat-num").count(), 6, "car stats as numbers");
-
-    // bag part vs mounted: green +N next to the stats
-    await page.locator('.bag-grid .part-card[data-compare="1"]').first().click();
-    await page.getByTestId("part-detail").waitFor();
-    const diffs = await page.locator("[data-testid=cmp-diff]").allTextContents();
-    assert.ok(diffs.some((t) => /^\+\d+$/.test(t)), `a +N difference (${diffs.join(" ")})`);
-    assert.match(await page.getByTestId("power-diff").textContent(), /\+\d+/);
-    await screenshot(page, `${width}-part-detail-numbers`);
-    await page.getByTestId("part-close").click();
-
-    // take the mounted tires off: the slot stays empty, also after a reload
-    const before = await page.evaluate(() => window.__game.state.getState().inventory.length);
-    await page.getByTestId("slot-tires").click();
-    await page.getByTestId("part-unequip").click();
-    await page.getByTestId("part-detail").waitFor({ state: "detached" });
-    const s = await page.evaluate(() => window.__game.state.getState());
-    assert.equal(s.car.equipped.tires, null);
-    assert.equal(s.inventory.length, before + 1);
-    await screenshot(page, `${width}-garage-empty-slot`);
-    await page.evaluate(() => window.__game.state.saveNow());
-    await page.reload();
-    await page.getByTestId("screen-garage").waitFor();
-    assert.equal(await page.evaluate(() => window.__game.state.getState().car.equipped.tires), null, "no free part after reload");
-    // any part beats an empty slot
-    assert.ok((await page.locator('.bag-grid .part-card[data-compare="1"]').count()) >= 1);
-    assert.deepEqual(page.errors, []);
-    await page.context().close();
-  });
-}

@@ -94,7 +94,7 @@ test("buddy ability is felt: speed buddy makes the car faster, dog adds a shield
     out.pupShields = effectsWith("pup").shields;
     out.pigCoins = effectsWith("pig", 10).coinMult;
     out.powerBunny = (crew.setActive("bunny"), stats.carPower());
-    out.powerNone = stats.carPower(stats.carStats(g.state.getState().car.equipped, false));
+    out.powerNone = stats.carPower(stats.carStats(stats.activeLevels(), false));
     return out;
   });
   assert.ok(r.dragon1 > r.baseSpeed * 1.05, `${r.dragon1} vs ${r.baseSpeed}`);
@@ -252,23 +252,19 @@ for (const width of WIDTHS) {
   });
 }
 
-test("dismantling can give candy; blue parts always do", async () => {
+test("the chest sometimes gives candy; a beaten boss always does", async () => {
   const page = await openGame(env.browser, env.server.url, { storage: quiet });
   const r = await page.evaluate(async () => {
-    const loot = await import("./js/systems/loot.js");
     const garage = await import("./js/systems/garage.js");
-    const rng = window.__game.rng;
-    rng.setSeed(4);
-    garage.addParts([loot.generatePart({ rarity: "rare", budget: 20, rng })]);
-    const uid = window.__game.state.getState().inventory[0].uid;
-    const one = garage.dismantle(uid);
-    garage.addParts(Array.from({ length: 20 }, () => loot.generatePart({ rarity: "common", budget: 5, rng })));
-    const many = garage.dismantleLow();
-    return { one, many, candy: window.__game.state.getState().crew.candy };
+    window.__game.rng.setSeed(4);
+    let normal = 0;
+    for (let i = 0; i < 40; i++) normal += garage.grantRaceLoot({ track: "city", level: 1, place: 2 }).candy;
+    const boss = garage.grantRaceLoot({ track: "city", level: 1, place: 1, bossWin: true }).candy;
+    return { normal, boss, candy: window.__game.state.getState().crew.candy };
   });
-  assert.ok(r.one.scrap > 0 && r.one.candy === 1);
-  assert.ok(r.many.candy >= 1 && r.many.candy <= 15, `candy ${r.many.candy}`);
-  assert.equal(r.candy, r.one.candy + r.many.candy);
+  assert.ok(r.normal >= 4 && r.normal <= 22, `candy from 40 chests: ${r.normal}`);
+  assert.equal(r.boss, 1);
+  assert.equal(r.candy, r.normal + r.boss);
   await page.context().close();
 });
 

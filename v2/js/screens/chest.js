@@ -1,21 +1,23 @@
-// End-of-race reward: a chest that opens and throws out the new parts (DESIGN-v2 §4.5),
-// then the coins and buttons Home / Again / Garage.
+// End-of-race reward: a chest that opens and throws out scrap 🔩, sometimes a golden part
+// (+1 level for the weakest part), a candy or an egg (DESIGN-v2 §4.5), then the coins and the
+// buttons Home / Again / Garage.
 
-import { h, modal, rewardModal, flyCoins, confetti } from "../core/ui.js";
+import { h, rewardModal, modal, flyCoins, confetti } from "../core/ui.js";
 import { speak, sfx } from "../core/audio.js";
 import { go } from "../core/router.js";
-import { rarityDef, rarityIndex } from "../systems/loot.js";
-import { RARITIES } from "../data/loot-bases.js";
-import { partCard } from "./part-card.js";
+import { SLOTS } from "../data/stats.js";
+import { LEGENDARIES } from "../data/legendaries.js";
+import { hintSlot } from "../systems/garage.js";
 import { presentColoringReward } from "./gallery.js";
 
-const BEST_SAY = [
-  "Truhlica je otvorená! Pozri, čo si našiel.",
-  "Zelený diel! Je dobrý.",
-  "Modrý diel! Je vzácny!",
-  "Fialový diel! Epický!",
-  "Oranžový diel! Legendárny!",
-];
+const GOLD = "#ffc21a";
+const slotDef = (id) => SLOTS.find((s) => s.id === id);
+const abilityDef = (id) => LEGENDARIES.find((l) => l.id === id);
+
+/** One thing out of the chest: a big icon and a small number or arrow. */
+function chestItem(icon, label, { testId, cls = "", aria } = {}) {
+  return h("div", { class: `chest-item ${cls}`, "data-testid": testId, "aria-label": aria }, h("span", { class: "ci-icon", "aria-hidden": "true" }, icon), label && h("span", { class: "ci-label" }, label));
+}
 
 function chestSvg() {
   const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
@@ -42,56 +44,57 @@ const CHEST_AUTO_OPEN_MS = 12000;
 export function presentReward(granted, { onHome, onAgain, onGames } = {}) {
   if (granted.coloringReward) return presentColoringReward(granted, { onHome });
   const loot = granted.loot;
-  if (!loot?.parts?.length) return rewardModal(granted, { onHome, onAgain, onGames });
+  if (!loot) return rewardModal(granted, { onHome, onAgain, onGames });
 
-  const best = Math.max(...loot.parts.map((p) => rarityIndex(p.rarity)));
-  const chest = h("button", { class: "chest", "data-testid": "chest", "aria-label": "Otvoriť truhlicu", style: { "--glow": rarityDef(loot.parts[0].rarity).color } }, chestSvg());
-  const partsRow = h("div", { class: "chest-parts", "data-testid": "chest-parts" });
+  const golden = loot.golden;
+  const ability = golden?.ability ? abilityDef(golden.ability) : null;
+  const chest = h("button", { class: "chest", "data-testid": "chest", "aria-label": "Otvoriť truhlicu", style: { "--glow": golden ? GOLD : "#ffd23f" } }, chestSvg());
+  const itemsRow = h("div", { class: "chest-parts", "data-testid": "chest-parts" });
   const coinsRow = h("div", { class: "reward-row", "data-testid": "reward-coins" }, "🪙 +", String(granted.coins || 0));
   const garageBtn = h("button", { class: "btn sky", "data-testid": "reward-garage", "aria-label": "Garáž", onclick: () => go("garage") }, "🔧");
   const after = h(
     "div",
     { class: "chest-after" },
     coinsRow,
-    loot.scrap > 0 && h("div", { class: "reward-row scrap", "aria-label": "Súčiastky" }, "🔩 +", String(loot.scrap)),
-    h(
-      "div",
-      { class: "modal-row" },
-      h("button", { class: "btn sun", "data-testid": "reward-home", "aria-label": "Domov", onclick: () => onHome?.() }, "🏠"),
-      onAgain && h("button", { class: "btn grass", "data-testid": "reward-again", "aria-label": "Znova", onclick: () => onAgain() }, "🔁"),
-      loot.kept.length > 0 && garageBtn,
-    ),
+    h("div", { class: "modal-row" }, h("button", { class: "btn sun", "data-testid": "reward-home", "aria-label": "Domov", onclick: () => onHome?.() }, "🏠"), onAgain && h("button", { class: "btn grass", "data-testid": "reward-again", "aria-label": "Znova", onclick: () => onAgain() }, "🔁"), garageBtn),
   );
 
-  const box = modal([chest, partsRow, after], { dismissible: false, className: "chest-modal", testId: "reward-modal" });
+  const box = modal([chest, itemsRow, after], { dismissible: false, className: "chest-modal", testId: "reward-modal" });
   let opened = false;
   const open = () => {
     if (opened) return;
     opened = true;
     chest.classList.add("open");
-    chest.style.setProperty("--glow", RARITIES[best].color);
     sfx.open();
-    if (best >= 2) confetti(best >= 3 ? 90 : 50);
-    loot.parts.forEach((p, i) => {
-      const card = partCard(p, { compare: true, onClick: () => go("garage") });
-      card.style.animationDelay = `${0.25 + i * 0.35}s`;
-      if (loot.bossPrize && p.uid === loot.bossPrize.uid) card.classList.add("boss-prize");
-      partsRow.append(card);
-    });
-    if (granted.egg) {
-      const egg = h("div", { class: "chest-egg", "data-testid": "chest-egg", "aria-label": "Vajíčko" }, "🥚");
-      egg.style.animationDelay = `${0.25 + loot.parts.length * 0.35}s`;
-      partsRow.append(egg);
+    const items = [chestItem("🔩", `+${loot.scrap}`, { testId: "chest-scrap", cls: "scrap", aria: "Súčiastky" })];
+    if (golden) {
+      const slot = slotDef(golden.slot);
+      items.push(
+        h(
+          "div",
+          { class: "chest-item golden", "data-testid": "chest-golden", "data-slot": golden.slot, "aria-label": "Zlatý diel" },
+          h("span", { class: "ci-icon", "aria-hidden": "true" }, slot.icon),
+          h("span", { class: "ci-label" }, h("b", { class: "up" }, "⬆"), String(golden.level)),
+          ability && h("span", { class: "ci-ability", "aria-hidden": "true" }, ability.icon),
+        ),
+      );
     }
-    // a mounted-vs-new ⬆ on any card lights up the garage button
-    if (partsRow.querySelector('[data-compare="1"]')) garageBtn.classList.add("pulse");
+    if (loot.candy) items.push(chestItem("🍬", `+${loot.candy}`, { testId: "chest-candy", aria: "Cukrík" }));
+    if (granted.egg) items.push(chestItem("🥚", null, { testId: "chest-egg", cls: "egg", aria: "Vajíčko" }));
+    items.forEach((el, i) => {
+      el.style.animationDelay = `${0.25 + i * 0.35}s`;
+      itemsRow.append(el);
+    });
+    if (golden) confetti(ability ? 90 : 50);
+    if (golden || hintSlot()) garageBtn.classList.add("pulse");
     setTimeout(() => {
       after.classList.add("show");
       sfx.win();
       if (granted.coins > 0) flyCoins(coinsRow, granted.coins / 5);
-    }, 400 + loot.parts.length * 350);
-    if (granted.boss && granted.extra?.bossWin) speak(`Poklad od bossa! ${BEST_SAY[best] || ""} A vajíčko s kamarátom!`);
-    else speak(BEST_SAY[best] || BEST_SAY[0]);
+    }, 400 + items.length * 350);
+    const what = golden ? `Zlatý diel! ${slotDef(golden.slot).name} je silnejší.${ability ? ` Nová schopnosť: ${ability.name}!` : ""}` : "Súčiastky do garáže!";
+    if (granted.boss && granted.extra?.bossWin) speak(`Poklad od bossa! ${what} A vajíčko s kamarátom!`);
+    else speak(what);
   };
   chest.addEventListener("click", open);
   if (granted.boss && granted.extra?.bossWin) chest.classList.add("boss-chest");

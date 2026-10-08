@@ -127,8 +127,6 @@ events.on("gameFinished", ({ gameId, result }) => {
   if (gameId === "coloring" && x.coloring) questEvent("paint");
   if (x.mini) questEvent("mini");
 });
-events.on("partsDismantled", ({ count }) => questEvent("dismantle", count));
-events.on("carChanged", ({ before, after }) => after > before && questEvent("equip"));
 events.on("partUpgraded", () => questEvent("upgrade"));
 events.on("itemBought", () => questEvent("buy"));
 events.on("buddyPetted", () => questEvent("pet"));

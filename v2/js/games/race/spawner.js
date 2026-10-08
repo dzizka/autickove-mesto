@@ -27,7 +27,7 @@ export function makeObject(kind, { lane, d, icon = "", color = "#ffffff", len = 
     spin: 0,
     pulled: false, // pulled by the magnet
     warn: 0, // boss throws: seconds until it lands (not solid before)
-    springSeen: false, // counted by the Springs legendary
+    springSeen: false, // counted by the Springs ability
   };
 }
 

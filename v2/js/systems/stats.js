@@ -1,62 +1,50 @@
-// Car stats: sum of equipped parts, set bonuses and the crew buddy,
-// car power, and how stats turn into race effects.
+// Car stats (DESIGN-v2 §4.3): the levels of the 6 parts of the chosen car plus the crew buddy,
+// car power, the abilities of the parts (§4.4) and how stats turn into race effects.
 
-import { STATS, STAT_IDS, EFFECTS } from "../data/stats.js";
+import { STAT_IDS, SLOTS, EFFECTS } from "../data/stats.js";
 import { RACE, TRACKS } from "../data/tracks.js";
+import { GARAGE, SLOT_ABILITIES } from "../data/garage.js";
 import { getState } from "../core/state.js";
-import { SETS } from "../data/sets.js";
 import { crewBonus } from "./crew.js";
 
 const num = (v) => (Number.isFinite(v) ? v : 0);
+export const SLOT_IDS = SLOTS.map((s) => s.id);
 
-/** Upgrade bonus: each +1 adds EFFECTS.upgradePerPlus to the part's values. */
-export const plusFactor = (plus) => 1 + EFFECTS.upgradePerPlus * Math.max(0, Math.min(5, num(plus)));
+/** A part level, always a whole number 1..maxLevel. */
+export const clampLevel = (l) => Math.max(1, Math.min(GARAGE.maxLevel, Math.floor(num(l)) || 1));
 
-export function partStats(part) {
-  const out = Object.fromEntries(STAT_IDS.map((id) => [id, 0]));
-  if (!part?.main) return out;
-  const f = plusFactor(part.plus);
-  out[part.main.stat] = (out[part.main.stat] ?? 0) + num(part.main.value) * f;
-  for (const s of part.subs || []) if (s.stat in out) out[s.stat] += num(s.value) * f;
+/** Stat of a part on a level: 8 at level 1, +6 per level (§4.3). */
+export const slotStat = (level) => GARAGE.statBase + (clampLevel(level) - 1) * GARAGE.statPerLevel;
+
+/** Levels of every part of one car: { engine: 1, … } (a car never upgraded is all 1). */
+export function levelsOf(carId, s = getState()) {
+  const saved = s.cars?.[carId] || {};
+  return Object.fromEntries(SLOT_IDS.map((id) => [id, clampLevel(saved[id])]));
+}
+
+/** The car the child drives now (chosen in the showroom). */
+export const activeCarId = (s = getState()) => s.look?.car;
+
+export const activeLevels = (s = getState()) => levelsOf(activeCarId(s), s);
+
+/** Every part on `level` (test cars, simulations). */
+export const evenLevels = (level) => Object.fromEntries(SLOT_IDS.map((id) => [id, clampLevel(level)]));
+
+/** Abilities of the parts (§4.4): each part gets one at level 10 and one at level 20. */
+export function carAbilities(levels = activeLevels()) {
+  const out = new Set();
+  for (const id of SLOT_IDS) GARAGE.abilityLevels.forEach((at, i) => clampLevel(levels?.[id]) >= at && out.add(SLOT_ABILITIES[id][i]));
   return out;
-}
-
-/** How many parts of each set are mounted: { police: 2, … }. */
-export function setCounts(equipped = getState().car.equipped) {
-  const out = {};
-  for (const part of Object.values(equipped || {})) if (part?.set) out[part.set] = (out[part.set] || 0) + 1;
-  return out;
-}
-
-/** Active set bonuses: [{ set, pieces, bonus }] (3 pieces → big bonus instead of the small one). */
-export function activeSetBonuses(equipped = getState().car.equipped) {
-  const counts = setCounts(equipped);
-  return SETS.filter((st) => (counts[st.id] || 0) >= 2).map((st) => ({ set: st, pieces: counts[st.id], bonus: counts[st.id] >= 3 ? st.bonus3 : st.bonus2 }));
-}
-
-/** Legendary abilities on mounted parts (DESIGN-v2 §4.4). */
-export function carAbilities(equipped = getState().car.equipped) {
-  return new Set(Object.values(equipped || {}).map((p) => p?.legendary).filter(Boolean));
-}
-
-/** Look overrides from complete sets (siren, flames behind the car, …). */
-export function setLook(equipped = getState().car.equipped) {
-  return Object.assign({}, ...activeSetBonuses(equipped).filter((b) => b.pieces >= 3).map((b) => b.set.look));
 }
 
 /**
- * Total stats of the car: equipped parts, set bonuses and the crew buddy's stat ability.
- * The buddy counts only for the player's own car (default argument), not for test cars.
+ * Total stats of the car: one stat per part plus the crew buddy's stat ability.
+ * The buddy counts only for the player's own car (no argument), not for test cars.
  */
-export function carStats(equipped = getState().car.equipped, withCrew = equipped === getState().car.equipped) {
+export function carStats(levels = null, withCrew = levels === null) {
+  const lv = levels || activeLevels();
   const total = Object.fromEntries(STAT_IDS.map((id) => [id, 0]));
-  for (const part of Object.values(equipped || {})) {
-    const ps = partStats(part);
-    for (const id of STAT_IDS) total[id] += ps[id];
-  }
-  for (const { bonus } of activeSetBonuses(equipped)) {
-    for (const b of bonus) if (b.stat in total) total[b.stat] = total[b.stat] * (1 + (b.pct || 0)) + (b.flat || 0);
-  }
+  for (const slot of SLOTS) total[slot.main] += slotStat(lv[slot.id]);
   if (withCrew) for (const [stat, v] of Object.entries(crewBonus().stats)) if (stat in total) total[stat] += v;
   for (const id of STAT_IDS) total[id] = Math.round(total[id]);
   return total;
@@ -68,7 +56,7 @@ export function carPower(stats = carStats()) {
 }
 
 /**
- * Race effects derived from stats and legendary abilities. All values finite by construction.
+ * Race effects derived from stats and part abilities. All values finite by construction.
  * Abilities that change numbers live here; abilities with events live in games/race/abilities.js.
  */
 export function raceEffects(stats = carStats(), abilities = new Set(), crew = { shields: 0, coinMult: 1 }) {

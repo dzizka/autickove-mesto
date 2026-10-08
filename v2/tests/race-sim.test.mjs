@@ -5,15 +5,14 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import * as rng from "../js/core/rng.js";
 import { TRACKS } from "../js/data/tracks.js";
-import { raceEffects, carStats, recommendedPower, carPower, difficulty } from "../js/systems/stats.js";
-import { starterParts, testParts } from "../js/systems/loot.js";
+import { raceEffects, carStats, recommendedPower, carPower, difficulty, evenLevels } from "../js/systems/stats.js";
 import { generateCourse } from "../js/games/race/spawner.js";
 import { createRace, step, finalOrder } from "../js/games/race/physics.js";
 import { runRace, carefulBot, randomBot } from "./race-bot.mjs";
 
 const SEEDS = Array.from({ length: 16 }, (_, i) => 1000 + i * 7);
-const starter = raceEffects(carStats(starterParts()));
-const strong = raceEffects(carStats(testParts(100)));
+const starter = raceEffects(carStats(evenLevels(1)));
+const strong = raceEffects(carStats(evenLevels(20)));
 const track = (id) => TRACKS.find((t) => t.id === id);
 
 function stats(trackId, level, effects, driverFactory) {
@@ -59,15 +58,15 @@ test("the hardest level needs a strong car; the starter car cannot win it", () =
 });
 
 test("recommended power: green for the starter on City 1, red on Space 5", () => {
-  const p = carPower(carStats(starterParts()));
+  const p = carPower(carStats(evenLevels(1)));
   assert.equal(difficulty(p, recommendedPower("city", 1)), "green");
   assert.equal(difficulty(p, recommendedPower("space", 5)), "red");
-  const strongPower = carPower(carStats(testParts(100)));
+  const strongPower = carPower(carStats(evenLevels(20)));
   assert.equal(difficulty(strongPower, recommendedPower("space", 5)), "green");
 });
 
 test("each stat has a visible effect", () => {
-  const base = carStats(starterParts());
+  const base = carStats(evenLevels(1));
   const bump = (stat) => raceEffects({ ...base, [stat]: base[stat] + 60 });
   assert.ok(bump("speed").topSpeed > starter.topSpeed * 1.25);
   assert.ok(bump("handling").laneStiffness > starter.laneStiffness * 2);

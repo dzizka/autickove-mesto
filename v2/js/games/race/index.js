@@ -3,7 +3,7 @@
 
 import { h } from "../../core/ui.js";
 import { RACE } from "../../data/tracks.js";
-import { carStats, raceEffects, getTrack, carAbilities, setLook } from "../../systems/stats.js";
+import { carStats, raceEffects, getTrack, carAbilities } from "../../systems/stats.js";
 import { isLevelUnlocked, previewUnlocks, isBossReady, rivalEase } from "../../systems/progress.js";
 import { LEGENDARIES } from "../../data/legendaries.js";
 import { BOSSES } from "../../data/bosses.js";
@@ -64,9 +64,9 @@ export default {
     const abilities = carAbilities();
     const race = createRace({ track, level, effects: raceEffects(carStats(), abilities, crewBonus()), rng: ctx.rng, short: !!ctx.state().cheats.shortRaces, abilities, boss, ease: rivalEase(track.id, level) });
     const hud = createHud(wrap, race, { onExit: ctx.exit, buddy: buddyBadge({ small: true, link: false }) });
-    // The car looks exactly like in the showroom (plus the look of a complete set):
+    // The car looks exactly like in the showroom:
     // kind, paint, wheels, roof… and neon and trail.
-    const look = { ...getLook(), ...setLook() };
+    const look = getLook();
     const looks = resolveLook(look);
     const buddy = buddyLook(activeBuddy());
     const fx = { look, neon: looks.neon, trail: createTrail(looks.trail), sparkle: abilities.size > 0, popups: [], buddy };

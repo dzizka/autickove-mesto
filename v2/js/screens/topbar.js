@@ -7,6 +7,7 @@ import { getState } from "../core/state.js";
 import { sfx, speak, repeat } from "../core/audio.js";
 import { go, goHome } from "../core/router.js";
 import { levelProgress } from "../systems/progress.js";
+import { hintSlot } from "../systems/garage.js";
 import { PILLARS } from "../data/menu.js";
 import { openParentGate } from "./test-menu.js";
 
@@ -91,6 +92,9 @@ export function mountTopbar(header, nav) {
     levelNum.textContent = String(s.level);
     levelRing.style.setProperty("--progress", `${Math.round(levelProgress(s) * 100)}%`);
     coinNum.textContent = s.coins.toLocaleString("sk-SK");
+    // a green ⬆ on 🔧 when the child can upgrade a part (garage B, §4.6)
+    const garage = nav.querySelector('[data-route="garage"]');
+    if (garage) garage.dataset.ready = hintSlot(s) ? "1" : "0";
   };
   paint();
   on("stateChanged", paint);

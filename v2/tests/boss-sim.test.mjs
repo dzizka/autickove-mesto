@@ -1,5 +1,5 @@
 // Part 4 in Node: every boss can be beaten (DESIGN-v2 §9 "done when"), boss throws are always
-// dodgeable, every legendary ability does something visible, sets add bonuses and a look.
+// dodgeable, every part ability (garage B, §4.4) does something visible.
 
 import { test } from "node:test";
 import assert from "node:assert/strict";
@@ -7,9 +7,8 @@ import * as rng from "../js/core/rng.js";
 import { TRACKS, RACE } from "../js/data/tracks.js";
 import { BOSSES } from "../js/data/bosses.js";
 import { LEGENDARIES } from "../js/data/legendaries.js";
-import { SETS } from "../js/data/sets.js";
-import { raceEffects, carStats, carPower, recommendedPower, setLook, activeSetBonuses, carAbilities } from "../js/systems/stats.js";
-import { starterParts, testParts, generatePart, generateBossPrize, emptyLootHistory } from "../js/systems/loot.js";
+import { SLOT_ABILITIES, GARAGE } from "../js/data/garage.js";
+import { raceEffects, carStats, carPower, recommendedPower, carAbilities, evenLevels } from "../js/systems/stats.js";
 import { createRace, step, steer } from "../js/games/race/physics.js";
 import { carefulBot } from "./race-bot.mjs";
 
@@ -30,9 +29,12 @@ function runBoss({ boss, level, equipped, seed, driver = carefulBot }) {
   return { race, throws };
 }
 
-/** A car whose power matches the recommended power of the level (🟢 on the selection screen). */
+/** An evenly built car whose power reaches the recommended power of the level (🟢). */
 function greenCar(trackId, level) {
-  return testParts(Math.ceil(recommendedPower(trackId, level) / 7.5) + 1, "epic");
+  const need = recommendedPower(trackId, level);
+  let l = 1;
+  while (l < GARAGE.maxLevel && carPower(carStats(evenLevels(l))) < need) l++;
+  return evenLevels(l);
 }
 
 test("every boss can be beaten with a 🟢 car, and it really throws things", () => {
@@ -55,7 +57,7 @@ test("every boss can be beaten with a 🟢 car, and it really throws things", ()
 
 test("the first boss (City, level 1) can be beaten with the starter car", () => {
   const boss = BOSSES.find((b) => b.track === "city");
-  const wins = SEEDS.filter((seed) => runBoss({ boss, level: 1, equipped: starterParts(), seed }).race.place === 1).length;
+  const wins = SEEDS.filter((seed) => runBoss({ boss, level: 1, equipped: evenLevels(1), seed }).race.place === 1).length;
   assert.ok(wins / SEEDS.length >= 0.75, `wins ${wins}/${SEEDS.length}`);
 });
 
@@ -79,29 +81,15 @@ test("boss throws show a target first and always leave a free lane", () => {
   }
 });
 
-test("boss prize: always epic (often a set piece) or legendary", () => {
-  rng.setSeed(1);
-  let sets = 0;
-  let legends = 0;
-  for (let i = 0; i < 2000; i++) {
-    const { part } = generateBossPrize({ budget: 40, rng, history: emptyLootHistory() });
-    assert.ok(part.rarity === "epic" || part.rarity === "legendary");
-    if (part.set) sets++;
-    if (part.legendary) legends++;
-  }
-  assert.ok(sets > 600 && sets < 1100, `set pieces ${sets}`);
-  assert.ok(legends > 200 && legends < 420, `legendaries ${legends}`);
-});
-
-test("12 legendary abilities, each one shows up in a race", () => {
+test("12 part abilities, two per part, each one shows up in a race", () => {
   assert.equal(LEGENDARIES.length, 12);
+  assert.deepEqual(Object.values(SLOT_ABILITIES).flat().sort(), LEGENDARIES.map((l) => l.id).sort(), "every ability belongs to exactly one part level");
   const numeric = { iceShield: "gripOnSnow", headlight: "lightRange", superMagnet: "magnetLanes", endlessTank: "fuelDrain", bubble: "shields" };
-  const base = raceEffects(carStats(starterParts()));
+  const starter = carStats(evenLevels(1));
+  const base = raceEffects(starter);
   for (const leg of LEGENDARIES) {
-    const equipped = { ...starterParts(), [leg.slot]: generatePart({ rarity: "legendary", budget: 30, rng, legendary: leg.id }) };
-    const abilities = carAbilities(equipped);
-    assert.ok(abilities.has(leg.id));
-    const fx = raceEffects(carStats(equipped), abilities);
+    const abilities = new Set([leg.id]);
+    const fx = raceEffects(starter, abilities);
     if (numeric[leg.id]) assert.notEqual(fx[numeric[leg.id]], base[numeric[leg.id]], `${leg.id} changes ${numeric[leg.id]}`);
     if (leg.id === "headlight" || leg.id === "iceShield" || leg.id === "superMagnet" || leg.id === "endlessTank") continue; // no event, the effect is constant
     // event abilities: drive a full race on a track with ramps and watch for the event
@@ -124,26 +112,10 @@ test("12 legendary abilities, each one shows up in a race", () => {
   }
 });
 
-test("sets: 2 parts give a small bonus, 3 parts a big bonus and the set look", () => {
-  for (const set of SETS) {
-    const slots = Object.keys(set.pieces);
-    const make = (n) => {
-      const eq = starterParts();
-      slots.slice(0, n).forEach((slot) => (eq[slot] = generatePart({ rarity: "epic", budget: 30, rng, slot, set: set.id })));
-      return eq;
-    };
-    const one = make(1);
-    const two = make(2);
-    const three = make(3);
-    assert.equal(activeSetBonuses(one).length, 0);
-    assert.equal(activeSetBonuses(two)[0].pieces, 2);
-    const stat = set.bonus2[0].stat;
-    // compare to the same parts without the set tag
-    const untag = (eq) => Object.fromEntries(Object.entries(eq).map(([k, p]) => [k, { ...p, set: null }]));
-    assert.ok(carStats(two)[stat] > carStats(untag(two))[stat], `${set.id} 2-piece bonus`);
-    assert.ok(carStats(three)[stat] - carStats(untag(three))[stat] > carStats(two)[stat] - carStats(untag(two))[stat], `${set.id} 3-piece bonus is bigger`);
-    assert.deepEqual(setLook(two), {});
-    assert.deepEqual(setLook(three), set.look);
-    assert.ok(carPower(carStats(three)) > carPower(carStats(untag(three))));
-  }
+test("abilities come with the part level: none at 5, six at 6, all twelve at 14", () => {
+  assert.equal(carAbilities(evenLevels(5)).size, 0);
+  assert.deepEqual([...carAbilities(evenLevels(6))].sort(), Object.values(SLOT_ABILITIES).map((a) => a[0]).sort());
+  assert.equal(carAbilities(evenLevels(13)).size, 6);
+  assert.equal(carAbilities(evenLevels(14)).size, 12);
+  assert.deepEqual([...carAbilities({ ...evenLevels(1), engine: 14 })].sort(), [...SLOT_ABILITIES.engine].sort());
 });

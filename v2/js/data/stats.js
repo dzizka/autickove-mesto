@@ -1,8 +1,6 @@
-// Car stats and part slots (DESIGN-v2 §4.3). Data only.
+// Car stats and the 6 parts of a car (DESIGN-v2 §4.3). Data only.
 
-/**
- * Values come from parts; the starter car has 8 in each main stat.
- */
+/** Values come from the car's part levels (data/garage.js); the starter car has 8 in each. */
 export const STATS = {
   speed: { icon: "⚡", name: "Rýchlosť", color: "#ffc93c" },
   handling: { icon: "🌀", name: "Ovládanie", color: "#2ab7ca" },
@@ -14,8 +12,8 @@ export const STATS = {
 
 export const STAT_IDS = Object.keys(STATS);
 
-/** A stat bar is full at this value (a strong late-game car has ~100–150 in its main stats). */
-export const STAT_BAR_FULL = 150;
+/** A stat bar is full at this value (a part on level 20 gives 84, a buddy adds a bit). */
+export const STAT_BAR_FULL = 100;
 
 export const SLOTS = [
   { id: "engine", icon: "🔥", name: "Motor", main: "speed" },
@@ -25,9 +23,6 @@ export const SLOTS = [
   { id: "magnet", icon: "🧲", name: "Magnet", main: "magnet" },
   { id: "mascot", icon: "🧸", name: "Maskot", main: "luck" },
 ];
-
-/** The starter car: a grey (common) part in every slot (DESIGN-v2 §4.8). */
-export const STARTER_MAIN_VALUE = 8;
 
 /**
  * How stats turn into race effects (used by systems/stats.js).
@@ -41,8 +36,7 @@ export const EFFECTS = {
   armorSlowPerPoint: 1 / 50, // slowdown after a hit 1.6 s / (1 + armor/50)
   fuelPerPoint: 1 / 40, // fuel lasts ×1.2 → ×3.5
   magnetLanesPerPoint: 1 / 40, // pulls coins from 0.2 → 2.5 lanes away
-  luckPerPoint: 1 / 100, // loot quality (part 2)
-  upgradePerPlus: 0.08, // each +1 upgrade adds this share to a part's values (§4.6)
-  recommendMargin: 0.06, // recommended power: top speed 6 % above the fastest rival (🟢 = "you will manage")
+  luckPerPoint: 1 / 100, // more scrap and golden parts from the chest (§4.5)
+  recommendMargin: 0.04, // recommended power: top speed 4 % above the fastest rival (🟢 = "you will manage")
   recommendMin: 30, // … but never below this (the starter car has 48)
 };

@@ -23,7 +23,7 @@ const finite = (v, fallback = 0) => (Number.isFinite(v) ? v : fallback);
  * @param {object} o.effects  from systems/stats.raceEffects()
  * @param {object} o.rng      core/rng.js (random, int, pick)
  * @param {boolean} [o.short] test-menu short race
- * @param {Set}     [o.abilities] legendary ability ids on the car
+ * @param {Set}     [o.abilities] ability ids of the car parts (levels 6 and 14)
  * @param {object}  [o.boss] entry of BOSSES for a boss race (one big rival instead of three)
  * @param {number}  [o.ease] 0…0.12: rivals this much slower after many tries (systems/progress.rivalEase)
  */

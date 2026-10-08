@@ -4,12 +4,15 @@ import { getState, update } from "../core/state.js";
 import { emit } from "../core/events.js";
 import { TROPHIES } from "../data/trophies.js";
 import { TRACKS } from "../data/tracks.js";
-import { SETS } from "../data/sets.js";
 import { PIXEL_PICTURES } from "../data/coloring/pixel.js";
 import { isTrackUnlocked, trackProgress } from "./progress.js";
 import { MINIGAMES } from "../data/minigames.js";
+import { GARAGE } from "../data/garage.js";
+import { levelsOf, carAbilities } from "./stats.js";
 
-const allParts = (s) => [...Object.values(s.car.equipped || {}), ...(s.inventory || [])].filter(Boolean);
+// part levels of every upgraded car (garage B, §4.6)
+const allCars = (s) => Object.keys(s.cars || {}).map((id) => levelsOf(id, s));
+const abilitiesFound = (s) => new Set(allCars(s).flatMap((lv) => [...carAbilities(lv)]));
 
 export function isEarned(t, s = getState()) {
   const c = t.check;
@@ -24,14 +27,14 @@ export function isEarned(t, s = getState()) {
       return isTrackUnlocked(c.track, s) && trackProgress(c.track, s).unlocked >= c.n;
     case "bosses":
       return Object.values(s.bosses || {}).filter((n) => n > 0).length >= c.n;
-    case "rarity":
-      return allParts(s).some((p) => p.rarity === c.rarity || p.rarity === "legendary") || Object.keys(s.setsFound || {}).length > 0;
-    case "legendaries":
-      return (s.legendariesFound || []).length >= c.n;
-    case "fullSets":
-      return SETS.filter((st) => (s.setsFound?.[st.id] || []).length >= Object.keys(st.pieces).length).length >= c.n;
-    case "plus5":
-      return allParts(s).some((p) => (p.plus || 0) >= 5);
+    case "partLevel":
+      return allCars(s).some((lv) => Object.values(lv).some((l) => l >= c.n));
+    case "abilities":
+      return abilitiesFound(s).size >= c.n;
+    case "upgradedCars":
+      return allCars(s).filter((lv) => Object.values(lv).reduce((a, b) => a + b, 0) >= c.level).length >= c.n;
+    case "maxCar":
+      return allCars(s).some((lv) => Object.values(lv).every((l) => l >= GARAGE.maxLevel));
     case "buddies":
       return Object.keys(s.crew?.owned || {}).length >= c.n;
     case "evolved":

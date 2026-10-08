@@ -1,6 +1,7 @@
 // Showroom (DESIGN-v2 §5): the car on a turning platform under a spotlight, 📯 horn,
 // 🎲 random look, car kinds and 9 tuning categories. Unowned items are previewed on the
-// car first and bought with coins; looks never change stats.
+// car first and bought with coins; looks never change stats. Each car kind has its own
+// part levels from the garage, so the badge shows the power of the car on the platform.
 
 import { h, toast, confetti } from "../core/ui.js";
 import { speak, sfx, playNotes } from "../core/audio.js";
@@ -12,7 +13,8 @@ import { carSidePic } from "../render/car-side.js";
 import { createCarView } from "../render/car-view.js";
 import { buddyBadge } from "./buddy-badge.js";
 import { openTestDrive } from "../games/race/test-drive.js";
-import { setLook } from "../systems/stats.js";
+import { carStats, carPower, levelsOf } from "../systems/stats.js";
+import { powerBadge } from "./stat-panel.js";
 
 const TABS = [CARS_TAB, ...TUNING];
 const MINI_CAR = new Set(["car", "pattern", "wheels", "wing", "neon"]);
@@ -53,6 +55,8 @@ export default {
         { class: "showroom", "data-testid": "showroom" },
         h("div", { class: "spotlight", "aria-hidden": "true" }),
         buddyBadge(),
+        // every car kind keeps its own part levels (§4.6): a new car starts weak
+        h("div", { class: "show-power", "data-testid": "show-power" }, powerBadge(carPower(carStats(levelsOf(resolveLook(look).car.id), true)))),
         h("div", { class: "turntable", "aria-hidden": "true" }),
         h("div", { class: "show-car", "data-testid": "show-car" }, carView.el),
       );
@@ -70,7 +74,7 @@ export default {
             onclick: () => {
               sfx.open();
               carView.pause(true);
-              openTestDrive({ ...shownLook(), ...setLook() }, { onClose: () => carView?.pause(false) });
+              openTestDrive(shownLook(), { onClose: () => carView?.pause(false) });
             },
           },
           "🛣️ Jazda",

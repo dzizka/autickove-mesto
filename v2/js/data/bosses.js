@@ -16,7 +16,5 @@ export const BOSS = {
   throwEvery: [3.2, 5], // seconds between throws (random in range)
   throwAhead: [45, 65], // metres ahead of the player where things land
   warnTime: 1.2, // a target ⭕ shows this long before the thing lands (never a surprise hit)
-  legendaryChance: 0.15, // boss win: sure epic part, small chance of a legendary instead
-  setChance: 0.5, // the sure epic is a set piece this often
   coinBonus: 80,
 };

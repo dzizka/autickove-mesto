@@ -6,14 +6,13 @@ import { h, modal, closeModal } from "../../core/ui.js";
 import { createLoop } from "../../core/loop.js";
 import { speak, playNotes, sfx } from "../../core/audio.js";
 import { TRACKS } from "../../data/tracks.js";
-import { setLook } from "../../systems/stats.js";
 import { getLook, resolveLook } from "../../systems/tuning.js";
 import { createDriveScene } from "./drive-scene.js";
 
 export const TEST_DRIVE_SECONDS = 14;
 
 /** Open the test drive over the current screen (a modal). Returns the modal box. */
-export function openTestDrive(look = { ...getLook(), ...setLook() }, { onClose } = {}) {
+export function openTestDrive(look = getLook(), { onClose } = {}) {
   const track = TRACKS.find((t) => t.id === "city") || TRACKS[0];
   const looks = resolveLook(look);
   const canvas = h("canvas", { class: "drive-canvas", "data-testid": "test-drive-canvas" });

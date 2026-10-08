@@ -174,7 +174,8 @@ test("version-3 saves migrate to the current schema with the starter look", asyn
   const s = await page.evaluate(() => window.__game.state.getState());
   assert.equal(s.version, await page.evaluate(() => window.__game.state.CURRENT_VERSION));
   assert.equal(s.coins, 33);
-  assert.equal(s.bagSize, 35);
+  assert.equal(s.scrap, 4);
+  assert.ok(!("bagSize" in s), "the bag is gone (garage B)");
   assert.equal(s.look.car, "sedan");
   assert.deepEqual(s.owned.neon, ["none"]);
   await page.context().close();

@@ -57,19 +57,18 @@ test("garage and colouring events count for quests", async () => {
   const page = await openGame(env.browser, env.server.url, { storage: { ...quiet, coins: 1000 } });
   const r = await page.evaluate(async () => {
     const q = await import("./js/systems/quests.js");
-    const loot = await import("./js/systems/loot.js");
     const garage = await import("./js/systems/garage.js");
     const tuning = await import("./js/systems/tuning.js");
     const g = window.__game;
-    g.state.update((s) => (s.quests.active = [{ id: "dismantle3", progress: 0 }, { id: "equip1", progress: 0 }, { id: "tune1", progress: 0 }]));
-    garage.addParts(Array.from({ length: 3 }, () => loot.generatePart({ rarity: "common", budget: 2, rng: g.rng })));
-    garage.addParts([loot.generatePart({ rarity: "epic", budget: 80, rng: g.rng, slot: "engine" })]);
-    garage.dismantleLow();
-    garage.equipBest();
+    g.state.update((s) => {
+      s.quests.active = [{ id: "upgrade3", progress: 0 }, { id: "tune1", progress: 0 }, { id: "race3", progress: 0 }];
+      s.scrap = 100;
+    });
+    for (const slot of ["engine", "tires", "bumper"]) garage.upgrade(slot);
     tuning.buy("color", "blue");
     return g.state.getState().quests.active.map((x) => [x.id, q.isDone(x)]);
   });
-  assert.deepEqual(r, [["dismantle3", true], ["equip1", true], ["tune1", true]]);
+  assert.deepEqual(r, [["upgrade3", true], ["tune1", true], ["race3", false]]);
   await page.context().close();
 });
 

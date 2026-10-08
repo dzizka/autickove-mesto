@@ -1,5 +1,5 @@
 // Quests (DESIGN-v2 §8): always 3 active, progress from game events, a reward when claimed.
-// Events (see main.js): race, win, collect, boss, dismantle, equip, upgrade, paint, buy, pet, hatch.
+// Events (see main.js): race, win, collect, boss, upgrade, paint, buy, pet, hatch, mini, build, pack.
 
 import { getState, update } from "../core/state.js";
 import { emit } from "../core/events.js";

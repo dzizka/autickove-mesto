@@ -117,7 +117,7 @@ test("stats are visible in the race: a strong car starts with shields and is fas
     return r;
   };
   const weak = await measure();
-  await page.evaluate(() => window.__game.state.update((s) => (s.car.equipped = Object.fromEntries(Object.entries(s.car.equipped).map(([k, p]) => [k, { ...p, main: { ...p.main, value: 100 } }])))));
+  await page.evaluate(async () => (await import("./js/systems/garage.js")).setAllLevels(20));
   await page.evaluate(() => (location.hash = "#/game/race/city/1"));
   await page.waitForFunction(() => window.__game.race?.phase === "racing");
   await page.waitForTimeout(1200);
@@ -132,13 +132,13 @@ test("stats are visible in the race: a strong car starts with shields and is fas
   await page.context().close();
 });
 
-test("version-1 saves migrate to the current schema with the starter car", async () => {
+test("version-1 saves migrate to the current schema with the starter car (all parts on level 1)", async () => {
   const page = await openGame(env.browser, env.server.url, { storage: { version: 1, coins: 70, settings: { sound: true, voice: false } } });
   const s = await page.evaluate(() => window.__game.state.getState());
   assert.equal(s.version, await page.evaluate(() => window.__game.state.CURRENT_VERSION));
   assert.equal(s.coins, 70);
-  assert.equal(Object.keys(s.car.equipped).length, 6);
-  for (const part of Object.values(s.car.equipped)) assert.ok(part.main && part.main.value > 0);
+  assert.deepEqual(s.cars, {});
+  assert.deepEqual(Object.values(await page.evaluate(async () => (await import("./js/systems/stats.js")).activeLevels())), [1, 1, 1, 1, 1, 1]);
   assert.deepEqual(s.races, { tracks: {}, total: 0, wins: 0 });
   await page.context().close();
 });

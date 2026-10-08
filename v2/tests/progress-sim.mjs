@@ -1,16 +1,15 @@
 // Long-play simulation (DESIGN-v2 §4.8): a child plays race after race with the real game
 // systems. It picks the newest level that shows 🟢 (🟡 if none), fights a boss when it is
-// ready, mounts ✨ Best, dismantles grey and green parts and upgrades what it can afford.
+// ready and in the garage taps the glowing part (the cheapest one) while scrap lasts.
 // Run alone for a report: node v2/tests/progress-sim.mjs
 
 import * as rng from "../js/core/rng.js";
 import * as state from "../js/core/state.js";
 import { TRACKS, RACE } from "../js/data/tracks.js";
 import { BOSSES } from "../js/data/bosses.js";
-import { SETS } from "../js/data/sets.js";
-import { carStats, carPower, raceEffects, carAbilities, recommendedPower, difficulty } from "../js/systems/stats.js";
+import { carStats, carPower, raceEffects, carAbilities, recommendedPower, difficulty, activeLevels } from "../js/systems/stats.js";
 import { recordRace, recordBoss, isBossReady, isLevelUnlocked, isTrackUnlocked, trackProgress, rivalEase } from "../js/systems/progress.js";
-import { grantRaceLoot, equipBest, dismantleLow, upgrade, canUpgrade } from "../js/systems/garage.js";
+import { grantRaceLoot, upgrade, hintSlot } from "../js/systems/garage.js";
 import { addCoins } from "../js/systems/economy.js";
 import { crewBonus } from "../js/systems/crew.js";
 import { createRace, step, steer } from "../js/games/race/physics.js";
@@ -82,18 +81,20 @@ export function simulate({ seed = 1, races = 400 } = {}) {
     recordRace(result.extra);
     if (boss) recordBoss(result.extra);
     if (result.extra.bossWin) mark(`boss-${pick.track.id}`, i);
-    grantRaceLoot(result.extra);
-    equipBest();
-    if (state.getState().inventory.length > 24) dismantleLow();
-    for (const part of Object.values(state.getState().car.equipped)) while (canUpgrade(part)) upgrade(part.uid);
+    const loot = grantRaceLoot(result.extra);
+    if (loot.golden) marks.golden = (marks.golden || 0) + 1;
+    for (let slot = hintSlot(); slot; slot = hintSlot()) upgrade(slot);
 
     const st = state.getState();
-    const parts = [...Object.values(st.car.equipped), ...st.inventory];
-    if (parts.some((p) => p.rarity === "epic" || p.rarity === "legendary")) mark("firstEpic", i);
-    if (st.legendariesFound.length) mark("firstLegendary", i);
-    if (SETS.some((set) => (st.setsFound[set.id] || []).length >= 3)) mark("fullSetFound", i);
+    if (carAbilities().size) mark("firstAbility", i);
+    if (carAbilities().size >= 6) mark("sixAbilities", i);
+    if (carAbilities().size >= 12) mark("allAbilities", i);
+    if (Object.values(activeLevels()).every((l) => l >= 20)) mark("fullCar", i);
     TRACKS.forEach((t) => isTrackUnlocked(t.id, st) && mark(`track-${t.id}`, i));
-    if (isLevelUnlocked("space", 5, st)) mark("space5", i);
+    if (isLevelUnlocked("space", 5, st) && !marks.space5) {
+      mark("space5", i);
+      marks.space5Power = carPower(carStats());
+    }
     if (BOSSES.every((b) => (st.bosses[b.track] || 0) > 0)) mark("allBosses", i);
     marks.bosses = Object.values(st.bosses).filter(Boolean).length;
     // longest stretch of races without a new level or track, until Space 5 (frustration check)
@@ -102,7 +103,7 @@ export function simulate({ seed = 1, races = 400 } = {}) {
       unlockedLevels = levels;
       lastUnlock = i;
     } else if (!marks.space5) marks.maxGap = Math.max(marks.maxGap, i - lastUnlock);
-    if (i % 100 === 0) marks[`power@${i}`] = carPower(carStats());
+    if (i % 50 === 0) marks[`power@${i}`] = carPower(carStats());
   }
   marks.finalPower = carPower(carStats());
   marks.coins = state.getState().coins;

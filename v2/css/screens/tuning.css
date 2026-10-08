@@ -125,3 +125,4 @@
 .drive-horn { left: 12px; }
 .drive-time { position: absolute; left: 84px; right: 84px; top: 30px; height: 12px; border-radius: 999px; background: rgba(255, 255, 255, .45); overflow: hidden; }
 .drive-time i { display: block; height: 100%; width: 100%; background: var(--sun, #ffd23f); }
+.show-power { position: absolute; top: 12px; right: 12px; z-index: 3; }

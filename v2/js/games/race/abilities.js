@@ -1,4 +1,4 @@
-// Legendary abilities in the race simulation (DESIGN-v2 §4.4). Pure logic, no DOM.
+// Part abilities in the race simulation (DESIGN-v2 §4.4). Pure logic, no DOM.
 // Abilities that only change numbers (ice shield, headlight, super magnet, endless tank,
 // bubble start shields) are in systems/stats.raceEffects(). Every use pushes an
 // { type: "ability", id } event so the game can play its own sound and effect.

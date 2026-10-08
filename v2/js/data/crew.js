@@ -67,8 +67,6 @@ export const CREW_RULES = {
   ],
   stageBonus: [1, 1.5, 2.2], // ability strength per stage
   duplicateCandy: { common: 3, rare: 5, epic: 8, legendary: 12 }, // a duplicate hatch → candy
-  dismantleCandyChance: 0.25, // dismantling a part may give 1 candy …
-  dismantleCandyRareBonus: 1, // … blue or better: +1 sure candy
   chestEggChance: 0.06, // eggs sometimes drop from the race chest (§6)
   firstEggRace: 3, // the first egg is sure in the 3rd race, so a buddy comes early
   petHearts: 3, // a pat shows hearts and a happy sound (no hunger, no sadness)

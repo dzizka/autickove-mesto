@@ -184,17 +184,6 @@ export function pet(id) {
   return getState().crew.owned[id].pets;
 }
 
-/** Candy from dismantling (§6): a chance per part, blue or better gives a sure one. */
-export function candyFromDismantle(parts, rng) {
-  let candy = 0;
-  for (const p of parts) {
-    if (["rare", "epic", "legendary"].includes(p.rarity)) candy += R.dismantleCandyRareBonus;
-    else if (rng.random() < R.dismantleCandyChance) candy += 1;
-  }
-  if (candy) update((s) => (s.crew.candy += candy));
-  return candy;
-}
-
 // ---------- clothes ----------
 
 export function ownsClothes(kind, item, s = getState()) {

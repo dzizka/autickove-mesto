@@ -1,5 +1,5 @@
-// Part 4 in the browser: the boss button, every boss race to the chest with a sure epic (or
-// legendary) part and an egg, legendary abilities in real races, and the set book.
+// Part 4 in the browser: the boss button, every boss race to the chest with a sure golden
+// part and an egg, and the 12 part abilities (garage B, §4.4) in real races.
 
 import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
@@ -34,11 +34,9 @@ async function startDriver(page) {
   });
 }
 
-async function superCar(page) {
-  await page.evaluate(async () => {
-    const loot = await import("./js/systems/loot.js");
-    window.__game.state.update((s) => (s.car.equipped = loot.testParts(100, "epic")));
-  });
+/** Every part of the chosen car on `level`. */
+async function carLevel(page, level) {
+  await page.evaluate(async (level) => (await import("./js/systems/garage.js")).setAllLevels(level), level);
 }
 
 test("boss button: locked until the challenge bar is full, then it glows", async () => {
@@ -56,9 +54,9 @@ test("boss button: locked until the challenge bar is full, then it glows", async
   await page.context().close();
 });
 
-test("every boss: race, win, sure epic or legendary prize and an egg", async () => {
+test("every boss: race, win, sure golden part and an egg", async () => {
   const page = await openGame(env.browser, env.server.url, { width: 390, storage: quiet });
-  await superCar(page);
+  await carLevel(page, 19);
   for (const track of TRACKS) {
     await page.evaluate((track) => {
       window.__game.state.update((s) => {
@@ -84,8 +82,8 @@ test("every boss: race, win, sure epic or legendary prize and an egg", async () 
     const s = await page.evaluate(() => window.__game.state.getState());
     assert.equal(s.bosses[track], 1, `${track} boss counted as beaten`);
     assert.equal(s.races.tracks[track].challenge, 0, "challenge bar emptied");
-    const prize = await page.locator(".chest-parts .boss-prize").getAttribute("data-rarity");
-    assert.ok(prize === "epic" || prize === "legendary", `${track}: prize ${prize}`);
+    assert.equal(await page.getByTestId("chest-golden").count(), 1, `${track}: a golden part`);
+    await carLevel(page, 19); // the golden part upgraded one part to 20: back for the next boss
     await page.getByTestId("reward-home").click();
     await page.getByTestId("screen-home").waitFor();
   }
@@ -96,42 +94,25 @@ test("every boss: race, win, sure epic or legendary prize and an egg", async () 
   await page.context().close();
 });
 
-test("all 12 legendary abilities in real races without a single error", async () => {
+test("all 12 part abilities in real races without a single error", async () => {
   const page = await openGame(env.browser, env.server.url, { width: 390, storage: { ...quiet, cheats: { shortRaces: false } } });
-  const groups = await page.evaluate(async () => {
-    const { LEGENDARIES } = await import("./js/data/legendaries.js");
-    // one legendary per slot per run → as many runs as needed
-    const runs = [];
-    for (const leg of LEGENDARIES) {
-      let run = runs.find((r) => !r.some((l) => l.slot === leg.slot));
-      if (!run) runs.push((run = []));
-      run.push(leg);
-    }
-    return runs.map((r) => r.map((l) => l.id));
-  });
-  for (const [i, ids] of groups.entries()) {
+  // level 6: the first ability of every part; level 14: both abilities of every part
+  for (const [i, level] of [6, 14].entries()) {
     for (const track of ["night", "snow"]) {
-      await page.evaluate(async (ids) => {
-        const loot = await import("./js/systems/loot.js");
-        const { LEGENDARIES } = await import("./js/data/legendaries.js");
+      await carLevel(page, level);
+      const ids = await page.evaluate(async (level) => {
+        const { SLOT_ABILITIES } = await import("./js/data/garage.js");
         window.__game.state.update((s) => {
-          s.car.equipped = loot.starterParts();
-          for (const id of ids) {
-            const def = LEGENDARIES.find((l) => l.id === id);
-            s.car.equipped[def.slot] = loot.generatePart({ rarity: "legendary", budget: 40, rng: window.__game.rng, legendary: id });
-          }
-          for (const t of ["night", "snow"]) s.races.tracks[t] = { unlocked: 1, best: { 1: 1 }, challenge: 0, races: 0 };
-          s.races.tracks.desert = { unlocked: 1, best: { 1: 1 }, challenge: 0, races: 0 };
-          s.races.tracks.forest = { unlocked: 1, best: { 1: 1 }, challenge: 0, races: 0 };
-          s.races.tracks.city = { unlocked: 1, best: { 1: 1 }, challenge: 0, races: 0 };
+          for (const t of ["city", "forest", "desert", "night", "snow"]) s.races.tracks[t] = { unlocked: 1, best: { 1: 1 }, challenge: 0, races: 0 };
         });
         window.__game.testTimeScale = 8;
-      }, ids);
+        return Object.values(SLOT_ABILITIES).flatMap((a) => (level >= 14 ? a : [a[0]]));
+      }, level);
       await page.evaluate((t) => (location.hash = `#/game/race/${t}/1`), track);
       await page.locator(`[data-testid=screen-game-race][data-track=${track}]`).waitFor();
       await page.waitForFunction(() => window.__game.race?.phase === "racing");
       await page.waitForTimeout(3000); // ≈ 24 s of race time: coin rain, bubbles, stars…
-      if (i === 0 && track === "night") await screenshot(page, "390-race-legendaries");
+      if (i === 1 && track === "night") await screenshot(page, "390-race-legendaries");
       const info = await page.evaluate(() => ({ ab: [...window.__game.race.abilities], stats: window.__game.loopStats }));
       assert.deepEqual(info.ab.sort(), [...ids].sort());
       assert.deepEqual(info.stats, { caughtErrors: 0, crashes: 0 }, ids.join(","));
@@ -143,48 +124,11 @@ test("all 12 legendary abilities in real races without a single error", async ()
   await page.context().close();
 });
 
-test("set book: found pieces light up, a full set shows its bonus and look in the garage", async () => {
-  const page = await openGame(env.browser, env.server.url, { width: 1280, storage: quiet, hash: "#/garage" });
-  await page.evaluate(async () => {
-    const loot = await import("./js/systems/loot.js");
-    const garage = await import("./js/systems/garage.js");
-    const rng = window.__game.rng;
-    garage.addParts(["engine", "tires", "bumper"].map((slot) => loot.generatePart({ rarity: "epic", budget: 60, rng, slot, set: "police" })));
-    garage.addParts([loot.generatePart({ rarity: "epic", budget: 60, rng, slot: "magnet", set: "space" })]);
-    garage.addParts([loot.generatePart({ rarity: "legendary", budget: 60, rng, legendary: "ghost" })]);
-  });
-  await page.evaluate(() => (location.hash = "#/races"));
-  await page.evaluate(() => (location.hash = "#/garage"));
-  await page.getByTestId("open-sets").click();
-  await page.getByTestId("set-book").waitFor();
-  assert.equal(await page.locator("[data-testid=set-police] .set-piece.found").count(), 3);
-  assert.equal(await page.locator("[data-testid=set-space] .set-piece.found").count(), 1);
-  assert.equal(await page.locator("[data-testid=set-fire] .set-piece.found").count(), 0);
-  await screenshot(page, "1280-set-book");
-  await page.getByRole("button", { name: "✖" }).click();
-
-  // mount the police set: big bonus, siren on the roof
-  for (const slot of ["engine", "tires", "bumper"]) {
-    const uid = await page.evaluate((slot) => window.__game.state.getState().inventory.find((p) => p.set === "police" && p.slot === slot).uid, slot);
-    await page.getByTestId(`part-${uid}`).click();
-    await page.getByTestId("part-equip").click();
-  }
-  await page.getByTestId("active-set-police").waitFor();
-  assert.equal(await page.locator(".lift-car [data-testid=car-view]").getAttribute("data-roof"), "siren");
-
-  // the legendary shows its ability in the detail
-  const ghost = await page.evaluate(() => window.__game.state.getState().inventory.find((p) => p.legendary).uid);
-  await page.getByTestId(`part-${ghost}`).click();
-  assert.match(await page.getByTestId("part-ability").textContent(), /Duch/);
-  await screenshot(page, "1280-legendary-detail");
-  assert.deepEqual(page.errors, []);
-  await page.context().close();
-});
-
-test("version-4 saves migrate to the current schema with empty set book, bosses and eggs", async () => {
+test("version-4 saves migrate to the current schema with no bosses and eggs yet", async () => {
   const page = await openGame(env.browser, env.server.url, { storage: { version: 4, coins: 12 } });
   const s = await page.evaluate(() => window.__game.state.getState());
   assert.equal(s.version, await page.evaluate(() => window.__game.state.CURRENT_VERSION));
-  assert.deepEqual([s.setsFound, s.bosses, s.eggs, s.legendariesFound], [{}, {}, [], []]);
+  assert.deepEqual([s.bosses, s.eggs, s.cars], [{}, [], {}]);
+  assert.ok(!("setsFound" in s) && !("inventory" in s));
   await page.context().close();
 });

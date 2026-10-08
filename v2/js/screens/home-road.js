@@ -8,7 +8,6 @@ import { createLoop } from "../core/loop.js";
 import { getState } from "../core/state.js";
 import { isModalOpen } from "../core/ui.js";
 import { TRACKS } from "../data/tracks.js";
-import { setLook } from "../systems/stats.js";
 import { getLook } from "../systems/tuning.js";
 import { createDriveScene } from "../games/race/drive-scene.js";
 
@@ -45,7 +44,7 @@ export function startHomeRoad(stage) {
   canvas.dataset.motion = String(motion);
   const scene = createDriveScene(canvas, {
     track: tracks[0],
-    look: { ...getLook(), ...setLook() },
+    look: getLook(),
     dprMax: 1.5,
     speed: 0.75,
     speedLines: false,

@@ -6,10 +6,7 @@ import { sfx, tone } from "../core/audio.js";
 import { getState, update, CURRENT_VERSION } from "../core/state.js";
 import { addCoins } from "../systems/economy.js";
 import { addXp, xpToNext, MAX_LEVEL, unlockAllTracks, readyAllBosses } from "../systems/progress.js";
-import { starterParts, testParts, generatePart, rollRarity } from "../systems/loot.js";
-import { LEGENDARIES } from "../data/legendaries.js";
-import { SETS } from "../data/sets.js";
-import { addParts } from "../systems/garage.js";
+import { setAllLevels } from "../systems/garage.js";
 import { ownAll } from "../systems/tuning.js";
 import { addEgg, hatchEggsNow, ownAllCrew, crewLevelUp } from "../systems/crew.js";
 import { unlockAllColoring } from "../systems/coloring.js";
@@ -23,18 +20,6 @@ function setLevel(level) {
     s.level = Math.min(MAX_LEVEL, level);
     s.xp = 0;
   });
-}
-
-function setCar(parts) {
-  update((s) => {
-    s.car.equipped = parts;
-  });
-}
-
-function giveParts(n, rarity) {
-  const parts = [];
-  for (let i = 0; i < n; i++) parts.push(generatePart({ rarity: rarity || rollRarity({ level: 3, trackIndex: 2, luck: 0, rng }), budget: 20 + rng.int(0, 60), rng }));
-  addParts(parts);
 }
 
 const CHEATS = [
@@ -53,14 +38,10 @@ const CHEATS = [
     run: () => update((s) => (s.cheats.shortRaces = !s.cheats.shortRaces)),
     reopen: true,
   },
-  { id: "carStarter", label: "🚗 Začiatočné auto", color: "ghost", run: () => setCar(starterParts()) },
-  { id: "carStrong", label: "🚙 Silné auto", color: "plum", run: () => setCar(testParts(50, "rare")) },
-  { id: "carSuper", label: "🏎️ Super auto", color: "plum", run: () => setCar(testParts(100, "epic")) },
-  { id: "parts10", label: "🧰 +10 dielov", color: "sky", run: () => giveParts(10) },
-  { id: "epic", label: "🟣 Epický diel", color: "sky", run: () => giveParts(1, "epic") },
-  { id: "legend", label: "🟠 Legendárny diel", color: "sky", run: () => addParts([generatePart({ rarity: "legendary", budget: 60, rng, legendary: rng.pick(LEGENDARIES).id })]) },
-  { id: "allLegends", label: "🟠 Všetky legendárne", color: "sky", run: () => addParts(LEGENDARIES.map((l) => generatePart({ rarity: "legendary", budget: 60, rng, legendary: l.id }))) },
-  { id: "sets", label: "📖 Všetky sety", color: "sky", run: () => addParts(SETS.flatMap((st) => Object.keys(st.pieces).map((slot) => generatePart({ rarity: "epic", budget: 60, rng, slot, set: st.id })))) },
+  { id: "carStarter", label: "🚗 Diely auta na úrovni 1", color: "ghost", run: () => setAllLevels(1) },
+  { id: "carStrong", label: "🚙 Diely auta na úrovni 8", color: "plum", run: () => setAllLevels(8) },
+  { id: "carAbility", label: "✨ Diely auta na úrovni 10 (schopnosti)", color: "plum", run: () => setAllLevels(10) },
+  { id: "carSuper", label: "🏎️ Diely auta na úrovni 20", color: "plum", run: () => setAllLevels(20) },
   { id: "bosses", label: "👑 Bossovia pripravení", color: "tomato", run: readyAllBosses },
   { id: "scrap", label: "+500 🔩", color: "sun", run: () => update((s) => (s.scrap += 500)) },
   { id: "looks", label: "🎨 Celý vzhľad", color: "plum", run: ownAll },

@@ -2,7 +2,7 @@
 // Rule: every schema change bumps CURRENT_VERSION and adds a step to MIGRATIONS.
 
 import { emit } from "./events.js";
-import { starterParts, emptyLootHistory } from "../systems/loot.js";
+import { CHEST } from "../data/garage.js";
 import { defaultLook, defaultOwned } from "../systems/tuning.js";
 import { defaultCrew } from "../systems/crew.js";
 import { defaultColoring } from "../systems/coloring.js";
@@ -10,7 +10,7 @@ import { defaultQuests } from "../systems/quests.js";
 import { RENAMED_CARS } from "../data/cars.js";
 
 export const STORAGE_KEY = "autickove-mesto-v2";
-export const CURRENT_VERSION = 12;
+export const CURRENT_VERSION = 13;
 
 /** Local date as YYYY-MM-DD (the same format as the play log). */
 export function todayKey(date = new Date()) {
@@ -30,24 +30,18 @@ export function defaultState() {
     playLog: {},
     // Hidden test-menu switches.
     cheats: { shortRaces: false },
-    // v2: the car's parts (slot → part) and the parts bag (part 2).
-    car: { equipped: starterParts() },
-    inventory: [],
+    // v13: part levels of every car (car id → { engine: 1, … }); a car not listed is all 1.
+    cars: {},
     // v2: race progress per track: { city: { unlocked: 1, best: { 1: 2 }, challenge: 0, races: 0 } }
     races: { tracks: {}, total: 0, wins: 0 },
-    // v3: garage — scrap 🔩, bag size, loot guarantees and the bad-luck counter.
+    // v3: scrap 🔩 for the garage.
     scrap: 0,
-    bagSize: 30,
-    loot: emptyLootHistory(),
     // v4: appearance — chosen look (category → item id) and owned items per category.
     look: defaultLook(),
     owned: defaultOwned(),
-    // v5: set book (set id → slots found), beaten bosses (track → wins), eggs from bosses (part 5),
-    // legendary abilities seen at least once (for trophies in part 7).
-    setsFound: {},
+    // v5: beaten bosses (track → wins), eggs from bosses (part 5).
     bosses: {},
     eggs: [],
-    legendariesFound: [],
     // v6: crew buddies (owned, active buddy in the car, candy 🍬, bought clothes).
     crew: defaultCrew(),
     // v7: colouring book (finished count, bought pictures, glitter colours, unfinished work).
@@ -112,6 +106,27 @@ const MIGRATIONS = {
   },
   // v11 → v12: the moving home background is on (settings.motion, filled from defaults).
   11: (s) => ({ ...s, version: 12 }),
+  // v12 → v13: garage B (§4.8). The chosen car gets part levels from its mounted parts, bag
+  // parts become scrap, the bag, sets and loot history are gone.
+  12: (s) => {
+    const out = { ...s, version: 13 };
+    const levels = {};
+    for (const [slot, p] of Object.entries(s.car?.equipped || {})) {
+      const value = (Number(p?.main?.value) || 0) * (1 + 0.08 * Math.max(0, Math.min(5, Number(p?.plus) || 0)));
+      levels[slot] = Math.max(1, Math.min(20, 1 + Math.round((value - 8) / 6)));
+    }
+    const car = isPlainObject(s.look) && typeof s.look.car === "string" ? s.look.car : null;
+    out.cars = car && Object.keys(levels).length ? { [car]: levels } : {};
+    const bagScrap = (Array.isArray(s.inventory) ? s.inventory : []).reduce((sum, p) => sum + (CHEST.oldPartScrap[p?.rarity] || 1), 0);
+    out.scrap = Math.max(0, Number(s.scrap) || 0) + bagScrap;
+    for (const k of ["car", "inventory", "bagSize", "loot", "setsFound", "legendariesFound"]) delete out[k];
+    if (isPlainObject(s.trophies)) {
+      out.trophies = { ...s.trophies };
+      for (const k of ["firstEpic", "firstLegend", "legends6", "fullSet", "allSets", "plus5"]) delete out.trophies[k];
+    }
+    if (isPlainObject(s.quests) && Array.isArray(s.quests.active)) out.quests = { ...s.quests, active: s.quests.active.filter((q) => !["dismantle3", "equip1"].includes(q?.id)) };
+    return out;
+  },
 };
 
 const isPlainObject = (v) => v !== null && typeof v === "object" && !Array.isArray(v);
@@ -141,12 +156,9 @@ export function migrate(raw) {
     s = step(s);
     v = s.version;
   }
-  // An empty car slot (the child took the part off) stays empty: no free starter part.
-  const emptySlots = isPlainObject(s.car?.equipped) ? Object.keys(s.car.equipped).filter((k) => s.car.equipped[k] === null) : [];
   s = fillDefaults(s, defaultState());
-  for (const k of emptySlots) s.car.equipped[k] = null;
   // Sanitize numbers that the UI relies on.
-  for (const key of ["coins", "xp"]) {
+  for (const key of ["coins", "xp", "scrap"]) {
     if (!Number.isFinite(s[key]) || s[key] < 0) s[key] = 0;
   }
   if (!Number.isInteger(s.level) || s.level < 1) s.level = 1;

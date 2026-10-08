@@ -88,6 +88,7 @@ body[data-screen="home"] .view { padding-bottom: calc(24px + var(--safe-bottom))
 body[data-screen="home"] .bottom-nav,
 body[data-mode="game"] .bottom-nav { display: none; }
 .nav-btn {
+  position: relative;
   display: grid;
   place-items: center;
   width: var(--tap);
@@ -99,6 +100,8 @@ body[data-mode="game"] .bottom-nav { display: none; }
   cursor: pointer;
 }
 .nav-btn.active { background: var(--sun); }
+/* 🔧 can upgrade a part: a small green ⬆ (garage B) */
+.nav-btn[data-ready="1"]::after { content: "⬆"; position: absolute; top: -4px; right: -4px; display: grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; background: var(--grass); color: #fff; font-size: .75rem; font-weight: 800; box-shadow: 0 0 0 2px #fff; }
 .nav-btn:active { transform: scale(.92); }
 
 /* Games take the whole screen; they bring their own exit button. */

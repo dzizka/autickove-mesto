@@ -2,7 +2,7 @@
 
 Verzia 2 je **nová hra**, ktorá sa stavia od začiatku. Z verzie 1 (`v1/`) nič nepreberá, okrem skúseností. Verzia 1 ostáva hrateľná samostatne na `/v1/`.
 
-V jadre je **akčná hra s autami a korisťou** (ako Diablo): dieťa jazdí preteky, z pretekov padajú diely na auto so štatistikami a auto je čoraz silnejšie. Okolo toho sú **tuning vzhľadu**, **kamaráti** a **Omaľovánka**.
+V jadre je **akčná hra s autami**: dieťa jazdí preteky, z truhlice dostáva súčiastky, v Garáži nimi vylepšuje diely auta a auto je čoraz silnejšie. Okolo toho sú **tuning vzhľadu**, **kamaráti** a **Omaľovánka**.
 
 ---
 
@@ -13,7 +13,7 @@ V jadre je **akčná hra s autami a korisťou** (ako Diablo): dieťa jazdí pret
 Z toho vyplýva:
 - **Ovládanie:** všetko ide ťuknutím alebo ťahaním prstom. Veľké tlačidlá (aspoň 56 px).
 - **Pokyny:** každý pokyn hra predčíta hlasom.
-- **Bez textu:** vzácnosť a porovnania sa ukazujú ikonami, farbami, hviezdičkami a šípkami ⬆⬇. **Čísla len pri štatistikách** (rozhodnutie rodiča po skúšaní, bod 4.3): sila dielu a hodnoty štatistík sú malé čísla, vždy so šípkou alebo farbou, takže sa dajú porovnať aj bez čítania.
+- **Bez textu:** všetko sa ukazuje ikonami, farbami a šípkami ⬆⬇. **Čísla len pri štatistikách** (rozhodnutie rodiča po skúšaní, bod 4.3): úroveň dielu, cena v súčiastkach a hodnoty štatistík sú malé čísla, vždy s ikonou, šípkou alebo farbou.
 - **Prehra neexistuje:** dieťa vždy niečo dostane. Najľahšiu trať musí vyhrať aj so začiatočným autom.
 
 **Čo dieťa vo v1 bavilo najviac** (podľa rodiča): **preteky, tuning, kamaráti, omaľovánka**. Verzia 2 je postavená na týchto štyroch pilieroch.
@@ -57,16 +57,15 @@ v2/
 │   │   ├── menu.js         # štyri piliere hry (tlačidlá Domov a navigácie)
 │   │   ├── stats.js        # štatistiky, sloty, začiatočné auto, účinky štatistík v pretekoch
 │   │   ├── cars.js  tuning.js  tracks.js  bosses.js
-│   │   ├── loot-bases.js  affixes.js  legendaries.js  sets.js
+│   │   ├── garage.js  legendaries.js   # úrovne dielov, ceny, súčiastky z truhlice; 12 schopností
 │   │   ├── crew.js  trophies.js  quests.js
 │   │   ├── city.js  album.js  # mesto (budovy), album (stránky nálepiek), denný darček
 │   │   ├── minigames.js    # hry v herni: zoznam, obtiažnosti, obrázky pexesa, poruchy v servise, farby parkoviska
 │   │   └── coloring/       # palette.js, free.js (24 obrázkov SVG), pixel.js (30 obrázkov podľa čísel)
 │   ├── systems/            # logika bez kreslenia
 │   │   ├── economy.js  progress.js  quests.js  trophies.js   # progress.js: level, čas hrania, postup na tratiach, bossovia
-│   │   ├── loot.js         # generovanie dielov, vzácnosť, sila
-│   │   ├── garage.js       # nasadenie, porovnanie, rozoberanie, vylepšenie
-│   │   ├── stats.js        # súčet štatistík auta (diely + sety + kamarát)
+│   │   ├── garage.js       # úrovne dielov každého auta, vylepšenie, truhlica
+│   │   ├── stats.js        # štatistiky auta (úrovne dielov + kamarát), schopnosti
 │   │   ├── tuning.js       # vzhľad: vlastnené veci, kúpa, náhodný vzhľad
 │   │   ├── coloring.js     # omaľovánka: pixelové obrázky z tvarov, odomykanie, galéria, odmeny
 │   │   ├── crew.js         # kamaráti: vajíčka, levely, vývoj
@@ -87,12 +86,11 @@ v2/
 │   ├── screens/            # home.js garage.js tuning.js crew.js gallery.js parents.js
 │   │                       # settings.js test-menu.js topbar.js coloring.js (výber obrázka) trophies.js
 │   │                       # races.js (výber trate a úrovne), stat-panel.js (pruhy štatistík, sila auta)
-│   │                       # part-card.js (karta dielu, detail s porovnaním), chest.js (truhlica po pretekoch)
-│   │                       # set-book.js (kniha setov), games.js (🎪 herňa), city.js album.js daily.js
+│   │                       # chest.js (truhlica po pretekoch), games.js (🎪 herňa), city.js album.js daily.js
 │   │                       # home-road.js (pohyblivá cesta za tlačidlami domova)
 │   └── games/
 │       ├── demo/           # skúšobná jazda len z testovacieho menu (overuje slučku a odmeny)
-│       ├── race/           # index.js  spawner.js  physics.js  hud.js  boss.js  abilities.js (legendárne schopnosti)
+│       ├── race/           # index.js  spawner.js  physics.js  hud.js  boss.js  abilities.js (schopnosti dielov)
 │       │                   # road.js (úseky cesty, projekcia, obloha)  scene.js (prekážky, autá, efekty)  weather.js
 │       │                   # drive-scene.js (auto na prázdnej ceste)  test-drive.js (🛣️ skúšobná jazda)
 │       ├── coloring/       # index.js  free-paint.js  by-number.js  brush.js  tools.js (panel nástrojov)
@@ -157,89 +155,79 @@ Vo v1 sa našli tri chyby (sú opravené vo v1). Vo v2 im treba predísť od za�
 
 ### 4.2 Dva druhy úprav auta
 
-- **Diely:** padajú z pretekov a majú štatistiky. Nemenia vzhľad auta, ukážu sa len malým znakom (napr. iskra pri legendárnom motore).
+- **Diely auta (od časti 17, garáž B):** každé auto má 6 dielov. Dieťa ich v Garáži vylepšuje za súčiastky 🔩 z pretekov. Diely nemenia vzhľad auta.
 - **Vzhľad (tuning):** farba, vzor, kolesá, krídlo, nálepky, strecha, neón, stopa, klaksón. Kupuje sa za mince a **nemá štatistiky**. Dieťa si vždy môže nechať auto, ktoré sa mu páči (bod 5).
+- **Prečo garáž B** (rozhodnutie rodiča po skúšaní): náhodné diely so vzácnosťou, taškou, porovnávaním a setmi boli pre 6-ročné dieťa zložité a nebavili ho. Teraz platí jedno pravidlo: **ťukni na diel a diel je silnejší.**
 
 ### 4.3 Sloty a štatistiky
 
-Auto má 6 slotov. Každý slot má hlavnú štatistiku a 0 až 3 vedľajšie.
+Auto má 6 dielov. Každý diel zvyšuje jednu štatistiku.
 
-| Slot | Ikona | Hlavná štatistika | Čo robí v pretekoch |
+| Diel | Ikona | Štatistika | Čo robí v pretekoch |
 |---|---|---|---|
 | Motor | 🔥 | ⚡ Rýchlosť | vyššia maximálna rýchlosť, skôr v cieli |
 | Pneumatiky | 🛞 | 🌀 Ovládanie | rýchlejší prechod medzi pruhmi, menej šmýka na snehu |
 | Nárazník | 🛡️ | 🛡️ Odolnosť | štíty na štarte, kratšie spomalenie po náraze |
 | Nádrž | ⛽ | ⛽ Benzín | benzín vydrží dlhšie |
 | Magnet | 🧲 | 🧲 Magnet | priťahuje mince zo vzdialenejších pruhov |
-| Maskot na palubovke | 🧸 | 🍀 Šťastie | častejšie a vzácnejšie diely |
+| Maskot na palubovke | 🧸 | 🍀 Šťastie | viac súčiastok z truhlice a častejší zlatý diel |
 
-**Zobrazenie** (po skúšaní zmenené z 5 dielikov na kombináciu čísel a šípok):
-- **Karta dielu:** sila dielu ako jedno malé číslo a zelená ⬆ alebo červená ⬇ oproti namontovanému dielu.
-- **Detail dielu:** pri každej ikone štatistiky je číslo a pruh. Pri porovnaní je vedľa rozdiel **+6** zelenou alebo **−3** červenou, aj pri celkovej sile dielu.
-- **Auto:** každá štatistika je ikona, číslo a súvislý pruh (plný pri 150).
-- **Sila auta** je jedno veľké číslo s farebným odznakom (súčet všetkého).
+- **Úroveň dielu:** 1 až 20. Štatistika dielu je 8 na úrovni 1 a každá úroveň pridá 4 (úroveň 20 = 84). Začiatočné auto má silu 48, celé auto na úrovni 20 má 504.
+- **Zobrazenie:** úroveň dielu je malé číslo s krúžkom, ktorý sa plní k ďalšej schopnosti. Štatistiky auta sú ikona, číslo a súvislý pruh (plný pri 100). **Sila auta** je jedno veľké číslo s farebným odznakom (súčet všetkých štatistík).
+- **Štatistiky musia byť cítiť.** Rýchlosť rozhoduje, či dieťa súperov predbehne. Ovládanie mení, ako rýchlo auto prejde do vedľajšieho pruhu. Odolnosť ukazuje štíty okolo auta.
 
-**Štatistiky musia byť cítiť.** Každá má viditeľný účinok:
-- Rýchlosť rozhoduje, či dieťa súperov predbehne.
-- Ovládanie mení, ako rýchlo auto prejde do vedľajšieho pruhu.
-- Odolnosť ukazuje štíty okolo auta.
+### 4.4 Schopnosti
 
-### 4.4 Vzácnosť
+Na **úrovni 6 a 14** dostane diel zvláštnu schopnosť (spolu 12; po simulácii posunuté zo 10 a 20, aby prvá prišla približne po 20 pretekoch). Ikona ďalšej schopnosti je pri diele vyblednutá a krúžok ukazuje, koľko k nej chýba. Keď ju dieťa získa, hlas ju pomenuje a vybuchnú konfety.
 
-| Vzácnosť | Farba | Vedľajšie štatistiky |
+| Diel | Úroveň 6 | Úroveň 14 |
 |---|---|---|
-| Obyčajný | sivá | 0 |
-| Dobrý | zelená | 1 |
-| Vzácny | modrá | 2 |
-| Epický | fialová | 3 |
-| Legendárny | oranžová, svieti | 2 + **zvláštna schopnosť** |
+| 🔥 Motor | 🚀 Raketový štart | 🌟 Hviezdne turbo (každá ⭐ dá krátke turbo) |
+| 🛞 Pneumatiky | 🦘 Pružiny (auto samo preskočí každú piatu prekážku) | 🧊 Ľadový štít (na snehu nešmýka) |
+| 🛡️ Nárazník | 🔦 Svetlomet (v noci svieti dvakrát ďalej) | 🫧 Bublina (2 štíty navyše) |
+| ⛽ Nádrž | 🪂 Skokan | ♾️ Nekonečná nádrž |
+| 🧲 Magnet | 🧲 Supermagnet | 🌧️ Mincový dážď (každých 20 sekúnd prší mince) |
+| 🧸 Maskot | 🐱 Zlatý kocúr (dvojnásobné mince) | 👻 Duch (prvý náraz prejde cez prekážku) |
 
-**Legendárne schopnosti** sú jednoduché a viditeľné, okolo 12 kusov. Príklady:
-- **Duch:** prvý náraz v pretekoch auto prejde cez prekážku.
-- **Hviezdne turbo:** každá zobratá ⭐ dá krátke turbo.
-- **Mincový dážď:** každých 20 sekúnd prší mince.
-- **Pružiny:** auto samo preskočí každú piatu prekážku.
-- **Ľadový štít:** na snehu auto nešmýka vôbec.
-- **Svetlomet:** v noci svieti dvakrát ďalej.
+Každá schopnosť má vlastný zvuk a efekt, aby ju dieťa spoznalo. Pri aute v pretekoch sa iskrí, keď má aspoň jednu.
 
-Každá schopnosť má vlastný zvuk a efekt, aby ju dieťa spoznalo.
+### 4.5 Truhlica po pretekoch
 
-### 4.5 Odkiaľ diely padajú
-
-- **Koniec pretekov:** truhlica, ktorá sa otvorí s animáciou. **Otvára ju dieťa ťuknutím.** Truhlica sa kýve a svieti, po 5 sekundách hlas pripomenie „Ťukni na truhlicu!“ a sama sa otvorí až po 12 sekundách (keď dieťa odišlo). 1. miesto dá 3 diely, 2. miesto 2, 3. a 4. miesto 1. Vzácnosť závisí od úrovne trate a od šťastia.
-- **Bossovia:** každá trať má svojho bossa: Kráľ ciest (Mesto), Medveď Drevorubač (Les), Škorpión (Púšť), Snežný Yeti (Sneh), Netopier (Noc) a Ufo (Vesmír). Boss príde po naplnení „pruhu výziev“ (3 preteky na trati). Je väčší, má vlastnú hudbu a niečo hádže na cestu. Výhra nad ním dá istý epický diel, malú šancu na legendárny a vajíčko s kamarátom (bod 6).
-- **Boss podrobnejšie:** pred dopadom hodenej veci svieti na ceste červený terč a vždy ostane voľný pruh. Boss je o niečo pomalší než najrýchlejší súper úrovne, aby ho auto s 🟢 isto porazilo. Po výhre sa pruh výziev vyprázdni a k istému dielu pribudnú 2 obyčajné diely. Prehra nič nezoberie: dieťa dostane mince a diel a pruh ostane plný na ďalší pokus.
+- **Otvára ju dieťa ťuknutím.** Truhlica sa kýve a svieti, po 5 sekundách hlas pripomenie „Ťukni na truhlicu!“ a sama sa otvorí až po 12 sekundách (keď dieťa odišlo).
+- **Vnútri:** kôpka súčiastok 🔩, mince, niekedy cukrík 🍬 (30 %), niekedy vajíčko 🥚 a niekedy **zlatý diel ⭐** (6 %, šťastie ju zvýši najviac na 25 %). Zlatý diel hneď vylepší najslabší diel auta o 1 úroveň zadarmo (ukáže, ktorý).
+- **Súčiastky** = (3 + poradie trate + (úroveň trate − 1)) × miesto (1. 100 %, 2. 75 %, 3. 50 %, 4. 40 %) × šťastie (do +13 %), vždy aspoň 3, takže prvé preteky zaplatia prvé vylepšenie. Na lepšej trati je ich viac (Mesto 1: 3, Vesmír 5: okolo 13).
+- **Bossovia:** každá trať má svojho bossa: Kráľ ciest (Mesto), Medveď Drevorubač (Les), Škorpión (Púšť), Snežný Yeti (Sneh), Netopier (Noc) a Ufo (Vesmír). Boss príde po naplnení „pruhu výziev“ (3 preteky na trati). Je väčší, má vlastnú hudbu a niečo hádže na cestu. Výhra nad ním dá 1,5-krát viac súčiastok, istý zlatý diel, cukrík a vajíčko s kamarátom (bod 6).
+- **Boss podrobnejšie:** pred dopadom hodenej veci svieti na ceste červený terč a vždy ostane voľný pruh. Boss je o niečo pomalší než najrýchlejší súper úrovne, aby ho auto s 🟢 isto porazilo. Po výhre sa pruh výziev vyprázdni. Prehra nič nezoberie: dieťa dostane mince a súčiastky a pruh ostane plný na ďalší pokus.
 
 ### 4.6 Garáž
 
-- **Auto a sloty:** veľké auto na zdviháku a okolo neho 6 slotov.
-- **Inventár:** 30 dielov, rozšíriteľný za mince do 60.
-- **Porovnanie:** pri každom diele je zelená ⬆ alebo červená ⬇ oproti tomu, čo je namontované, a pri ťuknutí sa ukážu pruhy štatistík vedľa seba.
-- **Nové diely:** majú značku „NOVÉ“, kým ich dieťa neotvorí.
-- **Tlačidlo ✨ Najlepšie:** namontuje najsilnejšie diely jedným ťuknutím.
-- **Rozobrať:** diel sa zmení na súčiastky 🔩. Je aj tlačidlo „Rozobrať všetko sivé a zelené“, ktoré sa pred použitím opýta.
-- **Vylepšiť:** za súčiastky a mince sa diel vylepší z +1 až na +5. Každé vylepšenie mierne zvýši štatistiky a pribudne hviezdička.
-- **Zamknúť 🔒:** zamknutý diel sa omylom nerozoberie.
-- **Zložiť ⬇:** namontovaný diel sa dá zložiť do tašky a slot ostane prázdny (aj po načítaní hry). Pri plnej taške to hlas povie. Akýkoľvek diel je lepší ako prázdny slot (⬆).
+- **Auto na zdviháku** (3D, otáča sa) a okolo neho **6 veľkých tlačidiel dielov**: ikona dielu, úroveň s krúžkom k ďalšej schopnosti a cena 🔩.
+- **Ťuknutie = vylepšenie.** Diel poskočí, auto sa zatrasie, ukáže sa „⚡ +6“ so zelenou ⬆ a sila auta stúpne. Na úrovni 20 je diel hotový (⭐ namiesto ceny, zlatý okraj).
+- **Málo súčiastok:** tlačidlo je sivé. Po ťuknutí sa jemne zatrasie a hlas povie, že treba jazdiť preteky. Nič sa nestratí.
+- **Nápoveda bez čítania:** najlacnejší diel, ktorý si dieťa môže dovoliť, svieti a poskakuje. Keď sa dá niečo vylepšiť, má 🔧 v spodnej lište zelenú ⬆.
+- **Každé auto má vlastné diely.** Vylepšenia patria autu, ktoré má dieťa práve vybrané vo Vzhľade. Nové auto začína od úrovne 1 a vylepšuje sa znova. Keď sa dieťa vráti k staršiemu autu, má všetky jeho vylepšenia (rozhodnutie rodiča). Vo Vzhľade je pri aute vidieť jeho silu, aby rodič vedel, prečo je nové auto zatiaľ slabšie.
+- **Kamarát** sedí vedľa auta ako odznak (bod 6).
 
-### 4.7 Sety
+### 4.7 Cena vylepšenia
 
-Sú 4 sety po 3 dieloch: **Policajný, Hasičský, Vesmírny, Džungľa**. Diel zo setu je epický: padne ako každý tretí epický diel z truhlice (35 %) a ako polovica istých dielov od bossov. Pri 2 dieloch zo setu sa zapne malý bonus, pri 3 veľký bonus a zvláštny vzhľad (napr. siréna na streche, plamene za autom). V Garáži je kniha setov, kde sa nájdené diely odfarbia.
+- Vylepšenie z úrovne L stojí `round(3 × 1,4^(L − 1))` 🔩, najviac 75: 3, 4, 6, 8, 12, 16, 23, 32, 44, 62 a od úrovne 11 vždy 75. Platí sa len súčiastkami, mince ostávajú na vzhľad, autá a mesto.
+- Lacnejšie sú vždy slabšie diele, takže auto rastie rovnomerne aj vtedy, keď dieťa ťuká na čo svieti.
+- Čísla sú v `data/garage.js`.
 
 ### 4.8 Vyváženie
 
-- **Začiatok:** začiatočné auto má sivé diely v každom slote. Prvý zelený a modrý diel padne isto počas prvých 3 pretekov.
-- **Postup:** približne 10 hodín hrania od prvého epického dielu po kompletný set a 5. úroveň tratí. Legendárne diely sú vzácne, ale do 2 až 3 hodín hrania dieťa nejaký isto uvidí. Zaručí to „počítadlo smoly“, ktoré po každých pretekoch bez legendárneho dielu zvýši šancu naň.
-- **Bez frustrácie:** preteky sa nedajú prehrať. Aj 4. miesto dá diel a mince.
+- **Začiatok:** začiatočné auto má všetky diely na úrovni 1 (sila 48). Prvé vylepšenie si dieťa môže dovoliť po prvých pretekoch.
+- **Bez frustrácie:** preteky sa nedajú prehrať. Aj 4. miesto dá súčiastky a mince.
 - **Poistka proti zaseknutiu:** keď dieťa na najnovšej úrovni 6-krát po sebe nevyhrá, súperi na nej spomalia o 1,5 % za každý ďalší pokus, najviac o 12 %. Po víťazstve sa to vráti.
-- **Odporúčaná sila** zodpovedá skutočnej rýchlosti súperov: 🟢 znamená, že rovnomerne postavené auto má najvyššiu rýchlosť o 6 % vyššiu než najrýchlejší súper úrovne. 🟡 je od 80 % tejto sily. Hlas pri 🔴 hovorí, že skúsiť sa dá.
-- **Namerané v simulácii** (8 simulovaných detí, každé 600 pretekov s chybami ako dieťa, `v2/tests/progress-sim.mjs`):
-  - Vesmír 5 sa odomkne medzi 57. a 207. pretekmi (v strede okolo 110).
-  - Najdlhší úsek bez novej úrovne je najviac 78 pretekov.
-  - Prvý legendárny diel padne do 30 pretekov.
-  - Celý set sa nájde medzi 28. a 130. pretekmi.
-  - Pri 1,5 až 2 minútach na preteky aj s truhlicou a garážou to je približne 3 až 7 hodín pretekov. Spolu s bossmi, setmi, kamarátmi a omaľovánkou vyjde okolo 10 hodín.
-  - Čísla sa dajú doladiť v `data/loot-bases.js` (`partBudgetShare`, `budgetOffset`) a `data/tracks.js` (`ease…`) a overiť simuláciou.
+- **Odporúčaná sila** zodpovedá skutočnej rýchlosti súperov: 🟢 znamená, že rovnomerne postavené auto má najvyššiu rýchlosť o 4 % vyššiu než najrýchlejší súper úrovne (garáž B: celé auto na úrovni 20 má na Vesmíre 5 🟢). 🟡 je od 80 % tejto sily. Hlas pri 🔴 hovorí, že skúsiť sa dá.
+- **Namerané v simulácii** (8 simulovaných detí, každé 600 pretekov s chybami ako dieťa, `v2/tests/progress-sim.mjs`, dieťa ťuká na diel, ktorý svieti):
+  - Prvá schopnosť príde medzi 19. a 23. pretekmi, všetkých 12 medzi 111. a 124.
+  - Vesmír 5 sa odomkne medzi 61. a 96. pretekmi (v strede okolo 85), so silou auta okolo 250 až 320.
+  - Najdlhší úsek bez novej úrovne je najviac 39 pretekov.
+  - Celé auto na úrovni 20 je medzi 178. a 195. pretekmi. Potom môže dieťa začať vylepšovať ďalšie auto.
+  - Pri 1,5 až 2 minútach na preteky je to približne 2 až 3 hodiny do Vesmíru 5 a 5 až 6 hodín do plného auta. Spolu s ďalšími autami, bossmi, kamarátmi a omaľovánkou vyjde okolo 10 hodín.
+  - Čísla sa dajú doladiť v `data/garage.js` a overiť simuláciou (`node v2/tests/progress-sim.mjs`).
+- **Staré uloženie (v12 → v13):** úroveň dielov vybraného auta sa vypočíta zo sily namontovaných dielov (`1 + (hodnota − 8) / 6`), diely v taške sa rozoberú na súčiastky a ostatné autá začínajú od úrovne 1. Sety, tašku a legendárne diely nová garáž nemá.
 
 ---
 
@@ -258,12 +246,12 @@ Kamarát sedí v aute ako spolujazdec (vidno ho v okne) a pomáha v pretekoch.
 
 - **Získanie:** z vajíčok. Vajíčko padá od bossov a občas z truhlice a vyliahne sa po 3 pretekoch. Zbierka má 20 kamarátov v 4 vzácnostiach. Nechytení sú v zbierke ako šedé tiene.
 - **Schopnosť:** každý kamarát má jednu schopnosť v pretekoch, napríklad +⚡, +🍀, viac mincí alebo štít navyše. Silnie s levelom.
-- **Level a vývoj:** kamarát rastie jazdením (level 1 až 20) a vyvíja sa až v 3 stupňoch (napr. 🦎→🦕→🦖) za cukríky 🍬. Cukríky sú z dvojitých vajíčok a z rozoberania dielov.
+- **Level a vývoj:** kamarát rastie jazdením (level 1 až 20) a vyvíja sa až v 3 stupňoch (napr. 🦎→🦕→🦖) za cukríky 🍬. Cukríky sú z dvojitých vajíčok a z truhlice.
 - **Starostlivosť:** pohladkanie a oblečenie (čiapka, okuliare). Bez hladovania a smútenia, aby dieťa nemalo pocit viny.
 - **Podrobnosti:**
   - Prvé vajíčko padne isto z truhlice v 3. pretekoch, aby dieťa malo kamaráta skoro. Potom padá z truhlice zriedka (6 %) a isto od bossov. Vajíčko od bossa má menšiu šancu na obyčajného kamaráta.
   - Z vajíčka sa prednostne liahnu kamaráti, ktorých dieťa ešte nemá. Dvojitý kamarát sa zmení na cukríky 🍬.
-  - Cukríky sú aj z rozoberania dielov: modrý a lepší diel dá 1 isto, sivý a zelený s 25 % šancou.
+  - Cukrík je v truhlici s 30 % šancou (od bossa isto).
   - Vývoj na 2. stupeň je od levelu 7 za 5 🍬, na 3. stupeň od levelu 14 za 15 🍬. Level rastie jazdením kamaráta v aute.
   - Kamarát sa ukazuje v okne auta doma, v Garáži, v showroome, v pretekoch aj na pódiu. Oblečenie sa kupuje za mince a nemá štatistiky.
 
@@ -307,10 +295,10 @@ Vo v1 ju malo dieťa rado, ale mala len 3 obrázky. Vo v2 bude mať dva režimy 
 ## 8. Okolo hry
 
 - **Domovská obrazovka:** auto dieťaťa s kamarátom, veľké tlačidlá **Preteky**, **Garáž**, **Vzhľad**, **Kamaráti** a **Omaľovánka**.
-- **Úlohy:** 3 jednoduché úlohy naraz (napr. „vyhraj preteky“, „rozober 3 diely“, „vymaľuj obrázok“). Za splnenie je odmena.
+- **Úlohy:** 3 jednoduché úlohy naraz (napr. „vyhraj preteky“, „vylepši 3 diely“, „vymaľuj obrázok“). Za splnenie je odmena.
   - Úlohy sú na domovskej obrazovke pod tlačidlami ako ikona s pruhom. Ťuknutie úlohu prečíta. Splnená úloha sa zmení na 🎁 a ťuknutím sa vyberie odmena (mince, niekedy 🔩 alebo 🍬). Hneď pribudne nová úloha.
   - Úlohy, ktoré by sa nedali splniť (pohladkať kamaráta bez kamaráta, poraziť bossa, keď žiadny nie je pripravený), sa neponúkajú.
-- **Trofeje:** za prvý legendárny diel, celý set, všetkých bossov, vylepšenie +5, vyvinutého kamaráta, obrázky a pod.
+- **Trofeje:** za prvú schopnosť auta, diel na úrovni 20, všetkých bossov, vyvinutého kamaráta, obrázky a pod.
   - Je ich 23. Poličku trofejí otvára 🏆 na domovskej obrazovke, nezískané trofeje sú šedé tiene a ťuknutie prečíta názov.
   - Nová trofej sa ohlási zvukom, hlasom a bublinou. Trofeje sa dopočítajú aj zo staršieho postupu.
 - **Prehľad pre rodičov:** čas hrania za 7 dní, čo dieťa hrá najčastejšie a sila auta. Tu sú aj čísla. Otvára sa v Nastaveniach (👪). Ukazuje stĺpce minút po dňoch, počty hier, štatistiky auta a postup (trate, bossovia, kamaráti, obrázky, trofeje, úlohy).
@@ -343,6 +331,7 @@ Každá časť sa po dokončení nahrá na GitHub a dá sa hneď hrať na `/v2/`
 | **15a. 3D auto** | Autá z Kenney Car Kit (nová zostava, raketa → raketové auto v uložení), otočné 3D auto vo Vzhľade a na zdviháku v Garáži, 3D obrázky na dlaždiciach Vzhľadu, 2D auto ako záloha bez WebGL (bod 14) | všetko kúpené vidno na 3D aute; hra ide aj bez WebGL |
 | **15b. Obrázky áut všade** | Obrázky toho istého 3D auta zboku, zozadu a zhora všade v hre (domov, preteky, hry, mesto), kužele a krabice ako prekážky, skúšobná jazda vo Vzhľade (bod 14) | auto vyzerá všade rovnako |
 | **16. Mesto zhora** | Mesto z City Kit modelov zhora, dieťa jazdí po uliciach a zbiera nájomné (bod 14) | dieťa nájde a vyberie mince samo |
+| **17. Garáž B** | Každé auto má 6 dielov s úrovňou 1 až 20, ťuknutie vylepší diel za súčiastky, schopnosti na úrovni 6 a 14, truhlica so súčiastkami a zlatým dielom, migrácia uloženia v13 (body 4.2 až 4.8) | dieťa vylepší auto bez čítania a nové auto má vlastný postup |
 
 ---
 
@@ -351,7 +340,7 @@ Každá časť sa po dokončení nahrá na GitHub a dá sa hneď hrať na `/v2/`
 - **Playwright testy** v `v2/tests/` (spúšťajú sa cez malý lokálny server):
   - **Obrazovky:** každá sa otvorí a dá sa z nej vrátiť domov.
   - **Preteky:** každá trať × úroveň × niekoľko kombinácií vzhľadu (všetky neóny, stopy, legendárne schopnosti) a 60 sekúnd jazdy s náhodným ovládaním. **Žiadna chyba v konzole** (ani zachytená ochranou slučky).
-  - **Korisť:** 10 000 vygenerovaných dielov, rozloženie vzácnosti podľa tabuľky a žiadny diel bez hlavnej štatistiky.
+  - **Garáž:** cena a štatistiky každej úrovne, schopnosti na úrovni 6 a 14, vlastné úrovne pre každé auto, truhlica a migrácia starých dielov.
   - **Uloženie:** export, import a migrácia medzi verziami schémy.
   - **Omaľovánka:** dokončiť obrázok podľa čísel automaticky a overiť odmenu a galériu.
 - **Zobrazenie:** každá obrazovka sa skontroluje v šírke telefónu (390 px) aj počítača (1280 px).

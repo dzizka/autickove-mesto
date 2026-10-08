@@ -12,7 +12,6 @@ import { buildingLevel, nextPrice, isBuildingOpen, buildOrUpgrade, rentWaiting, 
 import { getLook, resolveLook, colorLook } from "../systems/tuning.js";
 import { carSidePic } from "../render/car-side.js";
 import { hasWebGL } from "../render/car-pics.js";
-import { setLook } from "../systems/stats.js";
 
 const COLORS = ["#ff5a5f", "#2f80ed", "#ffd23f", "#3ebd4a", "#8f5bd8", "#ff8c42"];
 
@@ -202,7 +201,7 @@ export default {
           town = createTown(host, {
             onReady: () => loading.remove(),
             onLost: () => fallBack(new Error("WebGL context lost")),
-            look: resolveLook({ ...getLook(), ...setLook() }),
+            look: resolveLook(getLook()),
             phase: dayPhase(),
             onLot: (id) => details(BUILDINGS.find((b) => b.id === id)),
             onCoins: (id, at) => {
