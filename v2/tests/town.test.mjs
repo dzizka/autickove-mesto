@@ -189,6 +189,38 @@ for (const width of WIDTHS) {
   });
 }
 
+test("the town: a loading car first, WASD drives, GPU memory stays flat, a lost WebGL shows the street", async () => {
+  const now = Date.now();
+  const page = await openGame(env.browser, env.server.url, { width: 1280, storage: quiet({ coins: 1000, level: 2, city: { buildings: { kiosk: 2 }, rentAt: { kiosk: now - 3 * 3600000 } } }) });
+  await page.getByTestId("home-city").click();
+  await page.getByTestId("town-loading").waitFor();
+  await page.getByTestId("town-loading").waitFor({ state: "detached", timeout: 30000 });
+  const mem0 = await page.evaluate(() => window.__game.town.info());
+  assert.equal(mem0.shadows, true);
+  // WASD like the arrows
+  const gx = await page.evaluate(() => window.__game.town.state().gx);
+  await page.keyboard.press("d");
+  await page.waitForFunction((x) => window.__game.town.state().gx === x + 1 && !window.__game.town.state().moving, gx, { timeout: 10000 });
+  // rent comes and goes three times: only the coins change, nothing piles up on the GPU
+  for (let i = 0; i < 3; i++) {
+    await page.evaluate(() => window.__game.town.driveToCoins("kiosk"));
+    await page.waitForFunction(() => window.__game.town.state().coins === 0, null, { timeout: 10000 });
+    await page.evaluate(() => window.__game.state.update((s) => (s.city.rentAt.kiosk -= 3 * 3600000)));
+    await page.evaluate(() => (location.hash = "#/album"));
+    await page.getByTestId("screen-album").waitFor();
+    await page.evaluate(() => (location.hash = "#/city"));
+    await page.getByTestId("town-loading").waitFor({ state: "detached", timeout: 30000 });
+  }
+  const mem1 = await page.evaluate(() => window.__game.town.info());
+  assert.ok(mem1.geometries <= mem0.geometries + 2 && mem1.textures <= mem0.textures + 2, `GPU ${JSON.stringify(mem0)} → ${JSON.stringify(mem1)}`);
+  // the GPU is taken away: the child gets the 2D street instead of a black box
+  await page.evaluate(() => document.querySelector("[data-testid=town-canvas]").getContext("webgl2").getExtension("WEBGL_lose_context").loseContext());
+  await page.locator(".city-lots").waitFor({ timeout: 10000 });
+  assert.equal(await page.getByTestId("town-canvas").count(), 0);
+  assert.deepEqual(page.errors, []);
+  await page.context().close();
+});
+
 test("the daily gift opens on the home screen once a day", async () => {
   const page = await openGame(env.browser, env.server.url, { width: 390, storage: quiet({ coins: 0, daily: { last: "2000-01-01", streak: 4 } }) });
   await page.getByTestId("daily-modal").waitFor();

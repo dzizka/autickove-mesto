@@ -10,6 +10,9 @@ import { splitPaint, paintMaterial } from "./paint.js";
 const OWN_WHEELS = new Set(["tractor", "kart-oobi", "kart-oozi"]);
 
 const own = (m) => ((m.userData.own = true), m);
+// shared shapes: one upload to the GPU for all cars (no per-car geometry to forget to free)
+const GLOW_GEO = new THREE.CircleGeometry(1, 40);
+const STICKER_GEO = new THREE.PlaneGeometry(0.45, 0.45);
 
 function shadowsOn(root) {
   root.traverse((o) => {
@@ -84,7 +87,7 @@ async function addWing(wrap, size, wing) {
 
 function addNeon(wrap, size, neon) {
   if (!neon.value) return null;
-  const glow = new THREE.Mesh(new THREE.CircleGeometry(1, 40), own(new THREE.MeshBasicMaterial({ color: neon.value, transparent: true, opacity: 0.6, depthWrite: false })));
+  const glow = new THREE.Mesh(GLOW_GEO, own(new THREE.MeshBasicMaterial({ color: neon.value, transparent: true, opacity: 0.6, depthWrite: false })));
   glow.rotation.x = -Math.PI / 2;
   glow.scale.set(size.x * 0.8, size.z * 0.62, 1);
   glow.position.y = 0.02;
@@ -165,7 +168,7 @@ export async function buildCar(r, { colorHex = null, passenger = null, trail = f
   }
   if (r.sticker.icon) {
     for (const side of [1, -1]) {
-      const m = new THREE.Mesh(new THREE.PlaneGeometry(0.45, 0.45), own(new THREE.MeshBasicMaterial({ map: emojiTexture(r.sticker.icon), transparent: true })));
+      const m = new THREE.Mesh(STICKER_GEO, own(new THREE.MeshBasicMaterial({ map: emojiTexture(r.sticker.icon), transparent: true })));
       m.position.set(side * (size.x / 2 + 0.01), size.y * 0.4, -0.1);
       m.rotation.y = (side * Math.PI) / 2;
       wrap.add(m);

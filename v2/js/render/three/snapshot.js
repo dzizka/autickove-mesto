@@ -15,7 +15,7 @@ const MAX_PX = 1024;
 // where the camera looks from (towards the model's centre); the car faces +z
 const VIEWS = {
   side: { dir: [-0.84, 0.36, 0.41], up: [0, 1, 0] }, // left side, a little from the front: front points right
-  back: { dir: [0, 0.56, -0.83], up: [0, 1, 0], ppu: 200 }, // from behind and above (34°), like the race camera looks at the road
+  back: { dir: [0, 0.56, -0.83], up: [0, 1, 0], ppu: 240 }, // sharp enough for a 2× tablet screen // from behind and above (34°), like the race camera looks at the road
   top: { dir: [0, 1, 0], up: [0, 0, 1], ppu: 150 }, // from above, the front points up
 };
 
@@ -29,6 +29,11 @@ function setup() {
   renderer.setPixelRatio(1);
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.shadowMap.enabled = true;
+  // if the browser takes the GPU away, start a fresh renderer for the next picture
+  renderer.domElement.addEventListener("webglcontextlost", (e) => {
+    e.preventDefault();
+    renderer = null;
+  });
   scene = new THREE.Scene();
   addLights(scene);
   const fill = new THREE.DirectionalLight("#ffffff", 1.2); // lights the sides the sun misses

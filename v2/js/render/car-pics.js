@@ -15,8 +15,11 @@ export function hasWebGL() {
   if (window.__game?.no3d) return false;
   if (webgl === null) {
     try {
+      // a GPU that only draws in software (old laptops, blocked drivers) would make 3D slow:
+      // then the game keeps its 2D cars. Automated tests run with software WebGL on purpose.
+      const opts = navigator.webdriver ? {} : { failIfMajorPerformanceCaveat: true };
       const cv = document.createElement("canvas");
-      const gl = cv.getContext("webgl2") || cv.getContext("webgl");
+      const gl = cv.getContext("webgl2", opts) || cv.getContext("webgl", opts);
       webgl = !!gl;
       gl?.getExtension("WEBGL_lose_context")?.loseContext();
     } catch {

@@ -75,6 +75,14 @@ export function badge(char, size = 0.9, card = true) {
 }
 
 const coinGeo = new THREE.CylinderGeometry(0.2, 0.2, 0.05, 24);
+// one ground shape and three ground colours for all lots (nothing to free when a lot changes)
+const LOT_GEO = new THREE.BoxGeometry(TOWN.blockTiles - 0.3, 0.02, TOWN.blockTiles - 0.3);
+const LOT_MATS = {};
+const PAVE_GEO = new THREE.BoxGeometry(TOWN.blockTiles, 0.02, TOWN.blockTiles);
+const PAVE_MAT = new THREE.MeshStandardMaterial({ color: "#d9dde3" });
+const HIT_GEO = new THREE.BoxGeometry(TOWN.blockTiles, 2.5, TOWN.blockTiles);
+const HIT_MAT = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false, colorWrite: false });
+const lotMat = (state) => (LOT_MATS[state] ||= new THREE.MeshStandardMaterial({ color: state === "built" ? "#86d46a" : state === "empty" ? "#c79a62" : "#a9b4a1" }));
 const coinMat = new THREE.MeshStandardMaterial({ color: "#ffc93c", metalness: 0.6, roughness: 0.3, emissive: "#6b4a00", emissiveIntensity: 0.45 });
 
 /** Build the map into `scene`. Returns { lots, ready, setLot(def, info), coins() }. */
@@ -106,12 +114,12 @@ export function createTownMap(scene) {
     const cx = node(bx) + STEP / 2;
     const cz = node(bz) + STEP / 2;
     const def = BUILDINGS[i];
-    const pave = new THREE.Mesh(new THREE.BoxGeometry(B, 0.02, B), new THREE.MeshStandardMaterial({ color: "#d9dde3" }));
+    const pave = new THREE.Mesh(PAVE_GEO, PAVE_MAT);
     pave.position.set(cx, 0, cz);
     pave.receiveShadow = true;
     statics.add(pave);
     if (!def) {
-      const lawn = new THREE.Mesh(new THREE.BoxGeometry(B - 0.3, 0.02, B - 0.3), new THREE.MeshStandardMaterial({ color: "#86d46a" }));
+      const lawn = new THREE.Mesh(LOT_GEO, lotMat("built"));
       lawn.position.set(cx, 0.01, cz);
       lawn.receiveShadow = true;
       statics.add(lawn);
@@ -120,25 +128,54 @@ export function createTownMap(scene) {
       return;
     }
     // an invisible box over the lot: a tap on it opens the building
-    const hit = new THREE.Mesh(new THREE.BoxGeometry(B, 2.5, B), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false, colorWrite: false }));
+    const hit = new THREE.Mesh(HIT_GEO, HIT_MAT);
     hit.position.set(cx, 1.25, cz);
     hit.userData.lot = def.id;
+    hit.layers.set(1); // only for tapping: the camera never draws it
     statics.add(hit);
     lots.set(def.id, { def, index: i, bx, bz, cx, cz, hit, group: null, key: "", coins: [] });
   });
 
   const coinList = [];
 
-  /** Show a lot. info = { state: "locked" | "empty" | "built", level, coins (0–3) }. */
+  /** Coins in front of a lot: only these change when rent comes in, not the building. */
+  function setCoins(lot, n) {
+    if (lot.coins.length === n) return;
+    for (const c of lot.coins) {
+      scene.remove(c);
+      coinList.splice(coinList.indexOf(c), 1);
+    }
+    lot.coins = [];
+    for (let k = 0; k < n; k++) {
+      const c = new THREE.Mesh(coinGeo, coinMat);
+      c.rotation.order = "YXZ";
+      c.rotation.x = 1.1; // tilted, so it reads as a coin from above while it spins
+      c.position.set(lot.cx - 0.6 + k * 0.6, 0.3, node(lot.bz + 1) + TOWN.lane);
+      c.userData.lot = lot.def.id;
+      scene.add(c);
+      lot.coins.push(c);
+      coinList.push(c);
+    }
+  }
+
+  /**
+   * Show a lot. info = { state: "locked" | "empty" | "built", level, coins (0–3) }.
+   * Resolves true when the lot itself changed (so the shadows must be drawn again).
+   */
   async function setLot(def, info) {
     const lot = lots.get(def.id);
-    if (!lot) return;
-    const key = `${info.state}|${info.level}|${info.coins}`;
-    if (key === lot.key) return;
+    if (!lot) return false;
+    const key = `${info.state}|${info.level}`;
+    if (key === lot.key) {
+      if (lot.group) setCoins(lot, info.coins);
+      else lot.wantCoins = info.coins;
+      return false;
+    }
     lot.key = key;
+    lot.wantCoins = info.coins;
     const group = new THREE.Group();
     const { cx, cz } = lot;
-    const ground = new THREE.Mesh(new THREE.BoxGeometry(B - 0.3, 0.02, B - 0.3), new THREE.MeshStandardMaterial({ color: info.state === "built" ? "#86d46a" : info.state === "empty" ? "#c79a62" : "#a9b4a1" }));
+    const ground = new THREE.Mesh(LOT_GEO, lotMat(info.state));
     ground.position.set(cx, 0.01, cz);
     ground.receiveShadow = true;
     group.add(ground);
@@ -172,7 +209,7 @@ export function createTownMap(scene) {
     await Promise.all(work);
     if (lot.key !== key) {
       disposeGroup(group);
-      return; // a newer state came while the models loaded
+      return false; // a newer state came while the models loaded
     }
     if (lot.group) {
       scene.remove(lot.group);
@@ -180,23 +217,8 @@ export function createTownMap(scene) {
     }
     lot.group = group;
     scene.add(group);
-    // the rent waits as coins on the street in front of the building
-    for (const c of lot.coins) {
-      scene.remove(c);
-      coinList.splice(coinList.indexOf(c), 1);
-    }
-    lot.coins = [];
-    for (let k = 0; k < info.coins; k++) {
-      const c = new THREE.Mesh(coinGeo, coinMat);
-      c.rotation.order = "YXZ";
-      c.rotation.x = 1.1; // tilted, so it reads as a coin from above while it spins
-      c.position.set(cx - 0.6 + k * 0.6, 0.3, node(lot.bz + 1) + TOWN.lane);
-      c.castShadow = true;
-      c.userData.lot = def.id;
-      scene.add(c);
-      lot.coins.push(c);
-      coinList.push(c);
-    }
+    setCoins(lot, lot.wantCoins);
+    return true;
   }
 
   /** Remove a lot's coins (after they were collected). */
@@ -208,7 +230,6 @@ export function createTownMap(scene) {
       coinList.splice(coinList.indexOf(c), 1);
     }
     lot.coins = [];
-    lot.key = `${lot.key.split("|").slice(0, 2).join("|")}|0`;
   }
 
   return { lots, ready: Promise.all(jobs), setLot, clearCoins, coins: () => coinList, hits: () => [...lots.values()].map((l) => l.hit) };

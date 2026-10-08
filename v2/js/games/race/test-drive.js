@@ -46,8 +46,8 @@ export function openTestDrive(look = { ...getLook(), ...setLook() }, { onClose }
     sfx.tap();
   };
   const onKey = (e) => {
-    if (e.key === "ArrowLeft") scene.steer(-1);
-    if (e.key === "ArrowRight") scene.steer(1);
+    if (e.key === "ArrowLeft" || e.key.toLowerCase() === "a") scene.steer(-1);
+    if (e.key === "ArrowRight" || e.key.toLowerCase() === "d") scene.steer(1);
   };
   canvas.addEventListener("pointerdown", onPointer);
   window.addEventListener("keydown", onKey);

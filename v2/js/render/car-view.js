@@ -33,6 +33,9 @@ export function createCarView({ mode = "turntable" } = {}) {
   let dead = false;
   let pending = null; // the newest look while three.js is still loading
   let shownKey = "";
+  let timer = 0;
+  let lastShow = 0;
+  const SETTLE_MS = 150; // fast taps through the tiles build only the car the child stops at
 
   const show = (r, opts) => {
     const key = lookKey(r, opts);
@@ -67,7 +70,12 @@ export function createCarView({ mode = "turntable" } = {}) {
       else delete el.dataset.passenger;
       flat.replaceChildren(carSide(look, { passenger, trail }));
       pending = [r, { passenger, trail, colorHex: look.colorHex || null }];
-      if (stage) show(...pending);
+      if (!stage) return;
+      clearTimeout(timer);
+      const now = performance.now();
+      if (now - lastShow > SETTLE_MS) show(...pending); // the first tap shows at once
+      else timer = setTimeout(() => !dead && show(...pending), SETTLE_MS);
+      lastShow = now;
     },
     pause(on) {
       stage?.pause(on);
@@ -78,6 +86,7 @@ export function createCarView({ mode = "turntable" } = {}) {
     },
     destroy() {
       dead = true;
+      clearTimeout(timer);
       stage?.destroy();
       stage = null;
     },

@@ -121,8 +121,9 @@ export default {
       steer(race, e.clientX - r.left < r.width / 2 ? -1 : 1);
     };
     const onKey = (e) => {
-      if (e.key === "ArrowLeft" || e.key === "a") steer(race, -1);
-      if (e.key === "ArrowRight" || e.key === "d") steer(race, 1);
+      const k = e.key.toLowerCase();
+      if (e.key === "ArrowLeft" || k === "a") steer(race, -1);
+      if (e.key === "ArrowRight" || k === "d") steer(race, 1);
     };
     canvas.addEventListener("pointerdown", onPointer);
     window.addEventListener("keydown", onKey);
@@ -196,7 +197,7 @@ export default {
       const unlocks = previewUnlocks(result.extra);
       stopMusic();
       ctx.audio.playNotes(looks.horn.notes);
-      setTimeout(() => sfx.win(), 500);
+      setTimeout(() => wrap.isConnected && sfx.win(), 500); // not on another screen
       ctx.speak(boss ? BOSS_SAY[race.place === 1 ? 0 : 1] : PLACE_SAY[race.place - 1]);
       await new Promise((r) => setTimeout(r, 900));
       if (!wrap.isConnected) return;

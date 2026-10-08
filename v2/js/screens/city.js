@@ -34,6 +34,7 @@ function openTarget(def) {
 
 let timer = null;
 let town = null;
+let town3dBroken = false; // the 3D town failed once: this visit and the next use the 2D street
 
 /** What a lot shows in the 3D town: locked, a building site, or the building with its coins. */
 function lotInfo(def, now = Date.now()) {
@@ -168,7 +169,7 @@ export default {
       if (price !== null && getState().coins < price) speak(`${def.say} Na ${lvl ? "vylepšenie" : "stavbu"} treba viac mincí.`, { interrupt: false });
     }
 
-    const use3d = hasWebGL();
+    const use3d = hasWebGL() && !town3dBroken;
     function paint() {
       if (town) BUILDINGS.forEach((def) => town.setLot(def, lotInfo(def)));
       else street.replaceChildren(...BUILDINGS.map(buildingEl));
@@ -182,14 +183,26 @@ export default {
 
     if (use3d) {
       // part 16: the town from above, the child drives its own car through the streets
-      const host = h("div", { class: "town-wrap", "data-testid": "town" });
+      // a car driving round in circles while the streets load (no text to read)
+      const loading = h("div", { class: "town-loading", "data-testid": "town-loading", "aria-label": "Načítava sa" }, h("span", { class: "town-loading-car", "aria-hidden": "true" }, "🚗"));
+      const host = h("div", { class: "town-wrap", "data-testid": "town" }, loading);
       root.classList.add("town3d");
       root.append(albumBar, host);
       view.append(root);
+      const fallBack = (err) => {
+        console.warn("[city] 3D town failed, showing the street", err);
+        town3dBroken = true;
+        if (!root.isConnected) return;
+        this.leave();
+        view.replaceChildren();
+        this.render(view);
+      };
       import("../render/three/town.js")
         .then(({ createTown }) => {
           if (!root.isConnected) return;
           town = createTown(host, {
+            onReady: () => loading.remove(),
+            onLost: () => fallBack(new Error("WebGL context lost")),
             look: resolveLook({ ...getLook(), ...setLook() }),
             passenger: buddyLook(activeBuddy())?.icon || null,
             phase: dayPhase(),
@@ -206,9 +219,7 @@ export default {
           paint();
           if (window.__game) window.__game.town = town; // test hook
         })
-        .catch((err) => {
-          console.warn("[city] 3D town failed", err);
-        });
+        .catch(fallBack);
     } else {
       // without WebGL: the street with the child's cars driving by
       const s = getState();
