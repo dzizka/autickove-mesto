@@ -7,6 +7,7 @@ import * as rng from "../js/core/rng.js";
 import * as state from "../js/core/state.js";
 import { TRACKS, RACE } from "../js/data/tracks.js";
 import { BOSSES } from "../js/data/bosses.js";
+import { GARAGE } from "../js/data/garage.js";
 import { carStats, carPower, raceEffects, carAbilities, recommendedPower, difficulty, activeLevels } from "../js/systems/stats.js";
 import { recordRace, recordBoss, isBossReady, isLevelUnlocked, isTrackUnlocked, trackProgress, rivalEase } from "../js/systems/progress.js";
 import { grantRaceLoot, upgrade, hintSlot } from "../js/systems/garage.js";
@@ -49,7 +50,7 @@ function pickRace(s) {
   return options.filter((o) => o.light === "green").sort((a, b) => b.rank - a.rank)[0] || newest;
 }
 
-export function simulate({ seed = 1, races = 400 } = {}) {
+export function simulate({ seed = 1, races = 400, onRace = null } = {}) {
   rng.setSeed(seed);
   state.replace(state.defaultState());
   const marks = { maxGap: 0 };
@@ -83,13 +84,15 @@ export function simulate({ seed = 1, races = 400 } = {}) {
     if (result.extra.bossWin) mark(`boss-${pick.track.id}`, i);
     const loot = grantRaceLoot(result.extra);
     if (loot.golden) marks.golden = (marks.golden || 0) + 1;
-    for (let slot = hintSlot(); slot; slot = hintSlot()) upgrade(slot);
+    let ups = 0;
+    for (let slot = hintSlot(); slot; slot = hintSlot()) upgrade(slot), ups++;
+    onRace?.(i, { loot, ups, pick, place: result.extra.place });
 
     const st = state.getState();
     if (carAbilities().size) mark("firstAbility", i);
     if (carAbilities().size >= 6) mark("sixAbilities", i);
     if (carAbilities().size >= 12) mark("allAbilities", i);
-    if (Object.values(activeLevels()).every((l) => l >= 20)) mark("fullCar", i);
+    if (Object.values(activeLevels()).every((l) => l >= GARAGE.maxLevel)) mark("fullCar", i);
     TRACKS.forEach((t) => isTrackUnlocked(t.id, st) && mark(`track-${t.id}`, i));
     if (isLevelUnlocked("space", 5, st) && !marks.space5) {
       mark("space5", i);
