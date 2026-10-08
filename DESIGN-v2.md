@@ -252,7 +252,7 @@ Kamarát sedí v aute ako spolujazdec (vidno ho v okne) a pomáha v pretekoch.
 
 - **Získanie:** z vajíčok. Vajíčko padá od bossov a občas z truhlice a vyliahne sa po 3 pretekoch. Zbierka má 20 kamarátov v 4 vzácnostiach. Nechytení sú v zbierke ako šedé tiene.
 - **Schopnosť:** každý kamarát má jednu schopnosť v pretekoch, napríklad +⚡, +🍀, viac mincí alebo štít navyše. Silnie s levelom.
-- **Level a vývoj:** kamarát rastie jazdením (level 1 až 20) a vyvíja sa až v 3 stupňoch (napr. 🦎→🦕→🦖) za cukríky 🍬. Cukríky sú z dvojitých vajíčok a z truhlice.
+- **Level a vývoj:** kamarát rastie jazdením, kŕmením, hrou a v herni (level 1 až 20, bod 6.1) a vyvíja sa až v 3 stupňoch (napr. 🦎→🦕→🦖) za cukríky 🍬. Cukríky sú z dvojitých vajíčok a z truhlice.
 - **Starostlivosť:** pohladkanie a oblečenie (čiapka, okuliare). Bez hladovania a smútenia, aby dieťa nemalo pocit viny.
 - **Podrobnosti:**
   - Prvé vajíčko padne isto z truhlice v 3. pretekoch, aby dieťa malo kamaráta skoro. Potom padá z truhlice zriedka (6 %) a isto od bossov. Vajíčko od bossa má menšiu šancu na obyčajného kamaráta.
@@ -260,6 +260,20 @@ Kamarát sedí v aute ako spolujazdec (vidno ho v okne) a pomáha v pretekoch.
   - Cukrík je v truhlici s 30 % šancou (od bossa isto).
   - Vývoj na 2. stupeň je od levelu 7 za 5 🍬, na 3. stupeň od levelu 14 za 15 🍬. Level rastie jazdením kamaráta v aute.
   - Kamarát sa ukazuje v okne auta doma, v Garáži, v showroome, v pretekoch aj na pódiu. Oblečenie sa kupuje za mince a nemá štatistiky.
+
+### 6.1 Rast kamarátov bez pretekov a ekonomika (časť 21, po rozbore)
+
+Rozbor (simulácia): kamarát v aute dostane 10 až 15 XP za preteky, na level 20 treba 1 520 XP (asi 120 pretekov) a ostatní kamaráti nerastú vôbec. Cukríky sa hromadia (asi 0,5 za preteky) a míňajú sa len na vývoj. Minihra dávala 15 až 50 mincí, preteky 80 až 260. Rodič vybral prvý balík:
+
+- **🍬 Kŕmenie (K1):** na karte kamaráta je tlačidlo s cukríkom a číslom XP. Cukrík priletí kamarátovi do úst a dá asi tretinu úrovne (`feedShare` 0,34 z XP na ďalší level). Kamarát na leveli 20 už neje.
+- **⭐ Hra s kamarátom (K2):** padajú hviezdy a kamarát ich chytá; beží tam, kam dieťa ťukne alebo potiahne prst (aj šípky). Veľká hviezda 🌟 platí trikrát, chýbajúca hviezda len zmizne. Trvá 30 sekúnd. Prvé 3 hry denne s každým kamarátom dajú 3 XP a 2 mince za hviezdu, potom je to hra pre radosť. Tri bodky na tlačidle ukazujú, koľko hier ešte platí. Po hre ide 🐣 späť ku kamarátom. Kód v `games/buddy/`.
+- **🎪 Herňa učí kamaráta (K5):** každá dohraná minihra dá kamarátovi v aute 8 XP, za 3 hviezdy 12.
+- **💖 Pohladkanie (K6):** prvé pohladkanie dňa dá kamarátovi 10 XP; ďalšie len srdiečka.
+- **Viac mincí v herni (E1):** minihra dáva 40, 75 alebo 120 mincí podľa obtiažnosti (× 0,6 / 0,8 / 1 podľa hviezd), približne ako preteky.
+- **Viac cukríkov (C1):** 3 hviezdy v minihre dajú cukrík s 25 % šancou, denný darček dáva cukríky v 1., 3., 5. (po jednom) a 7. dni (tri).
+- Každý zisk sa ukáže ako „⬆ +XP“ nad kamarátom, nový level ⭐ a konfetami; v okne po hre je riadok s tváričkou kamaráta a cukríkom.
+- Uloženie v17: kamarát si pamätá deň pohladkania a hier (`petDay`, `playDay`, `plays`). Čísla sú v `data/crew.js` (`CREW_RULES`), `data/minigames.js` (`MINI.baseCoins`, `candy3`) a `data/album.js` (`DAILY.candy`).
+- **Druhý balík (navrhnutý, zatiaľ nezadaný):** domček kamarátov v meste alebo výpravy, menšie nafukovanie mincí neskoro v hre, nové veci na stále míňanie mincí.
 
 ---
 
@@ -341,6 +355,7 @@ Každá časť sa po dokončení nahrá na GitHub a dá sa hneď hrať na `/v2/`
 | **18. Upratanie tuningu** | Len spojlery, diely len na autá, kam sedia, umiestnenie podľa tvaru auta, nové veci, veľké záložky (bod 5) | každý diel na každom aute vyzerá, že tam patrí |
 | **19. Angličtina** | Druhý jazyk hry, výber podľa zariadenia a vlajkami v Nastaveniach, hlas a slová hier v angličtine (bod 15.1) | anglické zariadenie neukáže ani nepovie nič po slovensky |
 | **20. Hranie bez slov** | Ukážková ruka na každej obrazovke a v každej hre, obrázok ku každému zvuku, ❔ vysvetlenie pre rodiča, titulky (bod 15.2) | dieťa, ktoré nepočuje a nečíta, vie hrať samo |
+| **21. Kamaráti a ekonomika** | Kŕmenie cukríkom, hra s chytaním hviezd, XP z herne a pohladkania, viac mincí v herni, viac cukríkov (bod 6.1) | kamarát rastie aj bez pretekov a cukríky aj herňa majú zmysel |
 
 ---
 

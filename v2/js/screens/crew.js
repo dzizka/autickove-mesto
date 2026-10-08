@@ -10,6 +10,7 @@ import { STATS } from "../data/stats.js";
 import { canAfford } from "../systems/economy.js";
 import { crewDef, crewRarity, activeBuddy, buddyLook, abilityValue, xpToNext, isEggReady, hatch, setActive, pet, nextEvolution, canEvolve, evolve, ownsClothes, wear } from "../systems/crew.js";
 import { t } from "../core/i18n.js";
+import { careButtons, petGrowth } from "./buddy-care.js";
 
 const ABILITY_SAY = { speed: "rýchlosť", handling: "ovládanie", armor: "odolnosť", fuel: "benzín", magnet: "magnet", luck: "šťastie" };
 
@@ -20,7 +21,7 @@ export function abilityIcon(def) {
 
 function abilitySay(def) {
   if (def.ability.kind === "stat") return t("pridáva {stat}", { stat: t(ABILITY_SAY[def.ability.stat]) });
-  return def.ability.kind === "coins" ? "prináša viac mincí" : "dáva štít navyše";
+  return t(def.ability.kind === "coins" ? "prináša viac mincí" : "dáva štít navyše");
 }
 
 /** Big buddy face with hat and glasses on top. */
@@ -160,6 +161,7 @@ export default {
                   setTimeout(() => heart.remove(), 1400);
                 }
                 speak(t("{name} sa teší!", { name: t(def.name) }));
+                petGrowth(root.querySelector("[data-testid=buddy-card]"), b.id); // the first pat of the day: XP
               },
             },
             buddyFace(b, "big"),
@@ -172,6 +174,7 @@ export default {
             h("span", { class: "buddy-stages", "aria-hidden": "true" }, def.stages.map((ic, i) => h("span", { class: i <= b.stage ? "on" : "" }, ic))),
           ),
           h("div", { class: "buddy-ability", "data-testid": "buddy-ability", "aria-label": "Schopnosť" }, h("span", { class: "ab-icon" }, abilityIcon(def), "⬆"), segs(strength, 5, "ab-segs")),
+          h("div", { class: "buddy-actions care" }, careButtons(b, def, { card: () => root.querySelector("[data-testid=buddy-card]"), paint })),
           h(
             "div",
             { class: "buddy-actions" },
@@ -234,7 +237,7 @@ export default {
                 } else {
                   setActive(c.id);
                   sfx.tap();
-                  speak(`${c.name} ide s tebou! ${c.name} ${abilitySay(c)}.`);
+                  speak(t("{name} ide s tebou! {name} {ability}.", { name: t(c.name), ability: abilitySay(c) }));
                 }
                 paint();
               },

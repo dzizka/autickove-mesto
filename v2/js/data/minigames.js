@@ -19,7 +19,10 @@ export const MINI = {
   levels: 3,
   levelUpAfter: 2, // results with ≥ 2 stars on (or above) the recommended level → recommend the next one
   levelNames: ["Ľahké", "Stredné", "Ťažké"], // read aloud on the difficulty buttons
-  baseCoins: [15, 30, 50], // by level, × stars factor below (harder pays more)
+  // by level, × stars factor below (harder pays more); part 21: raised from 15/30/50 so the games
+  // room pays about like a race (a game takes about as long)
+  baseCoins: [40, 75, 120],
+  candy3: 0.25, // 3 stars: this chance of a candy 🍬 for the buddies (part 21)
   starFactor: [0.6, 0.8, 1], // 1, 2, 3 stars
   baseXp: [10, 16, 24],
 };

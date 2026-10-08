@@ -70,4 +70,13 @@ export const CREW_RULES = {
   chestEggChance: 0.06, // eggs sometimes drop from the race chest (§6)
   firstEggRace: 3, // the first egg is sure in the 3rd race, so a buddy comes early
   petHearts: 3, // a pat shows hearts and a happy sound (no hunger, no sadness)
+  // part 21: buddies grow also without races (DESIGN-v2 §6.1)
+  feedShare: 0.34, // a candy 🍬 gives this share of the XP to the next level (about a third)
+  petXp: 10, // the first pat of the day per buddy
+  playsPerDay: 3, // ⭐ play with a buddy: this many times a day per buddy give XP and coins
+  playSeconds: 30,
+  playXpPerStar: 3, // XP per caught star (a big star 🌟 counts 3)
+  playCoinsPerStar: 2,
+  miniXp: 8, // games room: XP for the buddy in the car …
+  miniXp3: 4, // … plus this for 3 stars
 };

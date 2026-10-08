@@ -33,4 +33,5 @@ export const ALBUM = {
 export const DAILY = {
   coins: [30, 40, 50, 60, 80, 100, 150], // day 1 … 7 (then 7 again)
   packs: [0, 0, 1, 0, 0, 0, 2],
+  candy: [1, 0, 1, 0, 1, 0, 3], // part 21: candy 🍬 for the buddies
 };

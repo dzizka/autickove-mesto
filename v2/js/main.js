@@ -33,7 +33,7 @@ import { checkTrophies } from "./systems/trophies.js";
 import { TROPHIES } from "./data/trophies.js";
 import coloringGame from "./games/coloring/index.js";
 import { recordFinished, addToGallery } from "./systems/coloring.js";
-import { tickEggs, addEgg, rollChestEgg, giveCrewXp } from "./systems/crew.js";
+import { tickEggs, addEgg, rollChestEgg, giveCrewXp, buddyIcon } from "./systems/crew.js";
 import { demoGame, demoCrashGame } from "./games/demo/index.js";
 import gamesRoom from "./screens/games.js";
 import city from "./screens/city.js";
@@ -50,7 +50,10 @@ import maze from "./games/maze/index.js";
 import letters from "./games/letters/index.js";
 import music from "./games/music/index.js";
 import traffic from "./games/traffic/index.js";
+import buddyPlay from "./games/buddy/index.js";
 import { isMini, recordMini } from "./systems/minigames.js";
+import { MINI } from "./data/minigames.js";
+import { giveMiniXp, recordPlay } from "./systems/crew-care.js";
 
 state.load();
 // the language: chosen in the settings, else the device's (part 19)
@@ -85,6 +88,7 @@ router.registerGame(demoGame);
 router.registerGame(demoCrashGame);
 // 🎪 games room (DESIGN-v2 §12)
 for (const game of [pexeso, wash, repair, park, puzzle, count, maze, letters, music, traffic]) router.registerGame(game);
+router.registerGame(buddyPlay); // ⭐ playing with a buddy (part 21)
 
 // Race results: track progress (medals, unlocks, boss bar), then the chest with parts.
 router.addRewardHandler((gameId, result) => {
@@ -117,7 +121,20 @@ router.addRewardHandler((gameId, result) => {
   // a good result sometimes brings a sticker for the album (§13)
   const chance = ALBUM.miniSticker[m.stars] || 0;
   const sticker = chance && rng.random() < chance ? giveStickers(1, rng).stickers[0] : null;
-  return { miniLevelUp: levelUp, sticker };
+  // part 21: the buddy in the car learns too, and 3 stars sometimes bring a candy 🍬
+  const learnt = giveMiniXp(m.stars);
+  const buddyXp = learnt && { ...learnt, icon: buddyIcon(state.getState().crew.owned[learnt.id]) };
+  const candy = m.stars >= 3 && rng.random() < MINI.candy3 ? 1 : 0;
+  if (candy) state.update((s) => (s.crew.candy += candy));
+  return { miniLevelUp: levelUp, sticker, buddyXp, candy };
+});
+// ⭐ Playing with a buddy (part 21): XP and coins while plays are left today.
+router.addRewardHandler((gameId, result) => {
+  const p = result.extra?.buddyPlay;
+  if (gameId !== "buddy" || !p) return null;
+  const r = recordPlay(p.id, p.caught);
+  const icon = buddyIcon(state.getState().crew.owned[p.id]);
+  return { coins: r.coins, buddyXp: r.xp ? { id: p.id, xp: r.xp, levels: r.levels, icon } : null, playCounted: r.counted, caught: p.caught };
 });
 router.setRewardPresenter(presentReward);
 

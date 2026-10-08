@@ -124,13 +124,13 @@ export function hatch(eggId, rng) {
 
 // ---------- levels, evolution ----------
 
-/** XP for the active buddy after a race. Returns the new levels reached. */
-export function giveCrewXp(win = false) {
-  const b = activeBuddy();
-  if (!b) return [];
+/** Give XP to one buddy (races, feeding, play, games room). Returns the new levels reached. */
+export function addBuddyXp(id, xp) {
+  const b = getState().crew.owned[id];
+  if (!b || !(xp > 0) || b.level >= R.maxLevel) return [];
   const gained = [];
   update(() => {
-    b.xp += R.xpPerRace + (win ? R.xpPerWin : 0);
+    b.xp += Math.round(xp);
     while (b.level < R.maxLevel && b.xp >= xpToNext(b.level)) {
       b.xp -= xpToNext(b.level);
       b.level++;
@@ -140,6 +140,12 @@ export function giveCrewXp(win = false) {
   });
   for (const level of gained) emit("buddyLevelUp", { id: b.id, level });
   return gained;
+}
+
+/** XP for the active buddy after a race. Returns the new levels reached. */
+export function giveCrewXp(win = false) {
+  const b = activeBuddy();
+  return b ? addBuddyXp(b.id, R.xpPerRace + (win ? R.xpPerWin : 0)) : [];
 }
 
 /** Next evolution step { level, candy } or null when fully evolved. */

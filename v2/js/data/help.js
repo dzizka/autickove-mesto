@@ -42,6 +42,7 @@ export const HELP = {
     icon: "🐣",
     text: [
       "Kamaráti. Vajíčka padajú od bossov a niekedy z truhlice a vyliahnu sa po troch pretekoch. Kamarát jazdí ako spolujazdec a pomáha (rýchlosť, štít, mince…).",
+      "Kamarát rastie aj bez pretekov: 🍬 cukrík mu dá asi tretinu úrovne, ⭐ hra s chytaním hviezd (3× denne, bodky ukazujú, koľko ostáva), prvé pohladkanie dňa a hry v herni.",
       "Za cukríky 🍬 sa kamarát vyvinie, za mince sa dá obliecť. Ťuknutím na 🏠 zostane doma.",
     ],
   },
@@ -66,6 +67,7 @@ export const HELP = {
   trophies: { icon: "🏆", text: ["Trofeje za úspechy v celej hre. Ťuknutím hra povie, za čo trofej je."] },
   settings: { icon: "⚙️", text: ["Nastavenia: jazyk, zvuky, hlas, pohyblivé pozadie, titulky, prenos postupu na iné zariadenie a prehľad pre rodičov."] },
   parents: { icon: "👪", text: ["Prehľad pre rodičov: čas hrania za posledných 7 dní, čo dieťa hrá najčastejšie a jeho postup."] },
+  "game-buddy": { icon: "⭐", text: ["Hra s kamarátom. Padajú hviezdy a kamarát ich chytá: beží tam, kam dieťa ťukne alebo potiahne prst. Veľká hviezda 🌟 platí trikrát. Trvá 30 sekúnd; prvé 3 hry denne s každým kamarátom mu dajú skúsenosti a pár mincí."] },
   "game-pexeso": { icon: "🃏", text: ["Pexeso. Ťuká sa na dve kartičky; keď sú rovnaké, ostanú otočené. Treba nájsť všetky dvojice."] },
   "game-wash": { icon: "🧽", text: ["Umyváreň. Prstom sa drhne blato špongiou, potom sa sprchou opláchne pena."] },
   "game-repair": { icon: "🔧", text: ["Servis. Na aute bliká, čo je pokazené. Dieťa ťukne na správny nástroj (koleso, žiarovka, benzín, olej…)."] },

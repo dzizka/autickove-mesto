@@ -10,7 +10,7 @@ import { defaultQuests } from "../systems/quests.js";
 import { RENAMED_CARS } from "../data/cars.js";
 
 export const STORAGE_KEY = "autickove-mesto-v2";
-export const CURRENT_VERSION = 16;
+export const CURRENT_VERSION = 17;
 
 /** Local date as YYYY-MM-DD (the same format as the play log). */
 export function todayKey(date = new Date()) {
@@ -147,6 +147,9 @@ const MIGRATIONS = {
   14: (s) => ({ ...s, version: 15 }),
   // v15 → v16: 💬 captions (settings.captions, filled from defaults: off).
   15: (s) => ({ ...s, version: 16 }),
+  // v16 → v17: buddy care (part 21). Buddies may have petDay, playDay and plays; a buddy without
+  // them has not been patted or played with today yet, so nothing needs filling in.
+  16: (s) => ({ ...s, version: 17 }),
 };
 
 const isPlainObject = (v) => v !== null && typeof v === "object" && !Array.isArray(v);

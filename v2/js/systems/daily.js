@@ -29,5 +29,7 @@ export function claimDaily(rng, now = new Date()) {
   const coins = addCoins(DAILY.coins[day - 1]);
   const packs = DAILY.packs[day - 1] || 0;
   const album = packs ? giveStickers(packs * 3, rng) : null;
-  return { day, coins, packs, album };
+  const candy = DAILY.candy?.[day - 1] || 0;
+  if (candy) update((s) => (s.crew.candy += candy));
+  return { day, coins, packs, album, candy };
 }

@@ -157,7 +157,10 @@ function runGame(game, params = []) {
         rewardPresenter(granted, {
           onHome: goHome,
           onAgain: () => show(), // same hash: re-run the game from scratch
-          onGames: MINI_IDS.has(game.id) ? () => go("games") : null, // back to the 🎪 games room
+          // back to the 🎪 games room, or to the screen the game came from (⭐ buddy game → crew)
+          onGames: MINI_IDS.has(game.id) ? () => go("games") : game.backTo ? () => go(game.backTo.screen) : null,
+          gamesIcon: game.backTo?.icon,
+          gamesLabel: game.backTo?.label,
         });
       }
       return granted;

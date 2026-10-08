@@ -12,7 +12,7 @@ export function showDailyGift({ onDone } = {}) {
   if (!dailyReady()) return false;
   const day = dailyDay();
   const days = DAILY.coins.map((_, i) =>
-    h("span", { class: `day-box${i + 1 < day ? " past" : i + 1 === day ? " today" : ""}`, "aria-hidden": "true" }, i + 1 < day ? "✅" : DAILY.packs[i] ? "🎴" : "🪙"),
+    h("span", { class: `day-box${i + 1 < day ? " past" : i + 1 === day ? " today" : ""}`, "aria-hidden": "true" }, i + 1 < day ? "✅" : DAILY.packs[i] ? "🎴" : DAILY.candy?.[i] ? "🍬" : "🪙"),
   );
   const gift = h(
     "button",
@@ -28,7 +28,7 @@ export function showDailyGift({ onDone } = {}) {
         flyCoins(e.currentTarget, Math.min(15, res.coins / 10));
         gift.classList.add("open");
         gift.textContent = "🪙";
-        coins.textContent = `🪙 +${res.coins}`;
+        coins.textContent = `🪙 +${res.coins}${res.candy ? `  🍬 +${res.candy}` : ""}`;
         coins.hidden = false;
         speak(res.packs ? "Mince a nálepky! Príď aj zajtra." : "Mince! Príď aj zajtra, darček bude väčší.");
         setTimeout(() => {

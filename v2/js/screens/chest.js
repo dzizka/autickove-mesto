@@ -42,10 +42,10 @@ function chestSvg() {
 const CHEST_REMIND_MS = 5000;
 const CHEST_AUTO_OPEN_MS = 12000;
 
-export function presentReward(granted, { onHome, onAgain, onGames } = {}) {
+export function presentReward(granted, { onHome, onAgain, onGames, gamesIcon, gamesLabel } = {}) {
   if (granted.coloringReward) return presentColoringReward(granted, { onHome });
   const loot = granted.loot;
-  if (!loot) return rewardModal(granted, { onHome, onAgain, onGames });
+  if (!loot) return rewardModal(granted, { onHome, onAgain, onGames, gamesIcon, gamesLabel });
 
   const golden = loot.golden;
   const ability = golden?.ability ? abilityDef(golden.ability) : null;

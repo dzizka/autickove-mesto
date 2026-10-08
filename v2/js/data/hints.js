@@ -34,6 +34,7 @@ export const HINTS = {
   album: [{ sel: "[data-testid=buy-pack]:not([disabled])" }],
   trophies: [{ sel: "[data-testid=trophy-grid] button" }],
   city: [{ sel: "[data-testid=town-pad] button" }, { sel: "[data-testid=city-lots] button" }],
+  "game-buddy": [{ sel: "[data-testid=bplay-canvas]", kind: "lanes", idle: false }],
   "game-race": [{ sel: "[data-testid=race-canvas]", kind: "lanes", idle: false }],
   "game-pexeso": [{ sel: ".pex-card:not(.up):not(.done)" }],
   "game-wash": [{ sel: ".wash-car", kind: "rub" }],

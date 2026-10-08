@@ -50,6 +50,10 @@ export const EN_HELP = {
   "Hudobná garáž. Autá zatrúbia melódiu (vidno, ktoré auto svieti), potom ju dieťa zopakuje ťukaním na autá. Melódia sa postupne predlžuje.":
     "Music garage. The cars honk a tune (you can see which car lights up), then the child plays it back by tapping the cars. The tune gets longer.",
   "Križovatka. Ťuknutím sa prepne semafor, aby autá prechádzali striedavo a nenarazili do seba.": "Crossroads. A tap switches the traffic lights so the cars take turns and don't crash.",
+  "Kamarát rastie aj bez pretekov: 🍬 cukrík mu dá asi tretinu úrovne, ⭐ hra s chytaním hviezd (3× denne, bodky ukazujú, koľko ostáva), prvé pohladkanie dňa a hry v herni.":
+    "A buddy also grows without races: a 🍬 sweet gives about a third of a level, ⭐ the star-catching game (3× a day, the dots show how many are left), the first pat of the day and the games room.",
+  "Hra s kamarátom. Padajú hviezdy a kamarát ich chytá: beží tam, kam dieťa ťukne alebo potiahne prst. Veľká hviezda 🌟 platí trikrát. Trvá 30 sekúnd; prvé 3 hry denne s každým kamarátom mu dajú skúsenosti a pár mincí.":
+    "Playing with a buddy. Stars fall and the buddy catches them: it runs where the child taps or drags a finger. A big star 🌟 counts three times. It lasts 30 seconds; the first 3 games a day with each buddy give it experience and a few coins.",
   // the help window itself
   "Pre dospelého": "For the grown-up",
   "Ukáž dieťaťu": "Show the child",

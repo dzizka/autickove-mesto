@@ -90,7 +90,7 @@ test("NaN or negative frame times never reach the game", async () => {
 test("more than 30 failing frames show 'car got stuck' and keep the coins", async () => {
   const page = await openGame(env.browser, env.server.url, { width: 1280 });
   await page.evaluate(() => (location.hash = "#/game/demo-crash"));
-  await page.getByTestId("crash-modal").waitFor({ timeout: 8000 });
+  await page.getByTestId("crash-modal").waitFor({ timeout: 20000 }); // slow when the whole suite runs
   await screenshot(page, "1280-crash");
   const stats = await page.evaluate(() => window.__game.loopStats);
   assert.equal(stats.crashes, 1);

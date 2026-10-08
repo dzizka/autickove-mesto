@@ -197,7 +197,7 @@ export function confetti(pieces = 60) {
 }
 
 /** End-of-game reward dialog: coins fly to the counter, then Home / Again. */
-export function rewardModal(result, { onHome, onAgain, onGames } = {}) {
+export function rewardModal(result, { onHome, onAgain, onGames, gamesIcon = "🎪", gamesLabel = "Herňa" } = {}) {
   const box = modal(
     [
       h("div", { class: "modal-icon bounce", "aria-hidden": "true" }, "🏆"),
@@ -205,12 +205,15 @@ export function rewardModal(result, { onHome, onAgain, onGames } = {}) {
       result.miniLevelUp && h("div", { class: "reward-row level-up", "data-testid": "reward-harder", "aria-label": "Skús ťažšie" }, "👍 ⬆️ ★"),
       result.sticker && h("div", { class: "reward-row sticker", "data-testid": "reward-sticker", "aria-label": "Nálepka" }, "📒 +", result.sticker.sticker),
       h("div", { class: "reward-row", "data-testid": "reward-coins" }, "🪙 +", String(result.coins || 0)),
+      // part 21: what the buddy learnt (its face, ⬆ and a ⭐ for a new level) and candy
+      result.buddyXp?.xp > 0 && h("div", { class: "reward-row buddy-xp", "data-testid": "reward-buddy", "aria-label": "Kamarát" }, result.buddyXp.icon || "🐾", " ⬆ +", String(result.buddyXp.xp), result.buddyXp.levels?.length ? " ⭐" : ""),
+      result.candy > 0 && h("div", { class: "reward-row candy", "data-testid": "reward-candy", "aria-label": "Cukrík" }, "🍬 +", String(result.candy)),
       h(
         "div",
         { class: "modal-row" },
         // 🔁 again first and biggest, then 🎪 back to the games room (small games), then 🏠 home
         onAgain && h("button", { class: "btn grass big-choice", "data-testid": "reward-again", "aria-label": "Znova", onclick: () => onAgain() }, "🔁"),
-        onGames && h("button", { class: "btn plum", "data-testid": "reward-games", "aria-label": "Herňa", onclick: () => onGames() }, "🎪"),
+        onGames && h("button", { class: "btn plum", "data-testid": "reward-games", "aria-label": gamesLabel, onclick: () => onGames() }, gamesIcon),
         h("button", { class: "btn sun", "data-testid": "reward-home", "aria-label": "Domov", onclick: () => onHome?.() }, "🏠"),
       ),
     ],
