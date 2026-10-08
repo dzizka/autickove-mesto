@@ -24,12 +24,18 @@
 
   /* 🏁 Preteky: bigger tracks and levels */
   .races { grid-template-columns: 380px 1fr; }
-  .track-card { min-height: clamp(96px, 14dvh, 140px); }
+  .track-card { min-height: clamp(96px, 17dvh, 210px); }
   .track-icon { font-size: 3.4rem; }
   .track-name { font-size: 1.05rem; }
-  .level-btn { min-height: clamp(80px, 11dvh, 112px); }
+  .level-btn { min-height: clamp(80px, 13dvh, 160px); }
+  .level-stars { font-size: .95rem; max-width: 64px; }
+  .level-medal { font-size: 1.5rem; }
+  .races { align-items: stretch; }
+  .races-car { align-content: center; }
   .level-light { font-size: 2.1rem; }
-  .start-btn { width: min(100%, 420px); min-height: clamp(96px, 12dvh, 130px); }
+  .start-btn .btn-icon { font-size: 4.2rem; }
+  .boss-btn { width: 112px; height: 112px; }
+  .boss-face { font-size: 3.6rem; }
 
   /* 🐣 Kamaráti */
   .buddy-face.big .bf-icon { font-size: 9rem; }

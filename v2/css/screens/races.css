@@ -91,3 +91,17 @@
 .boss-crown { position: absolute; top: -14px; font-size: 1.3rem; }
 .boss-wins { position: absolute; right: -8px; bottom: -8px; display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: var(--grass); color: #fff; font-weight: 700; }
 @keyframes boss-glow { 50% { box-shadow: 0 0 22px 4px var(--rarity-legendary); } }
+
+/* part 23: on a big screen everything lines up — the tracks on top, below them the levels with
+   the boss on the right, and the big start button next to the levels */
+@media (min-width: 900px) {
+  .races-main { grid-template-columns: minmax(0, 1fr) clamp(200px, 22vw, 300px); grid-template-areas: "tracks tracks" "levels start"; align-items: stretch; }
+  .races-main .track-grid { grid-area: tracks; }
+  .races-main .level-card { grid-area: levels; max-width: none; margin: 0; grid-template-columns: minmax(0, 1fr) auto; align-items: center; column-gap: 16px; }
+  .races-main .start-btn { grid-area: start; width: 100%; height: 100%; min-height: 0; margin: 0; justify-self: stretch; }
+  .level-card .level-row { grid-column: 1; grid-row: 1; }
+  .level-card .challenge { display: contents; }
+  .level-card .challenge-segs { grid-column: 1; grid-row: 2; }
+  .level-card .boss-btn { grid-column: 2; grid-row: 1 / span 2; }
+  .track-card { align-content: space-between; }
+}
