@@ -9,7 +9,7 @@ export const RACE = {
   // Above the cap the whole race runs in slow motion, so rivals still fall behind,
   // but obstacles come at a speed a child can react to (§4.1).
   visibleCap: 1.12, // × baseSpeed
-  carViewDeg: 18, // how high above the road the 3D cars are seen from behind (degrees; play-test: 34 looked like a wheelie)
+  carViewDeg: 12, // how high above the road the 3D cars are seen from behind (degrees; play-test: 34 looked like a wheelie, the parent chose 12)
   length: 1000,
   shortLength: 320, // test-menu "short races"
   rivals: [
