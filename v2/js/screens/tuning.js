@@ -15,6 +15,7 @@ import { buddyBadge } from "./buddy-badge.js";
 import { openTestDrive } from "../games/race/test-drive.js";
 import { carStats, carPower, levelsOf } from "../systems/stats.js";
 import { powerBadge } from "./stat-panel.js";
+import { t } from "../core/i18n.js";
 
 const TABS = [CARS_TAB, ...TUNING];
 const MINI_CAR = new Set(["car", "pattern", "wheels", "wing", "neon"]);
@@ -193,7 +194,7 @@ export default {
                   select(tab, item.id);
                 } else {
                   preview = { cat: tab, id: item.id };
-                  speak(canAfford(item.price) ? `Stojí to ${item.price} mincí. Chceš to kúpiť?` : "Na toto ešte nemáš dosť mincí. Vyhraj preteky!");
+                  speak(canAfford(item.price) ? t("Stojí to {n} mincí. Chceš to kúpiť?", { n: item.price }) : "Na toto ešte nemáš dosť mincí. Vyhraj preteky!");
                 }
                 paint();
               },

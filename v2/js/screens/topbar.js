@@ -10,6 +10,7 @@ import { levelProgress } from "../systems/progress.js";
 import { hintSlot } from "../systems/garage.js";
 import { PILLARS } from "../data/menu.js";
 import { openParentGate } from "./test-menu.js";
+import { t, num } from "../core/i18n.js";
 
 const HOLD_MS = 3000;
 
@@ -91,7 +92,7 @@ export function mountTopbar(header, nav) {
     const s = getState();
     levelNum.textContent = String(s.level);
     levelRing.style.setProperty("--progress", `${Math.round(levelProgress(s) * 100)}%`);
-    coinNum.textContent = s.coins.toLocaleString("sk-SK");
+    coinNum.textContent = num(s.coins);
     // a green ⬆ on 🔧 when the child can upgrade a part (garage B, §4.6)
     const garage = nav.querySelector('[data-route="garage"]');
     if (garage) garage.dataset.ready = hintSlot(s) ? "1" : "0";
@@ -108,7 +109,7 @@ export function mountTopbar(header, nav) {
   on("levelUp", ({ level }) => {
     sfx.levelUp();
     confetti(80);
-    toast(`Nový level ${level}!`, { icon: "⭐" });
+    toast(t("Nový level {n}!", { n: level }), { icon: "⭐" });
     speak("Hurá! Máš nový level!", { interrupt: false });
   });
   on("screenShown", ({ id }) => {

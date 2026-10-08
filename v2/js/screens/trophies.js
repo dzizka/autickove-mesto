@@ -6,6 +6,7 @@ import { speak, sfx } from "../core/audio.js";
 import { getState } from "../core/state.js";
 import { TROPHIES } from "../data/trophies.js";
 import { checkTrophies } from "../systems/trophies.js";
+import { t as tr } from "../core/i18n.js";
 
 export default {
   id: "trophies",
@@ -32,7 +33,7 @@ export default {
                 "aria-label": t.name,
                 onclick: () => {
                   sfx.tap();
-                  speak(s.trophies[t.id] ? `${t.name}. Máš ju!` : `${t.name}. Túto trofej ešte nemáš.`);
+                  speak(tr(s.trophies[t.id] ? "{name}. Máš ju!" : "{name}. Túto trofej ešte nemáš.", { name: tr(t.name) }));
                 },
               },
               h("span", { class: "trophy-icon", "aria-hidden": "true" }, t.icon),

@@ -3,6 +3,7 @@
 
 import { h } from "../core/ui.js";
 import { STATS, STAT_IDS, STAT_BAR_FULL } from "../data/stats.js";
+import { t } from "../core/i18n.js";
 
 export function statBar(statId, value) {
   const def = STATS[statId];
@@ -10,7 +11,7 @@ export function statBar(statId, value) {
   const fill = Math.min(1, v / STAT_BAR_FULL);
   return h(
     "div",
-    { class: "stat-row", style: { "--stat": def.color, "--fill": `${Math.round(fill * 100)}%` }, "data-stat": statId, "data-value": String(v), "aria-label": `${def.name}: ${v}` },
+    { class: "stat-row", style: { "--stat": def.color, "--fill": `${Math.round(fill * 100)}%` }, "data-stat": statId, "data-value": String(v), "aria-label": `${t(def.name)}: ${v}` },
     h("span", { class: "stat-icon", "aria-hidden": "true" }, def.icon),
     h("span", { class: "stat-num" }, String(v)),
     h("span", { class: "stat-bar" }, h("i")),

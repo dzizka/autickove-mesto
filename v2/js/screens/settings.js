@@ -2,10 +2,11 @@
 // The hidden test menu opens by holding ⚙️ in the top bar for 3 s (see topbar.js).
 
 import { h, modal, closeModal, confirm, toast } from "../core/ui.js";
-import { speak, sfx, hasSlovakVoice } from "../core/audio.js";
-import { getState, update, replace, reset } from "../core/state.js";
+import { speak, sfx, hasLangVoice } from "../core/audio.js";
+import { getState, update, replace, reset, saveNow } from "../core/state.js";
 import { exportCode, parseCode } from "../core/save-transfer.js";
 import { goHome, go } from "../core/router.js";
+import { t, LANGS, getLang } from "../core/i18n.js";
 
 function toggleRow({ key, icon, label, say }) {
   const on = () => getState().settings[key] !== false;
@@ -29,6 +30,35 @@ function toggleRow({ key, icon, label, say }) {
   };
   paint();
   return h("div", { class: "setting-row" }, h("span", { class: "setting-icon", "aria-hidden": "true" }, icon), h("span", { class: "setting-label" }, label), btn);
+}
+
+/** Two big flags: the game's language (part 19). The page reloads in the new language. */
+function languageRow() {
+  return h(
+    "div",
+    { class: "lang-row", role: "radiogroup", "aria-label": "Jazyk" },
+    LANGS.map((l) =>
+      h(
+        "button",
+        {
+          class: `lang-btn${l.id === getLang() ? " on" : ""}`,
+          role: "radio",
+          "aria-checked": String(l.id === getLang()),
+          "aria-label": l.name,
+          "data-testid": `lang-${l.id}`,
+          onclick: () => {
+            if (l.id === getLang()) return;
+            sfx.tap();
+            update((s) => (s.settings.lang = l.id));
+            saveNow();
+            location.reload();
+          },
+        },
+        h("span", { class: "lang-flag", "aria-hidden": "true" }, l.flag),
+        h("span", { class: "lang-name" }, l.name),
+      ),
+    ),
+  );
 }
 
 const ERRORS = {
@@ -64,7 +94,7 @@ export function openTransfer() {
       return;
     }
     msg.append(
-      h("p", {}, `Našiel som postup: level ${data.level}, ${data.coins} 🪙. Terajší postup v tomto prehliadači sa nahradí.`),
+      h("p", {}, t("Našiel som postup: level {level}, {coins} 🪙. Terajší postup v tomto prehliadači sa nahradí.", { level: data.level, coins: data.coins })),
       h("button", {
         class: "btn tomato",
         "data-testid": "import-confirm",
@@ -115,13 +145,14 @@ export default {
         "section",
         { class: "screen settings", "data-testid": "screen-settings" },
         h("h1", { class: "screen-title" }, "⚙️ Nastavenia"),
+        h("div", { class: "card" }, languageRow()),
         h(
           "div",
           { class: "card" },
           toggleRow({ key: "sound", icon: "🔔", label: "Zvuky", say: "Zvuky sú zapnuté." }),
           toggleRow({ key: "voice", icon: "🗣️", label: "Hlas", say: "Hlas je zapnutý." }),
           toggleRow({ key: "motion", icon: "🎞️", label: "Pohyblivé pozadie", say: "Pozadie sa hýbe." }),
-          !hasSlovakVoice() && h("p", { class: "small" }, "Tento prehliadač nemá slovenský hlas. Hra číta náhradným hlasom."),
+          !hasLangVoice() && h("p", { class: "small" }, getLang() === "sk" ? "Tento prehliadač nemá slovenský hlas. Hra číta náhradným hlasom." : "Tento prehliadač nemá anglický hlas. Hra číta náhradným hlasom."),
         ),
         h(
           "div",

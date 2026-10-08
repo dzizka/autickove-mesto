@@ -18,7 +18,7 @@ test("evening and night show the night tracks; old saves get the moving backgrou
   assert.equal(isNight(new Date(2026, 9, 8, 5)), true);
   const s = migrate({ version: 11, settings: { sound: false, voice: true } });
   assert.equal(s.version, CURRENT_VERSION);
-  assert.deepEqual(s.settings, { sound: false, voice: true, motion: true });
+  assert.deepEqual(s.settings, { sound: false, voice: true, motion: true, lang: null });
 });
 
 let env;

@@ -8,6 +8,7 @@ import { COLORING } from "../../data/coloring/palette.js";
 import { pixelGrid, pictureReward, saveWip, loadWip } from "../../systems/coloring.js";
 import { createHistory, createBrushLayer } from "./brush.js";
 import { createToolbar } from "./tools.js";
+import { t, getLang } from "../../core/i18n.js";
 
 const NUMBER_SAY = ["jednotku", "dvojku", "trojku", "štvorku", "päťku", "šestku", "sedmičku", "osmičku", "deviatku"];
 
@@ -57,7 +58,7 @@ export function startByNumber(view, ctx, pic, cleanup) {
   const swatches = grid.colors.map((color, k) =>
     h(
       "button",
-      { class: "bn-swatch", "data-testid": `num-${k + 1}`, "aria-label": `Číslo ${k + 1}`, style: { "--c": color }, onclick: () => select(k + 1, true) },
+      { class: "bn-swatch", "data-testid": `num-${k + 1}`, "aria-label": t("Číslo {n}", { n: k + 1 }), style: { "--c": color }, onclick: () => select(k + 1, true) },
       h("span", { class: "bn-num" }, String(k + 1)),
       h("span", { class: "bn-check", "aria-hidden": "true" }, "✔"),
     ),
@@ -82,7 +83,7 @@ export function startByNumber(view, ctx, pic, cleanup) {
     selected = k;
     sfx.tap();
     refresh();
-    if (say) ctx.speak(leftOf(k) ? `Hľadaj ${NUMBER_SAY[k - 1] || "toto číslo"}.` : "Toto číslo je hotové!");
+    if (say) ctx.speak(leftOf(k) ? (getLang() === "sk" ? `Hľadaj ${NUMBER_SAY[k - 1] || "toto číslo"}.` : t("Hľadaj číslo {n}.", { n: k })) : "Toto číslo je hotové!");
   }
 
   function persist() {

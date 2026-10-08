@@ -1,7 +1,8 @@
 // Sound effects (Web Audio, generated, no files) and the reading voice
-// (speechSynthesis, Slovak if available). Both respect the settings in state.
+// (speechSynthesis in the game's language, part 19). Both respect the settings in state.
 
 import { getState } from "./state.js";
+import { auto, getLang, langDef } from "./i18n.js";
 
 let ctx = null;
 let master = null;
@@ -76,10 +77,13 @@ function pickVoice() {
   const synth = window.speechSynthesis;
   if (!synth) return;
   const voices = synth.getVoices();
-  voice =
-    voices.find((v) => /^sk(-|_|$)/i.test(v.lang)) ||
-    voices.find((v) => /^cs(-|_|$)/i.test(v.lang)) ||
-    null;
+  const is = (re) => voices.find((v) => re.test(v.lang));
+  voice = getLang() === "en" ? is(/^en(-|_)GB/i) || is(/^en(-|_|$)/i) || null : is(/^sk(-|_|$)/i) || is(/^cs(-|_|$)/i) || null;
+}
+
+/** The language changed: pick a voice for it. */
+export function refreshVoice() {
+  pickVoice();
 }
 
 export function initVoice() {
@@ -92,13 +96,14 @@ export function initVoice() {
 /** Read a Slovak sentence aloud (if the voice is on). Interrupts what is being said. */
 export function speak(text, { interrupt = true } = {}) {
   if (!text) return;
+  text = auto(text);
   lastSpoken = text;
   const synth = window.speechSynthesis;
   if (!voiceOn() || !synth) return;
   try {
     if (interrupt) synth.cancel();
     const u = new SpeechSynthesisUtterance(text);
-    u.lang = voice?.lang || "sk-SK";
+    u.lang = voice?.lang || langDef().voice;
     if (voice) u.voice = voice;
     u.rate = 0.95;
     u.pitch = 1.1;
@@ -121,6 +126,7 @@ export function stopSpeaking() {
   }
 }
 
-export function hasSlovakVoice() {
-  return !!voice && /^sk/i.test(voice.lang);
+/** True when the browser has a voice in the game's language (else it reads with another one). */
+export function hasLangVoice() {
+  return !!voice && voice.lang.toLowerCase().startsWith(getLang());
 }

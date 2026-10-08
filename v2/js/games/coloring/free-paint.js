@@ -6,6 +6,7 @@ import { GLITTER, COLORING } from "../../data/coloring/palette.js";
 import { ownedGlitter, pictureReward } from "../../systems/coloring.js";
 import { createHistory, createBrushLayer } from "./brush.js";
 import { createToolbar, createPalette } from "./tools.js";
+import { t } from "../../core/i18n.js";
 
 const NS = "http://www.w3.org/2000/svg";
 const OUTLINE = "#2b2d33";
@@ -158,6 +159,6 @@ export function startFreePaint(view, ctx, pic, cleanup) {
   const onResize = () => brush.resize();
   window.addEventListener("resize", onResize);
   cleanup.push(() => window.removeEventListener("resize", onResize));
-  ctx.speak(`${pic.name}. Vyber farbu a ťukni do obrázka.`);
+  ctx.speak(t("{name}. Vyber farbu a ťukni do obrázka.", { name: t(pic.name) }));
   return { svg, brush, history };
 }

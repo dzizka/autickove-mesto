@@ -339,6 +339,8 @@ Každá časť sa po dokončení nahrá na GitHub a dá sa hneď hrať na `/v2/`
 | **16. Mesto zhora** | Mesto z City Kit modelov zhora, dieťa jazdí po uliciach a zbiera nájomné (bod 14) | dieťa nájde a vyberie mince samo |
 | **17. Garáž B** | Každé auto má 6 dielov s úrovňou 1 až 20, ťuknutie vylepší diel za súčiastky, schopnosti na úrovni 6 a 14, truhlica so súčiastkami a zlatým dielom, migrácia uloženia v13 (body 4.2 až 4.8) | dieťa vylepší auto bez čítania a nové auto má vlastný postup |
 | **18. Upratanie tuningu** | Len spojlery, diely len na autá, kam sedia, umiestnenie podľa tvaru auta, nové veci, veľké záložky (bod 5) | každý diel na každom aute vyzerá, že tam patrí |
+| **19. Angličtina** | Druhý jazyk hry, výber podľa zariadenia a vlajkami v Nastaveniach, hlas a slová hier v angličtine (bod 15.1) | anglické zariadenie neukáže ani nepovie nič po slovensky |
+| **20. Hranie bez slov** | Ukážková ruka na každej obrazovke a v každej hre, obrázok ku každému zvuku, ❔ vysvetlenie pre rodiča, titulky (bod 15.2) | dieťa, ktoré nepočuje a nečíta, vie hrať samo |
 
 ---
 
@@ -443,3 +445,27 @@ Každá hra má 3 obtiažnosti, ktoré si dieťa vyberá samo (od časti 13), a 
 - **Mesto (časť 16), rozhodnutie rodiča:** mesto **zhora**, ulice v mriežke, dieťa jazdí hore, dole, doľava a doprava (šípky, potiahnutie prstom) a cestou zbiera mince z kúpených pozemkov. Pohľad z uhla je krajší, ale vysoká budova zakryje auto; vrátime sa k nemu možno neskôr. **Hotové v časti 16** (`render/three/town.js`, `town-map.js`, rozloženie v `data/city.js` TOWN): mapa 4 × 4 blokov, budovy na 12 blokoch najbližšie stredu, okolo domy, parky a rad stromov. Auto dieťaťa (3D auto s tuningom a kamarátom) jazdí šípkami, potiahnutím prsta alebo klávesmi. Nájom čaká ako 1 až 3 mince na ulici pred domom (podľa toho, koľko sa nazbieralo); prejazdom cez ne sa vyberie. Ťuknutie na pozemok otvorí detail (postaviť, vylepšiť, ▶ hra). Svetlo podľa času dňa, v noci svietia aj svetlá auta. Modely: Kenney City Kit Roads, Suburban a Commercial (CC0). Budova rastie s úrovňou (malý obchod → poschodový dom → mrakodrap), každá má svoju farbu a ikonu; pozemok na predaj je hlina s kužeľmi, zamknutý má 🔒. Náhľad `/v2/preview/town3d.html`. Rodič nahral aj Nature, Racing a Toy Car Kit; použijú sa podľa potreby (napr. stromy, okolie trate). Pôvodné dve možnosti (už nevybrané) v náhľade `/v2/preview/town.html`:
   - **D1 jazda ulicou:** pohľad zozadu ako v pretekoch, domy po oboch stranách, šípky ◀ ▶ presunú auto k ďalšiemu domu, dom pred autom je veľký a ťuká sa naň.
   - **D2 bočná ulica s vrstvami:** súčasná ulica, ale krajšia: viac vrstiev pozadia, ktoré sa pri posúvaní hýbu rôzne rýchlo, a lepšie kreslené domy.
+
+---
+
+## 15. Jazyky a hranie bez slov (časti 19 a 20, po skúšaní)
+
+Rodič chce, aby hru hrali aj deti, ktoré nehovoria po slovensky, a aj deti, ktoré **nepočujú a nevedia čítať**. Hra má byť pochopiteľná len z obrázkov, pohybu a ukážky.
+
+### 15.1 Angličtina (časť 19)
+
+- **Dva jazyky:** slovenčina a angličtina (britská). Jazyk sa vyberie podľa zariadenia (slovenské a české zariadenie → slovenčina, iné → angličtina). Rodič ho zmení v Nastaveniach dvoma veľkými vlajkami 🇸🇰 🇬🇧, hra sa znovu načíta v novom jazyku a výber sa uloží (`settings.lang`, schéma v15).
+- **Ako to funguje:** v kóde ostáva slovenský text a anglický preklad sa nájde podľa neho (`core/i18n.js`, slovník v `data/i18n/en-*.js`). Texty s číslom alebo menom sa píšu `t("Úroveň {n}", { n })`. Tlačidlá, nápisy, hlas aj bublinky sa prekladajú samy. Chýbajúci preklad ostane po slovensky a test ho nájde.
+- **Hlas** číta v jazyku hry (anglický hlas, ak ho prehliadač má; inak náhradný a Nastavenia to povedia).
+- **Písmenká a Počítanie** majú v angličtine vlastné slová (apple, banana… a one, two, three…), lebo začiatočné písmená sa v jazykoch líšia.
+- **Test** (`tests/i18n.test.mjs`): anglické zariadenie prejde všetky obrazovky, hry aj preteky; na stránke ani v hlase nesmie byť slovenský text a žiadny text nesmie chýbať v slovníku.
+
+### 15.2 Hranie bez slov (časť 20)
+
+Cieľ: dieťa, ktoré nepočuje hlas a nevie čítať, pochopí, čo má robiť.
+
+- **Ukážková ruka 👆:** na každej obrazovke a v každej hre ruka ukáže hlavný krok: priletí k cieľu a ťukne naň (kruh pod prstom), pri ťahaní prejde od veci k jej miestu. Ukáže sa pri prvých návštevách obrazovky a vždy, keď dieťa asi 7 sekúnd nič nerobí. Ruka nikdy nezakryje ťuknutie. Hry označia, kam ukázať (`data-hint`, pri ťahaní aj `data-hint-to`), takže ruka ukazuje vždy správny ďalší krok (správna karta, správny nástroj, auto a jeho miesto).
+- **Každý zvuk má obrázok:** klaksón ukáže zvukové vlny, správna odpoveď ✔ a hviezdy, chybná zatrasenie a ✖, dochádzajúci benzín bliká, boss má červený terč, výhra konfety. Nič dôležité sa dieťa nedozvie len hlasom.
+- **❔ pre rodiča (bod 5 z pripomienok):** vedľa 🔊 je ❔. Otvorí krátke vysvetlenie aktuálnej obrazovky pre dospelého v jazyku hry (čo sa tu robí, prečo, čo z toho dieťa má) a tlačidlo 👆, ktoré pustí ukážku ruky. Texty sú v `data/help.js`.
+- **💬 Titulky** (Nastavenia, predvolene vypnuté): čo hra hovorí, sa ukáže aj ako krátka bublina dole. Pre staršie deti a rodičov, ktorí nepočujú.
+- **Test:** pri vypnutom hlase sa na každej obrazovke a v každej hre po chvíli nečinnosti ukáže ruka a ukazuje na viditeľné tlačidlo; ❔ má vysvetlenie pre každú obrazovku a hru v oboch jazykoch.

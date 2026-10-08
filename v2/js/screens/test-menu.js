@@ -14,6 +14,7 @@ import { finishAllQuests } from "../systems/quests.js";
 import { giveStickers } from "../systems/album.js";
 import * as rng from "../core/rng.js";
 import { go } from "../core/router.js";
+import { t } from "../core/i18n.js";
 
 function setLevel(level) {
   update((s) => {
@@ -33,7 +34,7 @@ const CHEATS = [
   { id: "lvl20", label: "Level 20", color: "plum", run: () => setLevel(20) },
   {
     id: "short",
-    label: () => `Krátke preteky: ${getState().cheats.shortRaces ? "zapnuté" : "vypnuté"}`,
+    label: () => t(getState().cheats.shortRaces ? "Krátke preteky: zapnuté" : "Krátke preteky: vypnuté"),
     color: "grass",
     run: () => update((s) => (s.cheats.shortRaces = !s.cheats.shortRaces)),
     reopen: true,
@@ -85,7 +86,7 @@ export function openTestMenu() {
   modal(
     [
       h("h2", {}, "🧪 Testovacie menu"),
-      h("p", { class: "small" }, `Skryté pred dieťaťom. Zmeny sa hneď uložia. Schéma v${CURRENT_VERSION}, uložené ${Math.round(bytes / 1024 * 10) / 10} kB, level ${s.level}, ${s.coins} 🪙.`),
+      h("p", { class: "small" }, t("Skryté pred dieťaťom. Zmeny sa hneď uložia. Schéma v{v}, uložené {kb} kB, level {level}, {coins} 🪙.", { v: CURRENT_VERSION, kb: Math.round((bytes / 1024) * 10) / 10, level: s.level, coins: s.coins })),
       h("div", { class: "cheat-grid" }, buttons),
       h("div", { class: "modal-row" }, h("button", { class: "btn ghost", onclick: closeModal }, "Zavrieť")),
     ],
@@ -110,7 +111,7 @@ export function openParentGate() {
   modal(
     [
       h("h2", {}, "Pre rodičov"),
-      h("p", { "data-testid": "gate-question" }, `Koľko je ${a} × ${b}?`),
+      h("p", { "data-testid": "gate-question" }, t("Koľko je {a} × {b}?", { a, b })),
       input,
       h(
         "div",

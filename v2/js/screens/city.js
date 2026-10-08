@@ -12,6 +12,7 @@ import { buildingLevel, nextPrice, isBuildingOpen, buildOrUpgrade, rentWaiting, 
 import { getLook, resolveLook, colorLook } from "../systems/tuning.js";
 import { carSidePic } from "../render/car-side.js";
 import { hasWebGL } from "../render/car-pics.js";
+import { t } from "../core/i18n.js";
 
 const COLORS = ["#ff5a5f", "#2f80ed", "#ffd23f", "#3ebd4a", "#8f5bd8", "#ff8c42"];
 
@@ -151,7 +152,7 @@ export default {
                     closeModal();
                     playNotes([[523, 0.12, "triangle"], [659, 0.12, "triangle"], [784, 0.2, "triangle"]]);
                     confetti(lvl ? 40 : 70);
-                    speak(lvl ? `${def.name} je väčšia a krajšia!` : `Postavené! ${def.name}.`);
+                    speak(lvl ? t("{name} je väčšia a krajšia!", { name: t(def.name) }) : t("Postavené! {name}.", { name: t(def.name) }));
                     toast(def.name, { icon: def.icon });
                     paint();
                   },
@@ -164,7 +165,7 @@ export default {
         ],
         { testId: "bld-detail", className: "bld-modal" },
       );
-      if (price !== null && getState().coins < price) speak(`${def.say} Na ${lvl ? "vylepšenie" : "stavbu"} treba viac mincí.`, { interrupt: false });
+      if (price !== null && getState().coins < price) speak(`${t(def.say)} ${t(lvl ? "Na vylepšenie treba viac mincí." : "Na stavbu treba viac mincí.")}`, { interrupt: false });
     }
 
     const use3d = hasWebGL() && !town3dBroken;

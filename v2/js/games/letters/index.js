@@ -5,6 +5,7 @@ import { h } from "../../core/ui.js";
 import { LETTERS } from "../../data/minigames.js";
 import { miniDef, starsFor } from "../../systems/minigames.js";
 import { createShell, createRounds, shake } from "../mini/shell.js";
+import { t, getLang } from "../../core/i18n.js";
 
 const cap = (w) => w[0].toUpperCase() + w.slice(1);
 let shell = null;
@@ -19,7 +20,11 @@ export default {
     shell = createShell(view, ctx, this);
     const sh = shell;
     const L = sh.level - 1;
-    const pool = L === 0 ? LETTERS.words.filter((w) => LETTERS.easy.includes(w[0])) : LETTERS.words;
+    // every language has its own words (an apple starts with A in English, with J in Slovak)
+    const en = getLang() === "en";
+    const words = en ? LETTERS.wordsEn : LETTERS.words;
+    const easy = en ? LETTERS.easyEn : LETTERS.easy;
+    const pool = L === 0 ? words.filter((w) => easy.includes(w[0])) : words;
     const letters = [...new Set(pool.map((w) => w[0]))];
     const top = h("div", { class: "let-top", "data-testid": "let-top" });
     const opts = h("div", { class: "let-opts", "data-testid": "let-opts" });
@@ -81,20 +86,20 @@ export default {
         const others = ctx.rng.shuffle(letters.filter((l) => l !== letter)).slice(0, LETTERS.options[L] - 1).map((l) => ctx.rng.pick(pool.filter((w) => w[0] === l)));
         opts.replaceChildren(
           ...ctx.rng.shuffle([word, ...others]).map((w) =>
-            option(h("span", { class: "let-pic" }, w[1]), w === word, `Áno! ${cap(w[2])} sa začína na ${letter}.`, `To je ${w[2]}. Skús ešte raz.`, { "data-word": w[2], "aria-label": w[2] }),
+            option(h("span", { class: "let-pic" }, w[1]), w === word, t("Áno! {word} sa začína na {letter}.", { word: cap(w[2]), letter }), t("To je {word}. Skús ešte raz.", { word: w[2] }), { "data-word": w[2], "aria-label": w[2] }),
           ),
         );
-        ctx.speak(`Ktorý obrázok sa začína na písmeno ${letter}?`);
+        ctx.speak(t("Ktorý obrázok sa začína na písmeno {letter}?", { letter }));
       } else {
         // a picture and its word without the first letter; which letter is missing?
         top.replaceChildren(h("div", { class: "let-big", "aria-hidden": "true" }, pic), h("div", { class: "let-word", "aria-hidden": "true" }, h("b", { class: "let-blank" }, "?"), name.slice(1).toUpperCase()));
         const others = ctx.rng.shuffle(letters.filter((l) => l !== letter)).slice(0, LETTERS.options[L] - 1);
         opts.replaceChildren(
           ...ctx.rng.shuffle([letter, ...others]).map((l) =>
-            option(h("span", { class: "let-letter" }, l), l === letter, `Áno! ${letter}, ${name}.`, "Skús ešte raz.", { "data-letter": l, "aria-label": l }),
+            option(h("span", { class: "let-letter" }, l), l === letter, t("Áno! {letter}, {word}.", { letter, word: name }), "Skús ešte raz.", { "data-letter": l, "aria-label": l }),
           ),
         );
-        ctx.speak(`${cap(name)}. Na aké písmeno sa začína?`);
+        ctx.speak(t("{word}. Na aké písmeno sa začína?", { word: cap(name) }));
       }
     }
     next();

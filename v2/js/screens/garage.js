@@ -14,6 +14,7 @@ import { createCarView } from "../render/car-view.js";
 import { buddyBadge } from "./buddy-badge.js";
 import { getLook } from "../systems/tuning.js";
 import { statPanel, powerBadge } from "./stat-panel.js";
+import { t } from "../core/i18n.js";
 
 const abilityDef = (id) => LEGENDARIES.find((l) => l.id === id);
 const SAY_GAP_MS = 2500;
@@ -34,7 +35,7 @@ function partButton(slot, level, scrap, { hint, onTap }) {
       "data-slot": slot.id,
       "data-level": String(level),
       "data-can": can ? "1" : "0",
-      "aria-label": `${slot.name} ${level}`,
+      "aria-label": `${t(slot.name)} ${level}`,
       style: { "--ring": `${Math.round(ring * 100)}%`, "--stat": STATS[slot.main].color },
       onclick: (e) => onTap(slot, e.currentTarget),
     },
@@ -93,10 +94,10 @@ export default {
         confetti(90);
         playNotes(ability.notes);
         saidAt = performance.now();
-        speak(`Nová schopnosť! ${ability.name}!`);
+        speak(t("Nová schopnosť! {name}!", { name: t(ability.name) }));
       } else if (res.level === GARAGE.maxLevel) {
         sfx.win();
-        say(`${slot.name} je na najvyššej úrovni!`);
+        say(t("{name} je na najvyššej úrovni!", { name: t(slot.name) }));
       }
     };
 

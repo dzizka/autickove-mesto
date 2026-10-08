@@ -7,6 +7,7 @@ import * as rng from "../core/rng.js";
 import { getState } from "../core/state.js";
 import { PAGES, ALBUM } from "../data/album.js";
 import { openPages, stickerCount, stickerTier, spare, isGold, pageFound, buyPack, upgradeSticker } from "../systems/album.js";
+import { t } from "../core/i18n.js";
 
 const TIER_ICON = ["", "🥈", "🥇"];
 
@@ -68,7 +69,7 @@ export default {
                     if (!upgradeSticker(st)) return;
                     playNotes([[523, 0.1, "triangle"], [659, 0.1, "triangle"], [784, 0.1, "triangle"], [1047, 0.25, "triangle"]]);
                     confetti(40);
-                    speak(`${next.name} nálepka!`);
+                    speak(t("{name} nálepka!", { name: t(next.name) }));
                     closeModal();
                     paint();
                   },
@@ -81,7 +82,7 @@ export default {
         ],
         { testId: "sticker-detail" },
       );
-      speak(next ? (sp >= next.cost ? `Máš dosť rovnakých nálepiek. Vyrob ${next.name.toLowerCase()}!` : "Zbieraj rovnaké nálepky a vyrobíš striebornú alebo zlatú.") : "Zlatá nálepka! Krajšia už nebude.");
+      speak(next ? (sp >= next.cost ? t("Máš dosť rovnakých nálepiek. Vyrob {name}!", { name: t(next.name).toLowerCase() }) : "Zbieraj rovnaké nálepky a vyrobíš striebornú alebo zlatú.") : "Zlatá nálepka! Krajšia už nebude.");
     }
 
     function pageEl(page) {

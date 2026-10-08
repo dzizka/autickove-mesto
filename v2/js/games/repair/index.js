@@ -7,6 +7,7 @@ import { miniDef, starsFor } from "../../systems/minigames.js";
 import { getLook, resolveLook } from "../../systems/tuning.js";
 import { carSidePic } from "../../render/car-side.js";
 import { createShell, shake } from "../mini/shell.js";
+import { t } from "../../core/i18n.js";
 
 /** Where a problem shows on the side view (viewBox 240 × 124). */
 function spot(side, at) {
@@ -110,7 +111,7 @@ export default {
           ),
         ),
       );
-      ctx.speak(`${p.say} Čo potrebuješ?`);
+      ctx.speak(`${t(p.say)} ${t("Čo potrebuješ?")}`);
     }
     next();
   },

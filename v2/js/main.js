@@ -4,6 +4,7 @@ import * as state from "./core/state.js";
 import * as events from "./core/events.js";
 import * as rng from "./core/rng.js";
 import * as audio from "./core/audio.js";
+import * as i18n from "./core/i18n.js";
 import * as ui from "./core/ui.js";
 import * as router from "./core/router.js";
 import { loopStats, frameTiming } from "./core/loop.js";
@@ -51,6 +52,10 @@ import traffic from "./games/traffic/index.js";
 import { isMini, recordMini } from "./systems/minigames.js";
 
 state.load();
+// the language: chosen in the settings, else the device's (part 19)
+i18n.setLang(state.getState().settings.lang || i18n.detectLang());
+document.title = i18n.t("Autíčkové mesto 2");
+document.querySelector("[data-nav]")?.setAttribute("aria-label", i18n.t("Navigácia"));
 audio.initVoice();
 
 // Audio may only start after a user gesture.
@@ -141,8 +146,8 @@ const flushTrophies = () => {
   if (!announce.length || document.body.dataset.mode === "game") return;
   const t = announce.shift();
   audio.sfx.levelUp();
-  ui.toast(`Nová trofej: ${t.name}`, { icon: `🏆${t.icon}`, ms: 3200 });
-  audio.speak(`Nová trofej! ${t.name}!`, { interrupt: false });
+  ui.toast(i18n.t("Nová trofej: {name}", { name: i18n.t(t.name) }), { icon: `🏆${t.icon}`, ms: 3200 });
+  audio.speak(i18n.t("Nová trofej! {name}!", { name: i18n.t(t.name) }), { interrupt: false });
   setTimeout(flushTrophies, 3400);
 };
 events.on("screenShown", () => {

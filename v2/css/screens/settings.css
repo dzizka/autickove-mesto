@@ -2,3 +2,9 @@
 .settings { display: grid; gap: 4px; padding-top: 6px; }
 .settings .btn.big { justify-self: center; min-width: 160px; margin-top: 8px; }
 .settings .card .btn { width: 100%; }
+
+/* language: two big flags (part 19) */
+.lang-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.lang-btn { display: grid; justify-items: center; gap: 4px; padding: 12px 8px; border: 4px solid #e4e9f0; border-radius: 20px; background: #fff; font: inherit; font-weight: 700; cursor: pointer; }
+.lang-btn.on { border-color: var(--grass); background: #eaf8ec; }
+.lang-flag { font-size: 2.6rem; line-height: 1; }

@@ -2,6 +2,10 @@
 // reward and crash dialogs. Every player-facing text is also spoken.
 
 import { sfx, speak } from "./audio.js";
+import { auto } from "./i18n.js";
+
+// texts on the page are translated by their Slovak wording (core/i18n.js)
+const TEXT_ATTRS = new Set(["aria-label", "title", "placeholder"]);
 
 /** h("button", { class: "btn", onclick }, "text", child) */
 export function h(tag, attrs = {}, ...children) {
@@ -19,11 +23,11 @@ export function h(tag, attrs = {}, ...children) {
     }
     else if (k === "dataset") Object.assign(el.dataset, v);
     else if (v === true) el.setAttribute(k, "");
-    else el.setAttribute(k, v);
+    else el.setAttribute(k, TEXT_ATTRS.has(k) ? auto(String(v)) : v);
   }
   for (const c of children.flat()) {
     if (c == null || c === false) continue;
-    el.append(c instanceof Node ? c : document.createTextNode(String(c)));
+    el.append(c instanceof Node ? c : document.createTextNode(auto(String(c))));
   }
   return el;
 }

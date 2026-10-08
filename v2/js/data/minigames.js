@@ -99,6 +99,8 @@ export const COUNT = {
   items: ["🚗", "🚕", "🚌", "🚜", "🍎", "⭐", "🐶", "🎈", "🐤", "🍓", "🐟", "⚽"],
   stars: [1, 3], // rounds missed on the first try: ≤ 1 → 3 stars, ≤ 3 → 2 stars
 };
+// counting words per language (part 19: the English game counts in English)
+export const NUMBER_WORDS_EN = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen", "twenty"];
 export const NUMBER_WORDS = ["nula", "jeden", "dva", "tri", "štyri", "päť", "šesť", "sedem", "osem", "deväť", "desať", "jedenásť", "dvanásť", "trinásť", "štrnásť", "pätnásť", "šestnásť", "sedemnásť", "osemnásť", "devätnásť", "dvadsať"];
 
 // ---------- Bludisko ----------
@@ -127,6 +129,18 @@ export const LETTERS = {
     ["R", "🤖", "robot"], ["S", "🐘", "slon"], ["S", "☀️", "slnko"], ["S", "🧀", "syr"], ["T", "🐯", "tiger"],
     ["T", "🚜", "traktor"], ["T", "🍰", "torta"], ["U", "👂", "ucho"], ["V", "🚂", "vlak"], ["V", "🐺", "vlk"],
     ["Z", "🦓", "zebra"], ["Z", "🐰", "zajac"], ["Ž", "🐸", "žaba"], ["Ž", "🦒", "žirafa"],
+  ],
+  // English words (part 19): first letters work differently in each language, so it has its own list
+  easyEn: ["A", "B", "C", "D", "M", "P", "S", "T"],
+  wordsEn: [
+    ["A", "🍎", "apple"], ["A", "🐜", "ant"], ["B", "🍌", "banana"], ["B", "🎈", "balloon"], ["B", "🐻", "bear"],
+    ["C", "🐱", "cat"], ["C", "🚗", "car"], ["D", "🐶", "dog"], ["D", "🦆", "duck"], ["E", "🥚", "egg"], ["E", "🐘", "elephant"],
+    ["F", "🐟", "fish"], ["F", "🐸", "frog"], ["G", "🍇", "grapes"], ["G", "🦒", "giraffe"], ["H", "🏠", "house"], ["H", "🐴", "horse"],
+    ["J", "🧃", "juice"], ["K", "🔑", "key"], ["K", "🪁", "kite"], ["L", "🦁", "lion"], ["L", "🍋", "lemon"],
+    ["M", "🐭", "mouse"], ["M", "🌙", "moon"], ["N", "👃", "nose"], ["O", "🐙", "octopus"], ["O", "🍊", "orange"],
+    ["P", "🐷", "pig"], ["P", "🍕", "pizza"], ["R", "🐰", "rabbit"], ["R", "🚀", "rocket"], ["R", "🤖", "robot"],
+    ["S", "☀️", "sun"], ["S", "🐍", "snake"], ["S", "⭐", "star"], ["T", "🐯", "tiger"], ["T", "🚜", "tractor"], ["T", "🚂", "train"],
+    ["U", "☂️", "umbrella"], ["V", "🚐", "van"], ["W", "🐋", "whale"], ["Z", "🦓", "zebra"],
   ],
 };
 

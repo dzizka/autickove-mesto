@@ -64,8 +64,9 @@ export async function setup({ webgl = false } = {}) {
  * New page at the given width. `page.errors` collects console errors and page errors.
  * Google Fonts is stubbed so tests run offline without network errors.
  */
-export async function openGame(browser, baseUrl, { width = 390, height = width < 600 ? 844 : 800, hash = "", storage } = {}) {
-  const context = await browser.newContext({ viewport: { width, height }, hasTouch: width < 600 });
+export async function openGame(browser, baseUrl, { width = 390, height = width < 600 ? 844 : 800, hash = "", storage, locale = "sk-SK" } = {}) {
+  // a Slovak device unless a test asks for another language (part 19: the game follows the device)
+  const context = await browser.newContext({ viewport: { width, height }, hasTouch: width < 600, locale });
   await context.route(/fonts\.(googleapis|gstatic)\.com/, (route) => route.fulfill({ status: 200, contentType: "text/css", body: "" }));
   if (storage !== undefined) {
     await context.addInitScript((data) => {

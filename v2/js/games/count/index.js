@@ -2,9 +2,12 @@
 // counts it aloud ("jeden, dva, tri…"), so the child can count along. Level 3 adds a + b.
 
 import { h } from "../../core/ui.js";
-import { COUNT, NUMBER_WORDS } from "../../data/minigames.js";
+import { COUNT, NUMBER_WORDS, NUMBER_WORDS_EN } from "../../data/minigames.js";
 import { miniDef, starsFor } from "../../systems/minigames.js";
 import { createShell, createRounds, shake, dotsEl } from "../mini/shell.js";
+import { t, getLang } from "../../core/i18n.js";
+
+const numberWord = (n) => (getLang() === "sk" ? NUMBER_WORDS : NUMBER_WORDS_EN)[n] || String(n);
 
 let shell = null;
 
@@ -44,7 +47,7 @@ export default {
                 el.classList.add("counted");
                 counted++;
                 ctx.audio.tone(500 + counted * 40, 0.08, { type: "triangle", volume: 0.12 });
-                ctx.speak(NUMBER_WORDS[counted] || String(counted));
+                ctx.speak(numberWord(counted));
               },
             },
             icon,
@@ -83,7 +86,7 @@ export default {
             {
               class: "count-answer",
               "data-n": String(n),
-              "aria-label": NUMBER_WORDS[n] || String(n),
+              "aria-label": numberWord(n),
               onclick: (e) => {
                 const btn = e.currentTarget;
                 if (sh.over || answers.dataset.busy === "1") return;
@@ -91,7 +94,7 @@ export default {
                   answers.dataset.busy = "1";
                   btn.classList.add("right");
                   ctx.audio.sfx.coin();
-                  ctx.speak(`Áno! ${NUMBER_WORDS[n] || n}.`);
+                  ctx.speak(t("Áno! {n}.", { n: numberWord(n) }));
                   rounds.right(() => {
                     answers.dataset.busy = "";
                     next();

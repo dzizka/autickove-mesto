@@ -4,6 +4,7 @@
 
 import { resolveLook } from "../systems/tuning.js";
 import { sideCarEl } from "./car-pics.js";
+import { auto } from "../core/i18n.js";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 let uid = 0;
@@ -155,7 +156,7 @@ export function carSide(look = {}, { passenger = null, trail = false } = {}) {
   svg.setAttribute("viewBox", trail ? "-80 0 320 124" : "0 0 240 124");
   svg.setAttribute("class", "car-side");
   svg.setAttribute("role", "img");
-  svg.setAttribute("aria-label", "Tvoje auto");
+  svg.setAttribute("aria-label", auto("Tvoje auto"));
   for (const c of ["car", "color", "pattern", "wheels", "wing", "sticker", "roof", "neon", "trail"]) svg.dataset[c] = r[c].id;
   if (passenger) svg.dataset.passenger = passenger;
   svg.innerHTML = `

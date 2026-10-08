@@ -11,6 +11,7 @@ import { TROPHIES } from "../data/trophies.js";
 import { CREW } from "../data/crew.js";
 import { isTrackUnlocked, trackProgress } from "../systems/progress.js";
 import { MINIGAMES } from "../data/minigames.js";
+import { t } from "../core/i18n.js";
 
 const GAME_NAMES = { race: "Preteky", coloring: "Omaľovánka", demo: "Skúšobná jazda", ...Object.fromEntries(MINIGAMES.map((g) => [g.id, g.name])) };
 const DAY_NAMES = ["ne", "po", "ut", "st", "št", "pi", "so"];
@@ -63,7 +64,7 @@ export default {
         "section",
         { class: "screen parents", "data-testid": "screen-parents" },
         h("h1", { class: "screen-title" }, "👪 Prehľad pre rodičov"),
-        h("div", { class: "card" }, h("h2", {}, "Čas hrania za 7 dní"), bars, h("p", { class: "small" }, `Spolu ${total} min, v priemere ${Math.round(total / 7)} min denne. Počíta sa len čas, keď je hra na obrazovke.`)),
+        h("div", { class: "card" }, h("h2", {}, "Čas hrania za 7 dní"), bars, h("p", { class: "small" }, t("Spolu {total} min, v priemere {avg} min denne. Počíta sa len čas, keď je hra na obrazovke.", { total, avg: Math.round(total / 7) }))),
         h(
           "div",
           { class: "card" },
@@ -80,11 +81,11 @@ export default {
           row("Level hráča", s.level),
           row("Mince", s.coins),
           row("Preteky spolu / víťazstvá", `${s.races.total} / ${s.races.wins}`),
-          row("Otvorené trate", `${openTracks.length} z ${TRACKS.length} (najvyššia úroveň: ${Math.max(...openTracks.map((t) => trackProgress(t.id, s).unlocked))})`),
-          row("Porazení bossovia", `${Object.values(s.bosses || {}).filter(Boolean).length} z 6`),
-          row("Kamaráti", `${Object.keys(s.crew.owned).length} z ${CREW.length}`),
+          row("Otvorené trate", t("{open} z {all} (najvyššia úroveň: {top})", { open: openTracks.length, all: TRACKS.length, top: Math.max(...openTracks.map((tr) => trackProgress(tr.id, s).unlocked)) })),
+          row("Porazení bossovia", t("{n} z {all}", { n: Object.values(s.bosses || {}).filter(Boolean).length, all: 6 })),
+          row("Kamaráti", t("{n} z {all}", { n: Object.keys(s.crew.owned).length, all: CREW.length })),
           row("Vymaľované obrázky", s.coloring.finished),
-          row("Trofeje", `${Object.keys(s.trophies).length} z ${TROPHIES.length}`),
+          row("Trofeje", t("{n} z {all}", { n: Object.keys(s.trophies).length, all: TROPHIES.length })),
           row("Splnené úlohy", s.quests.done),
         ),
         h("button", { class: "btn big sun", "data-testid": "back-home", "aria-label": "Domov", onclick: goHome }, h("span", { class: "btn-icon", "aria-hidden": "true" }, "🏠"), h("span", { class: "btn-label" }, "Domov")),

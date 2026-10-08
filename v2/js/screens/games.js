@@ -8,6 +8,7 @@ import { getState } from "../core/state.js";
 import { startGame } from "../core/router.js";
 import { MINIGAMES, MINI } from "../data/minigames.js";
 import { miniProgress } from "../systems/minigames.js";
+import { t } from "../core/i18n.js";
 
 /** The child picks the difficulty; all three are open, the recommendation glows. */
 function pickLevel(g) {
@@ -42,7 +43,7 @@ function pickLevel(g) {
     ],
     { testId: "level-picker", className: "level-modal" },
   );
-  speak(`${g.say} Vyber si: ľahké, stredné, alebo ťažké.`);
+  speak(`${t(g.say)} ${t("Vyber si: ľahké, stredné, alebo ťažké.")}`);
 }
 
 export default {

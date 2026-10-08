@@ -12,6 +12,7 @@ import { PIXEL_PICTURES } from "../data/coloring/pixel.js";
 import { canAfford } from "../systems/economy.js";
 import { isFreeUnlocked, buyPicture, pixelGrid, loadWip } from "../systems/coloring.js";
 import { pictureSvg } from "../games/coloring/free-paint.js";
+import { t } from "../core/i18n.js";
 
 const SIZES = [
   { size: 10, stars: "⭐", say: "Ľahké obrázky" },
@@ -79,7 +80,7 @@ export default {
                   speak("Tento obrázok sa odomkne za preteky. Alebo si naň našetri mince.");
                   return;
                 }
-                const ok = await confirm({ icon: "🖼️", title: "Odomknúť obrázok?", text: `🪙 ${p.unlock.price}`, say: `Odomknúť obrázok za ${p.unlock.price} mincí?` });
+                const ok = await confirm({ icon: "🖼️", title: "Odomknúť obrázok?", text: `🪙 ${p.unlock.price}`, say: t("Odomknúť obrázok za {n} mincí?", { n: p.unlock.price }) });
                 if (ok && buyPicture(p.id)) {
                   sfx.win();
                   paint();

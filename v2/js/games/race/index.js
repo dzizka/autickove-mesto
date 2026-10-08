@@ -18,6 +18,7 @@ import { PROPS } from "../../render/road-sprites.js";
 import { createWeather, drawWeather } from "./weather.js";
 import { createHud, showPodium } from "./hud.js";
 import { buddyBadge } from "../../screens/buddy-badge.js";
+import { t } from "../../core/i18n.js";
 
 const PLACE_SAY = [
   "Prvé miesto! Si víťaz!",
@@ -253,7 +254,7 @@ export default {
       partial: () => ({ coins: race.player.coins, xp: 5 }),
     });
     loop.start();
-    ctx.speak(boss ? `${boss.name}! Predbehni ho a vyhýbaj sa tomu, čo hádže!` : `${track.name}. Ťukaj vľavo a vpravo a vyhýbaj sa prekážkam!`);
+    ctx.speak(boss ? t("{name}! Predbehni ho a vyhýbaj sa tomu, čo hádže!", { name: t(boss.name) }) : t("{name}. Ťukaj vľavo a vpravo a vyhýbaj sa prekážkam!", { name: t(track.name) }));
     window.__game && (window.__game.race = race); // test hook
   },
 

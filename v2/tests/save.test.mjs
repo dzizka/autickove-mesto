@@ -102,7 +102,7 @@ test("a version-0 save (no version field) migrates to the current schema", async
   assert.equal(s.version, current);
   assert.equal(s.coins, 42);
   assert.equal(s.level, 2);
-  assert.deepEqual(s.settings, { sound: false, voice: true, motion: true });
+  assert.deepEqual(s.settings, { sound: false, voice: true, motion: true, lang: null });
   assert.equal("sound" in s, false);
   assert.ok(s.playLog && s.cheats, "missing defaults were filled in");
   assert.deepEqual(page.errors, []);

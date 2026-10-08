@@ -10,7 +10,7 @@ import { defaultQuests } from "../systems/quests.js";
 import { RENAMED_CARS } from "../data/cars.js";
 
 export const STORAGE_KEY = "autickove-mesto-v2";
-export const CURRENT_VERSION = 14;
+export const CURRENT_VERSION = 15;
 
 /** Local date as YYYY-MM-DD (the same format as the play log). */
 export function todayKey(date = new Date()) {
@@ -25,7 +25,8 @@ export function defaultState() {
     coins: 0,
     xp: 0,
     level: 1,
-    settings: { sound: true, voice: true, motion: true }, // motion: the moving home background (v12)
+    // motion: the moving home background (v12); lang: "sk" | "en", null = the device language (v15)
+    settings: { sound: true, voice: true, motion: true, lang: null },
     // Per-day play log for the parents' overview: { "2026-10-06": { seconds, games: { race: 3 } } }
     playLog: {},
     // Hidden test-menu switches.
@@ -141,6 +142,8 @@ const MIGRATIONS = {
     }
     return out;
   },
+  // v14 → v15: the game's language (settings.lang, filled from defaults: the device language).
+  14: (s) => ({ ...s, version: 15 }),
 };
 
 const isPlainObject = (v) => v !== null && typeof v === "object" && !Array.isArray(v);

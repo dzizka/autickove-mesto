@@ -9,6 +9,7 @@ import { SLOTS } from "../data/stats.js";
 import { LEGENDARIES } from "../data/legendaries.js";
 import { hintSlot } from "../systems/garage.js";
 import { presentColoringReward } from "./gallery.js";
+import { t } from "../core/i18n.js";
 
 const GOLD = "#ffc21a";
 const slotDef = (id) => SLOTS.find((s) => s.id === id);
@@ -92,8 +93,8 @@ export function presentReward(granted, { onHome, onAgain, onGames } = {}) {
       sfx.win();
       if (granted.coins > 0) flyCoins(coinsRow, granted.coins / 5);
     }, 400 + items.length * 350);
-    const what = golden ? `Zlatý diel! ${slotDef(golden.slot).name} je silnejší.${ability ? ` Nová schopnosť: ${ability.name}!` : ""}` : "Súčiastky do garáže!";
-    if (granted.boss && granted.extra?.bossWin) speak(`Poklad od bossa! ${what} A vajíčko s kamarátom!`);
+    const what = golden ? t("Zlatý diel! {name} je silnejší.", { name: t(slotDef(golden.slot).name) }) + (ability ? ` ${t("Nová schopnosť: {name}!", { name: t(ability.name) })}` : "") : t("Súčiastky do garáže!");
+    if (granted.boss && granted.extra?.bossWin) speak(t("Poklad od bossa! {what} A vajíčko s kamarátom!", { what }));
     else speak(what);
   };
   chest.addEventListener("click", open);

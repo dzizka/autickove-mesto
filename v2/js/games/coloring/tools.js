@@ -4,6 +4,7 @@
 
 import { h } from "../../core/ui.js";
 import { COLORS, GLITTER } from "../../data/coloring/palette.js";
+import { t } from "../../core/i18n.js";
 
 const SAY = { bucket: "Vedierko", brush: "Štetec", eraser: "Guma" };
 
@@ -22,7 +23,7 @@ export function createToolbar({ onExit, onUndo, onDone, onTool, speak, sfx, extr
     "div",
     { class: "csizes" },
     [0, 1, 2].map((i) =>
-      h("button", { class: "csize", "data-testid": `size-${i}`, "aria-label": `Hrúbka ${i + 1}`, onclick: () => ((state.size = i), sfx.tap(), refresh()) }, h("i", { style: { width: `${8 + i * 9}px`, height: `${8 + i * 9}px` } })),
+      h("button", { class: "csize", "data-testid": `size-${i}`, "aria-label": t("Hrúbka {n}", { n: i + 1 }), onclick: () => ((state.size = i), sfx.tap(), refresh()) }, h("i", { style: { width: `${8 + i * 9}px`, height: `${8 + i * 9}px` } })),
     ),
   );
   const undo = h("button", { class: "ctool", "data-testid": "undo", "aria-label": "Späť", onclick: () => (sfx.back(), onUndo()) }, "↩️");

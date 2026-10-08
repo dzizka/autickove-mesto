@@ -9,6 +9,7 @@ import { carStats, carPower, recommendedPower, difficulty } from "../systems/sta
 import { trackProgress, isTrackUnlocked, isLevelUnlocked, CHALLENGE_RACES, isBossReady, bossWins } from "../systems/progress.js";
 import { BOSSES } from "../data/bosses.js";
 import { statPanel, powerBadge } from "./stat-panel.js";
+import { t as tr } from "../core/i18n.js";
 
 const LIGHT = { green: "🟢", yellow: "🟡", red: "🔴" };
 const LIGHT_SAY = {
@@ -69,7 +70,7 @@ export default {
                 sfx.tap();
                 selected = { track: t.id, level: trackProgress(t.id).unlocked };
                 paint();
-                speak(`${t.name}. Vyber si úroveň.`);
+                speak(tr("{name}. Vyber si úroveň.", { name: tr(t.name) }));
               },
             },
             h("span", { class: "track-icon", "aria-hidden": "true" }, open ? t.icon : "🔒"),
@@ -94,7 +95,7 @@ export default {
               class: `level-btn${level === selected.level ? " selected" : ""}${open ? "" : " locked"}`,
               "data-testid": `level-${level}`,
               "data-light": light,
-              "aria-label": `Úroveň ${level}`,
+              "aria-label": tr("Úroveň {n}", { n: level }),
               onclick: () => {
                 if (!open) {
                   sfx.oops();
@@ -130,7 +131,7 @@ export default {
           onclick: () => {
             if (!ready) {
               sfx.oops();
-              speak(`${boss.name} príde, keď naplníš pruh. Jazdi preteky na tejto trati.`);
+              speak(tr("{name} príde, keď naplníš pruh. Jazdi preteky na tejto trati.", { name: tr(boss.name) }));
               return;
             }
             sfx.tap();
@@ -142,7 +143,7 @@ export default {
         wins > 0 && h("span", { class: "boss-wins", "aria-hidden": "true" }, "✔"),
       );
       challenge.replaceChildren(h("span", { class: "challenge-segs" }, segs), bossBtn);
-      if (ready) speak(`${boss.name} ťa čaká! Ťukni na neho.`, { interrupt: false });
+      if (ready) speak(tr("{name} ťa čaká! Ťukni na neho.", { name: tr(boss.name) }), { interrupt: false });
     }
 
     function paint() {

@@ -9,6 +9,7 @@ import { CREW, CREW_RULES, CLOTHES } from "../data/crew.js";
 import { STATS } from "../data/stats.js";
 import { canAfford } from "../systems/economy.js";
 import { crewDef, crewRarity, activeBuddy, buddyLook, abilityValue, xpToNext, isEggReady, hatch, setActive, pet, nextEvolution, canEvolve, evolve, ownsClothes, wear } from "../systems/crew.js";
+import { t } from "../core/i18n.js";
 
 const ABILITY_SAY = { speed: "rýchlosť", handling: "ovládanie", armor: "odolnosť", fuel: "benzín", magnet: "magnet", luck: "šťastie" };
 
@@ -18,7 +19,7 @@ export function abilityIcon(def) {
 }
 
 function abilitySay(def) {
-  if (def.ability.kind === "stat") return `pridáva ${ABILITY_SAY[def.ability.stat]}`;
+  if (def.ability.kind === "stat") return t("pridáva {stat}", { stat: t(ABILITY_SAY[def.ability.stat]) });
   return def.ability.kind === "coins" ? "prináša viac mincí" : "dáva štít navyše";
 }
 
@@ -57,7 +58,7 @@ function showHatch(res, onDone) {
     buddy.classList.add("out");
     playNotes([[523, 0.1, "triangle"], [659, 0.1, "triangle"], [784, 0.1, "triangle"], [1047, 0.25, "triangle"]]);
     confetti(res.isNew ? 80 : 30);
-    speak(res.isNew ? `Vyliahol sa ${res.def.name}! Nový kamarát!` : `${res.def.name} už máš. Dostal si cukríky!`);
+    speak(t(res.isNew ? "Vyliahol sa {name}! Nový kamarát!" : "{name} už máš. Dostal si cukríky!", { name: t(res.def.name) }));
   }, 900);
 }
 
@@ -158,7 +159,7 @@ export default {
                   ev.currentTarget.append(heart);
                   setTimeout(() => heart.remove(), 1400);
                 }
-                speak(`${def.name} sa teší!`);
+                speak(t("{name} sa teší!", { name: t(def.name) }));
               },
             },
             buddyFace(b, "big"),
@@ -185,7 +186,7 @@ export default {
                     if (!evolve(b.id)) return;
                     sfx.levelUp();
                     confetti(90);
-                    speak(`${def.name} sa vyvinul!`);
+                    speak(t("{name} sa vyvinul!", { name: t(def.name) }));
                     paint();
                   },
                 },
@@ -194,7 +195,7 @@ export default {
                 h("small", { class: "cost" }, ` 🍬${step.candy}`, b.level < step.level ? " 🔒" : ""),
               ),
             h("button", { class: "btn sky", "data-testid": "wardrobe-open", "aria-label": "Oblečenie", onclick: () => openWardrobe(getState().crew.owned[b.id], paint) }, "🧢🕶️"),
-            h("button", { class: "btn ghost", "data-testid": "buddy-home", "aria-label": "Nechať doma", onclick: () => (setActive(null), sfx.back(), speak(`${def.name} zostane doma.`), paint()) }, "🏠"),
+            h("button", { class: "btn ghost", "data-testid": "buddy-home", "aria-label": "Nechať doma", onclick: () => (setActive(null), sfx.back(), speak(t("{name} zostane doma.", { name: t(def.name) })), paint()) }, "🏠"),
           ),
         );
       } else if (Object.keys(s.crew.owned).length) {
@@ -229,7 +230,7 @@ export default {
                   // tapped the buddy that rides along: it stays at home now
                   setActive(null);
                   sfx.back();
-                  speak(`${c.name} zostane doma.`);
+                  speak(t("{name} zostane doma.", { name: t(c.name) }));
                 } else {
                   setActive(c.id);
                   sfx.tap();
@@ -265,7 +266,7 @@ export default {
     const s = getState();
     const ready = s.eggs.some(isEggReady);
     const b = activeBuddy(s);
-    speak(ready ? "Vajíčko je pripravené! Ťukni naň." : b ? `Kamaráti. ${crewDef(b.id).name} sedí v tvojom aute.` : "Kamaráti. Vajíčka dostaneš od bossov a z truhlíc.");
+    speak(ready ? "Vajíčko je pripravené! Ťukni naň." : b ? t("Kamaráti. {name} sedí v tvojom aute.", { name: t(crewDef(b.id).name) }) : "Kamaráti. Vajíčka dostaneš od bossov a z truhlíc.");
     if (ready) toast("🥚 ➡️ 🐣", { ms: 2000 });
   },
 };
