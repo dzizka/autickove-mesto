@@ -4,6 +4,7 @@
 // colour tint, lit windows at night. Sizes of the built models are in metres.
 
 import * as THREE from "three";
+import { WORLD_PROCS } from "./props3d-world.js";
 
 const mat = (color, extra = {}) => new THREE.MeshStandardMaterial({ color, roughness: 0.75, flatShading: true, ...extra });
 const mesh = (geo, m, x = 0, y = 0, z = 0, rx = 0, ry = 0, rz = 0) => {
@@ -148,6 +149,7 @@ const PROCS = {
   glowPost,
   gate: (arg) => gate(Number(arg) || 3, true),
   startGate: (arg) => gate(Number(arg) || 3, false),
+  ...WORLD_PROCS, // Farm and Beach (part 25)
 };
 
 /** A built model for "proc:<name>[:<arg>]", or null. */

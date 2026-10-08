@@ -12,7 +12,7 @@ const PLAYER_LEN = 4.2;
 const HIT_WIDTH = 0.62; // lane units: closer than this = same lane for collisions
 const TURBO_TIME = 2.6;
 const MAGNET_TIME = 7;
-const SOLID = new Set(["obstacle", "traffic"]);
+const SOLID = new Set(["obstacle", "traffic", "animal"]);
 
 const finite = (v, fallback = 0) => (Number.isFinite(v) ? v : fallback);
 
@@ -134,6 +134,7 @@ export function step(race, dt) {
   updateRivals(race, dt);
   updateBoss(race, dt);
   updateTraffic(race, dt);
+  updateAnimals(race, dt);
   if (race.phase === "racing") {
     collide(race);
     if (spawnFuelIfLow(race)) race.events.push({ type: "fuelSpawn" });
@@ -207,13 +208,33 @@ function updateTraffic(race, dt) {
   for (const o of race.objects) {
     if (o.kind !== "traffic" || o.hit) continue;
     o.d += o.speed * dt * race.view;
-    const blocked = race.objects.some((b) => b.kind === "obstacle" && !b.hit && b.lane === o.lane && b.d > o.d && b.d < o.d + 14);
+    const blocked = race.objects.some((b) => (b.kind === "obstacle" || b.kind === "animal") && !b.hit && b.lane === o.lane && b.d > o.d && b.d < o.d + 14);
     if (blocked) {
       const options = [o.lane - 1, o.lane + 1].filter((l) => l >= 0 && l < race.lanes && !laneBlocked(race, l, o.d, 14));
       if (options.length) o.lane = options[0];
       else o.speed = 0; // parks behind the obstacle; still avoidable in the free lane
     }
     o.x += (o.lane - o.x) * Math.min(1, dt * 3);
+  }
+}
+
+/**
+ * Animals (part 25): wait beside the road, walk in when the player is RACE.animalTrigger metres
+ * away, stop in their lane and walk on once the player is past. A bumped animal hops away.
+ */
+function updateAnimals(race, dt) {
+  const p = race.player;
+  for (const o of race.objects) {
+    if (o.kind !== "animal") continue;
+    if (!o.walking && race.phase === "racing" && o.d - p.d < RACE.animalTrigger) {
+      o.walking = true;
+      race.events.push({ type: "animal", icon: o.icon });
+    }
+    if (!o.walking) continue;
+    const away = o.hit || p.d > o.d + 4;
+    const target = away ? (o.dir > 0 ? race.lanes + 2 : -3) : o.goal;
+    const stepX = o.speed * dt * race.view * (o.hit ? 2.5 : 1);
+    o.x += Math.max(-stepX, Math.min(stepX, target - o.x));
   }
 }
 
@@ -254,6 +275,14 @@ function collide(race) {
       if (!touching) continue;
       o.taken = true;
       pickStar(race);
+    } else if (o.kind === "puddle") {
+      // only a splash: nothing slows down (part 25)
+      if (touching && p.airT <= 0 && !o.splashed) {
+        o.splashed = true;
+        race.events.push({ type: "splash", color: o.color });
+      }
+    } else if (o.kind === "sign") {
+      continue;
     } else if (o.kind === "ramp") {
       if (touching && p.airT <= 0) {
         o.taken = true;
@@ -261,6 +290,7 @@ function collide(race) {
         race.events.push({ type: "jump" });
       }
     } else if (touching && p.airT <= 0 && o.warn <= 0 && race.ab.ghostT <= 0) {
+      if (o.kind === "animal") race.events.push({ type: "hop", icon: o.icon }); // it hops away, unhurt
       hitSolid(race, o);
     }
   }

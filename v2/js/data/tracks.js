@@ -31,6 +31,13 @@ export const RACE = {
   coinRowsPer100: 1.4,
   powerupsPer100: 0.35,
   rampsPer100: 0.25,
+  // part 25: some obstacle rows are an animal that walks onto the road and stops in one lane
+  // (a ⚠ sign shows it early); puddles only splash, they never slow the car
+  animalShare: 0.2,
+  animalTrigger: 95, // metres ahead of the player where the animal starts walking
+  animalSpeed: 2, // lanes per second
+  animalSign: 16, // the ⚠ sign stands this many metres before the animal
+  puddlesPer100: 0.35,
   fuelCansPer100: 0.3,
   fuelDrainPerSecond: 1 / 34, // tank lasts ~34 s with ×1.0 fuel
   // End-of-race coins by place, multiplied by level and track bonus.
@@ -41,7 +48,8 @@ export const RACE = {
 };
 
 /**
- * Per track (DESIGN-v2 §4.1): lanes, obstacle ids (models in data/race-props.js, which also holds
+ * Per track (DESIGN-v2 §4.1): lanes, animals (emoji that walk onto the road, part 25), puddle colour
+ * (null = none), obstacle ids (models in data/race-props.js, which also holds
  * the scenery along each track; 2D drawings in render/road-sprites.js),
  * scene = colours of the pseudo-3D view (far: skyline | hills | dunes | mountains | space),
  * road = repeating plan of [metres, curve, hill]; curves and hills are only for the eye.
@@ -56,6 +64,8 @@ export const TRACKS = [
     weather: "none",
     colors: { ground: "#7ccf5a", groundAlt: "#6cc04b", road: "#5a606b", line: "#ffffff", edge: "#ffd23f", sky: "#9be3f0" },
     obstacles: ["cone", "barrier", "crate"],
+    animals: ["🦆", "🐕"],
+    puddle: "#5aa9e6",
     traffic: ["#f2c94c", "#56ccf2", "#eb5757", "#ffffff", "#bb6bd9"],
     slippery: 0,
     airTime: 0.9,
@@ -72,6 +82,8 @@ export const TRACKS = [
     weather: "leaves",
     colors: { ground: "#3f8f3a", groundAlt: "#367e32", road: "#8a6a4a", line: "#f4e3c1", edge: "#5b4330", sky: "#bfe8b0" },
     obstacles: ["log", "rock", "stump"],
+    animals: ["🦌", "🦔", "🐗"],
+    puddle: "#6b4a2b",
     traffic: ["#8d6e63", "#f2994a", "#6fcf97", "#f2c94c"],
     slippery: 0.1,
     airTime: 0.9,
@@ -88,6 +100,8 @@ export const TRACKS = [
     weather: "sand",
     colors: { ground: "#f2d18b", groundAlt: "#e8c27a", road: "#c79a5b", line: "#fff4d6", edge: "#a87b45", sky: "#ffe6a8" },
     obstacles: ["cactusSmall", "sandRock", "tumbleweed"],
+    animals: ["🐫", "🦎"],
+    puddle: null,
     traffic: ["#e0e0e0", "#f2994a", "#eb5757", "#2d9cdb"],
     slippery: 0.15,
     airTime: 1.0,
@@ -104,6 +118,8 @@ export const TRACKS = [
     weather: "snow",
     colors: { ground: "#f4f9ff", groundAlt: "#e6f0fa", road: "#b8c6d6", line: "#ffffff", edge: "#7fa3c4", sky: "#dceeff" },
     obstacles: ["snowman", "iceBlock", "snowball"],
+    animals: ["🐧", "🦊"],
+    puddle: "#cfeeff",
     traffic: ["#eb5757", "#2d9cdb", "#27ae60", "#f2c94c"],
     slippery: 1, // lane changes overshoot unless handling is high
     airTime: 0.9,
@@ -120,6 +136,8 @@ export const TRACKS = [
     weather: "night",
     colors: { ground: "#2c4a3a", groundAlt: "#264233", road: "#3a3f4b", line: "#fff6b0", edge: "#ffd23f", sky: "#1c2340" },
     obstacles: ["cone", "barrier", "barrel"],
+    animals: ["🦔", "🦉"],
+    puddle: "#2a3f6b",
     traffic: ["#f2c94c", "#ffffff", "#eb5757", "#56ccf2"],
     slippery: 0.1,
     airTime: 0.9,
@@ -136,12 +154,51 @@ export const TRACKS = [
     weather: "stars",
     colors: { ground: "#120f2e", groundAlt: "#17133a", road: "#3b2f7a", line: "#7df9ff", edge: "#ff6ad5", sky: "#0b0820" },
     obstacles: ["asteroid", "satellite", "crystalRock"],
+    animals: ["👽"],
+    puddle: "#7dff9a",
     traffic: ["#7df9ff", "#ff6ad5", "#c3ff6a", "#ffffff"],
     slippery: 0.2,
     airTime: 1.5, // low gravity: longer jumps,
     lanes: 5,
     scene: { sky: ["#05020f", "#1b0f40"], fog: "#140a33", far: "space", hills: ["#2a1760", "#21124d"], grass: ["#120a2e", "#160d38"], road: ["#3a2a70", "#35266a"], rumble: ["#00e5ff", "#ff3df2"], line: "#9ff6ff", sun: "planet", stars: true, glow: true },
     road: [[80, 4, 6], [80, -4, -6], [60, 0, 4], [80, 5, -4], [60, -3, 0]],
+  },
+  // part 25: two more tracks after Space
+  {
+    id: "farm",
+    name: "Farma",
+    icon: "🚜",
+    rivalBase: 1.1,
+    coinBonus: 2,
+    weather: "petals",
+    colors: { ground: "#8fd16a", groundAlt: "#7fc35c", road: "#b8946a", line: "#ffffff", edge: "#3ebd4a", sky: "#bfe8ff" },
+    obstacles: ["bale", "pumpkin", "milkCan"],
+    animals: ["🐄", "🐑", "🐔", "🐖"],
+    puddle: "#7a5230",
+    traffic: ["#e8463a", "#3ebd4a", "#f2c94c", "#2d9cdb"],
+    slippery: 0.1,
+    airTime: 0.9,
+    lanes: 3,
+    scene: { sky: ["#6cc4ff", "#e6f7ff"], fog: "#e6f4dc", far: "hills", hills: ["#9ccf6a", "#78b54c"], grass: ["#7cc95a", "#73bf52"], road: ["#a88a68", "#a28463"], rumble: ["#ffffff", "#3ebd4a"], line: "#ffffff", sun: "sun" },
+    road: [[70, 0, 2], [60, 3, -2], [50, 0, 3], [70, -3, -3], [60, 2, 1], [50, 0, -1]],
+  },
+  {
+    id: "beach",
+    name: "Pláž",
+    icon: "🏖️",
+    rivalBase: 1.14,
+    coinBonus: 2.2,
+    weather: "none",
+    colors: { ground: "#f5deb3", groundAlt: "#efd3a0", road: "#6c7079", line: "#ffffff", edge: "#2ab7ca", sky: "#9be3f0" },
+    obstacles: ["sandcastle", "beachBall", "surfboard"],
+    animals: ["🦀", "🐢", "🦭"],
+    puddle: "#58c4f0",
+    traffic: ["#ff9ec7", "#7ad7ff", "#ffd23f", "#ffffff"],
+    slippery: 0.15,
+    airTime: 1.0,
+    lanes: 4,
+    scene: { sky: ["#3fb4ff", "#d8f6ff"], fog: "#d8f3ff", far: "hills", hills: ["#7fd0ef", "#5bb8e0"], grass: ["#f3dca8", "#eed49c"], road: ["#6c7079", "#686b74"], rumble: ["#ffffff", "#2ab7ca"], line: "#ffffff", sun: "bigSun", sea: { side: -1, from: 2.4, colors: ["#2aa9e0", "#38b6ea"], foam: "#ffffff" } },
+    road: [[90, 3, 0], [80, -2, 1], [70, 0, -1], [90, 4, 0], [60, -3, 0]],
   },
 ];
 

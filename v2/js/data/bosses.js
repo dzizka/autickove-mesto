@@ -10,6 +10,8 @@ export const BOSSES = [
   { id: "yeti", track: "snow", name: "Snežný Yeti", icon: "🦍", color: "#dceeff", throws: "❄️", pace: 0.93, music: [[131, 0.3], [156, 0.3], [175, 0.3], [156, 0.3]] },
   { id: "bat", track: "night", name: "Netopier", icon: "🦇", color: "#5b4b8a", throws: "🎃", pace: 0.93, music: [[92, 0.25], [87, 0.25], [92, 0.25], [69, 0.5]] },
   { id: "ufo", track: "space", name: "Ufo", icon: "🛸", color: "#7df9ff", throws: "☄️", pace: 0.93, music: [[220, 0.12], [330, 0.12], [262, 0.12], [196, 0.3]] },
+  { id: "bull", track: "farm", name: "Býk", icon: "🐂", color: "#8d5a3b", throws: "🥚", pace: 0.93, music: [[98, 0.2], [98, 0.2], [131, 0.2], [110, 0.4]] },
+  { id: "crab", track: "beach", name: "Krab", icon: "🦀", color: "#ff6b4a", throws: "🥥", pace: 0.93, music: [[147, 0.15], [175, 0.15], [147, 0.15], [131, 0.15], [110, 0.35]] },
 ];
 
 export const BOSS = {

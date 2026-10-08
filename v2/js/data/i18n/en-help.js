@@ -54,6 +54,8 @@ export const EN_HELP = {
     "A buddy also grows without races: a 🍬 sweet gives about a third of a level, ⭐ the star-catching game (3× a day, the dots show how many are left), the first pat of the day and the games room.",
   "Hra s kamarátom. Padajú hviezdy a kamarát ich chytá: beží tam, kam dieťa ťukne alebo potiahne prst. Veľká hviezda 🌟 platí trikrát. Trvá 30 sekúnd; prvé 3 hry denne s každým kamarátom mu dajú skúsenosti a pár mincí.":
     "Playing with a buddy. Stars fall and the buddy catches them: it runs where the child taps or drags a finger. A big star 🌟 counts three times. It lasts 30 seconds; the first 3 games a day with each buddy give it experience and a few coins.",
+  "Značka ⚠ so zvieratkom ukazuje, že zvieratko vojde na cestu a zastane v jednom pruhu: treba ho obísť. Mláky len ošpliechajú auto, nič sa nestane.":
+    "A ⚠ sign with an animal means the animal will walk onto the road and stop in one lane: go around it. Puddles only splash the car, nothing happens.",
   // the help window itself
   "Pre dospelého": "For the grown-up",
   "Ukáž dieťaťu": "Show the child",

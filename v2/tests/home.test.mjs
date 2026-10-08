@@ -9,7 +9,7 @@ import { isNight } from "../js/screens/home-road.js";
 import { migrate, CURRENT_VERSION } from "../js/core/state.js";
 
 const quiet = (extra = {}) => ({ settings: { sound: false, voice: false }, ...extra });
-const DAY = ["city", "forest", "desert", "snow"];
+const DAY = ["city", "forest", "desert", "snow", "farm", "beach"];
 const NIGHT = ["night", "space"];
 
 test("evening and night show the night tracks; old saves get the moving background", () => {

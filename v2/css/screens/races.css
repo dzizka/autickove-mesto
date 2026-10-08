@@ -5,7 +5,7 @@
 .races-car .power-badge { flex-direction: column; padding: 10px 14px; border-radius: 22px; gap: 0; }
 .races-main { display: grid; gap: 14px; }
 
-.track-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.track-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; } /* 8 tracks: 2 rows (part 25) */
 .track-card {
   position: relative;
   display: grid;

@@ -105,18 +105,23 @@ function placeDecor(segs, track, decor, half, length) {
 
   const free = (i) => !segs[i].land && !busy(i);
   const put = (i, id, side, off, extra = {}) => segs[i].scenery.push({ id, off: side * off, side, seed: rnd(), ...extra });
+  const sea = track.scene?.sea; // the beach: the sea on one side, with its own things (part 25)
   for (const side of [-1, 1]) {
-    if (decor.far?.length) {
+    const onSea = sea && sea.side === side;
+    const farList = onSea ? decor.farSea : decor.far;
+    const nearList = onSea ? decor.nearSea : decor.near;
+    if (farList?.length) {
       for (let i = 4 + between([0, 6]); i < segs.length; i += between(decor.farEvery || [5, 10])) {
         if (!free(i)) continue;
-        const id = pick(decor.far);
-        put(i, id, side, kerb + spriteWidth(id) / 2 + 380 + rnd() * 1700, { shadow: !!MODELS[id] });
+        const id = pick(farList);
+        const from = onSea ? half * sea.from + 700 + rnd() * 2600 : kerb + 380 + rnd() * 1700;
+        put(i, id, side, from + spriteWidth(id) / 2, { shadow: !!MODELS[id] && !onSea });
       }
     }
-    if (decor.near?.length) {
+    if (nearList?.length) {
       for (let i = 3 + between([0, 4]); i < segs.length; i += between(decor.nearEvery || [6, 10])) {
         if (!free(i)) continue;
-        const id = pick(decor.near);
+        const id = pick(nearList);
         put(i, id, side, kerb + spriteWidth(id) / 2 + 140 + rnd() * 260, { shadow: true, small: true });
       }
     }
@@ -192,6 +197,22 @@ function drawSegment(g, V, R, s, fog, fogColor) {
   // under a bridge the grass is a river (part 24)
   g.fillStyle = s.land === "bridge" && R.decor?.water ? R.decor.water[s.c] : sc.grass[s.c];
   g.fillRect(0, b.y, V.w, ay - b.y);
+  if (sc.sea && s.land !== "bridge") {
+    // the beach (part 25): the sea from `from` × half the road outwards, with a line of foam
+    const k = sc.sea.side * sc.sea.from;
+    const xa = a.x + a.w * k;
+    const xb = b.x + b.w * k;
+    const edge = sc.sea.side < 0 ? 0 : V.w;
+    g.fillStyle = sc.sea.colors[s.c];
+    g.beginPath();
+    g.moveTo(edge, ay);
+    g.lineTo(xa, ay);
+    g.lineTo(xb, b.y);
+    g.lineTo(edge, b.y);
+    g.fill();
+    const f = sc.sea.side * 0.12;
+    quad(g, sc.sea.foam, xa + a.w * f * 0.5, ay, a.w * 0.06, xb + b.w * f * 0.5, b.y, b.w * 0.06);
+  }
   quad(g, sc.rumble[s.c], a.x, ay, a.w * 1.1, b.x, b.y, b.w * 1.1);
   if (s.mark === "finish") {
     const cols = R.lanes * 4;

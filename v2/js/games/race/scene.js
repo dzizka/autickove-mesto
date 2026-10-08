@@ -7,6 +7,7 @@ import { M, SEG, CAM_H, DEPTH, PLAYER_Z, DRAW, LANE, CAR_W, segIndex, fogAt } fr
 import { drawRoadSprite, emojiAt, spriteWidth } from "../../render/road-sprites.js";
 import { RACE_DRAW } from "../../data/race-props.js";
 import { drawEdge, drawTunnel, drawPortal, drawRing, drawGate, groundSpot } from "./decor.js";
+import { drawAnimal, drawSign, drawPuddle, drawRamp } from "./road-life.js";
 import { drawCarBack, backFoot } from "../../render/car-back.js";
 import { neonColor, updateTrail, drawTrail } from "../../render/effects.js";
 
@@ -35,44 +36,18 @@ function placeAt(R, V, z, off) {
   return { x: lerp(s.p1.x, s.p2.x, t) + sc * off * V.KX, y: lerp(s.p1.y, s.p2.y, t), u: sc * V.KX };
 }
 
-function drawRamp(g, R, V, o) {
-  const off = laneOffset(R, o.x);
-  const a = placeAt(R, V, (o.d - o.len / 2) * M, off);
-  const b = placeAt(R, V, (o.d + o.len / 2) * M, off);
-  if (!a || !b) return;
-  const wa = LANE * 0.42 * a.u;
-  const wb = LANE * 0.42 * b.u;
-  const lift = 260 * b.u; // the far edge is raised
-  g.fillStyle = "#c98a00";
-  g.beginPath();
-  g.moveTo(a.x - wa, a.y);
-  g.lineTo(a.x + wa, a.y);
-  g.lineTo(b.x + wb, b.y - lift);
-  g.lineTo(b.x - wb, b.y - lift);
-  g.fill();
-  g.fillStyle = "#ffd23f";
-  for (let k = 0; k < 3; k++) {
-    const t1 = (k + 0.2) / 3;
-    const t2 = (k + 0.6) / 3;
-    const y1 = lerp(a.y, b.y - lift, t1);
-    const y2 = lerp(a.y, b.y - lift, t2);
-    const w1 = lerp(wa, wb, t1) * 0.7;
-    const w2 = lerp(wa, wb, t2) * 0.7;
-    const x1 = lerp(a.x, b.x, t1);
-    const x2 = lerp(a.x, b.x, t2);
-    g.beginPath(); // chevron ⌃
-    g.moveTo(x1 - w1, y1);
-    g.lineTo(x2, y2);
-    g.lineTo(x1 + w1, y1);
-    g.lineTo(x1 + w1 * 0.6, y1);
-    g.lineTo(x2, y2 + (y1 - y2) * 0.45);
-    g.lineTo(x1 - w1 * 0.6, y1);
-    g.fill();
-  }
-}
 
 function drawObject(g, R, V, o, p0, t, night) {
-  if (o.kind === "ramp") return drawRamp(g, R, V, o);
+  if (o.kind === "animal") return drawAnimal(g, p0, o, t);
+  if (o.kind === "sign") return drawSign(g, p0, o);
+  if (o.kind === "ramp" || o.kind === "puddle") {
+    // flat on the road: placed by its near and far edge
+    const off = laneOffset(R, o.x);
+    const a = placeAt(R, V, (o.d - o.len / 2) * M, off);
+    const b = placeAt(R, V, (o.d + o.len / 2) * M, off);
+    if (a && b) (o.kind === "ramp" ? drawRamp(g, a, b) : drawPuddle(g, a, b, o, t));
+    return;
+  }
   const p = { ...p0, u: p0.u * (BIG[o.kind] || 1) };
   if (o.kind === "obstacle" && !o.hit && !(o.warn > 0)) {
     g.fillStyle = "rgba(0,0,0,.22)";
@@ -215,7 +190,7 @@ export function drawScene(g, V, R, race, view) {
         if (it.o) {
           if (rel < PLAYER_Z * 0.55) continue;
           // obstacles show through the fog early, so there is time to change lanes (§4.1)
-          g.globalAlpha = 1 - f * (it.o.kind === "obstacle" ? RACE_DRAW.obstacleFog : 1);
+          g.globalAlpha = 1 - f * (it.o.kind === "obstacle" || it.o.kind === "animal" || it.o.kind === "sign" ? RACE_DRAW.obstacleFog : 1);
           const p = placeAt(R, V, it.z, laneOffset(R, it.o.x));
           if (p) drawObject(g, R, V, it.o, p, t, night);
         } else {

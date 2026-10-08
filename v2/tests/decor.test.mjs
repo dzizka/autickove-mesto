@@ -11,7 +11,7 @@ import { SPRITE_WIDTH } from "../js/render/road-sprites.js";
 import { buildRoad, M } from "../js/games/race/road.js";
 import { setup, openGame, screenshot, WIDTHS } from "./helpers.mjs";
 
-const PROCS = readFileSync(new URL("../js/render/three/props3d.js", import.meta.url), "utf8");
+const PROCS = ["props3d.js", "props3d-world.js"].map((f) => readFileSync(new URL(`../js/render/three/${f}`, import.meta.url), "utf8")).join("\n");
 const DRAWN_2D = readFileSync(new URL("../js/render/road-sprites.js", import.meta.url), "utf8");
 const has2D = (id) => DRAWN_2D.includes(`case "${id}":`);
 

@@ -38,7 +38,7 @@ export function trackPics(track, { lazy = false } = {}) {
   const d = DECOR[track.id] || {};
   const pics = (track.obstacles || []).map((id) => modelPic(id, { track: track.id, lazy }));
   pics.push(propPic(`proc:startGate:${track.lanes}`, { lazy }), propPic(`proc:gate:${track.lanes}`, { lazy }));
-  const beside = [...new Set([...(d.near || []), ...(d.far || []), ...(d.stands || []), d.posts?.id].filter(Boolean))];
+  const beside = [...new Set([...(d.near || []), ...(d.far || []), ...(d.farSea || []), ...(d.nearSea || []), ...(d.stands || []), d.posts?.id].filter(Boolean))];
   for (const id of beside) for (const side of MODELS[id]?.turn || MODELS[id]?.face ? [-1, 1] : [0]) pics.push(modelPic(id, { track: track.id, side, scenery: true, lazy }));
   return pics.filter(Boolean);
 }

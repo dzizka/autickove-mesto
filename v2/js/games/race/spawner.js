@@ -12,7 +12,7 @@ export function makeObject(kind, { lane, d, icon = "", color = "#ffffff", len = 
   const l = Math.max(0, Math.min(lanes - 1, Math.round(Number(lane) || 0)));
   return {
     id: nextId++,
-    kind, // obstacle | traffic | coin | powerup | ramp | fuel | star
+    kind, // obstacle | traffic | coin | powerup | ramp | fuel | star | animal | sign | puddle
     lane: l,
     x: l, // lane position (float, changes for traffic and pulled coins)
     d: Number.isFinite(d) ? d : 0, // distance along the track (metres, centre)
@@ -28,6 +28,10 @@ export function makeObject(kind, { lane, d, icon = "", color = "#ffffff", len = 
     pulled: false, // pulled by the magnet
     warn: 0, // boss throws: seconds until it lands (not solid before)
     springSeen: false, // counted by the Springs ability
+    goal: l, // animals (part 25): the lane where it stops
+    dir: 0, // animals: −1 comes from the right, 1 from the left
+    walking: false, // animals: started walking onto the road
+    splashed: false, // puddles: the car went through
   };
 }
 
@@ -63,7 +67,9 @@ export function generateCourse({ track, level, length, rng }) {
   // Rows start after the starting grid and stop before the finish line.
   for (let d = 90; d < length - 50; d += Math.max(18, avgGap * (0.6 + rng.random() * 0.8))) {
     const ev = weighted(rng, rates);
-    if (ev.kind === "obstacle") {
+    if (ev.kind === "obstacle" && track.animals?.length && rng.random() < RACE.animalShare && !out.some((o) => o.kind === "obstacle" && o.d > d - 16)) {
+      out.push(...animalCrossing(track, N, d, rng));
+    } else if (ev.kind === "obstacle") {
       // one obstacle, sometimes two (never all lanes)
       const extra = (rng.random() < 0.25 + 0.05 * level ? 1 : 0) + (N >= 4 && rng.random() < 0.5 ? 1 : 0);
       const blocked = Math.min(N - 1, 1 + extra);
@@ -91,12 +97,43 @@ export function generateCourse({ track, level, length, rng }) {
       out.push(makeObject("fuel", { lane: lane(), d, icon: "⛽", len: 1.4 }));
     }
   }
+  out.push(...puddles(track, N, length, out, rng));
   return removeBlockedPickups(out).sort((a, b) => a.d - b.d);
+}
+
+/**
+ * An animal (part 25) waits beside the road, walks in when the player comes near and stops in
+ * one lane until the player is past; a ⚠ sign with the animal stands before it on its side.
+ */
+function animalCrossing(track, lanes, d, rng) {
+  const goal = rng.int(0, lanes - 1);
+  const dir = goal < (lanes - 1) / 2 ? 1 : goal > (lanes - 1) / 2 ? -1 : rng.random() < 0.5 ? 1 : -1; // from the nearer side
+  const icon = rng.pick(track.animals);
+  const start = dir > 0 ? -1.4 : lanes - 1 + 1.4;
+  const animal = makeObject("animal", { lane: goal, d, icon, len: 1.8, speed: RACE.animalSpeed });
+  Object.assign(animal, { x: start, dir, goal });
+  const sign = makeObject("sign", { lane: goal, d: d - RACE.animalSign, icon, len: 1 });
+  sign.x = dir > 0 ? -0.95 : lanes - 0.05;
+  return [animal, sign];
+}
+
+/** Puddles that only splash (part 25), never on top of something solid. */
+function puddles(track, lanes, length, objects, rng) {
+  if (!track.puddle) return [];
+  const out = [];
+  const n = Math.round((length / 100) * RACE.puddlesPer100);
+  for (let k = 0; k < n * 3 && out.length < n; k++) {
+    const d = 80 + rng.random() * (length - 140);
+    const lane = rng.int(0, lanes - 1);
+    const busy = objects.some((o) => (o.kind === "obstacle" || o.kind === "ramp" || o.kind === "animal") && Math.abs(o.d - d) < 10) || out.some((o) => Math.abs(o.d - d) < 30);
+    if (!busy) out.push(makeObject("puddle", { lane, d, color: track.puddle, len: 3.6 }));
+  }
+  return out;
 }
 
 /** Never put a coin, power-up or can on top of an obstacle (unless it floats over a ramp jump). */
 function removeBlockedPickups(objects) {
-  const solid = objects.filter((o) => o.kind === "obstacle");
+  const solid = objects.filter((o) => o.kind === "obstacle" || o.kind === "animal");
   return objects.filter((o) => {
     if (o.kind !== "powerup" && o.kind !== "fuel" && o.kind !== "coin") return true;
     const clash = solid.some((s) => s.lane === o.lane && Math.abs(s.d - o.d) < 3);

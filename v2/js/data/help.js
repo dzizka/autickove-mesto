@@ -21,6 +21,7 @@ export const HELP = {
     icon: "🏎️",
     text: [
       "Preteky. Auto ide samo, ťuknutím na ľavú alebo pravú polovicu obrazovky zmení pruh. Treba sa vyhýbať prekážkam a zbierať mince, benzín ⛽ a hviezdy.",
+      "Značka ⚠ so zvieratkom ukazuje, že zvieratko vojde na cestu a zastane v jednom pruhu: treba ho obísť. Mláky len ošpliechajú auto, nič sa nestane.",
       "Prehrať sa nedá: aj 4. miesto dá mince a súčiastky. Na konci sa ťukne na truhlicu.",
     ],
   },

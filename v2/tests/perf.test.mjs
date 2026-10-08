@@ -14,7 +14,7 @@ after(async () => {
   await env.teardown();
 });
 
-const TRACKS = ["city", "forest", "desert", "snow", "night", "space"];
+const TRACKS = ["city", "forest", "desert", "snow", "night", "space", "farm", "beach"];
 
 test("every track stays smooth on a 4× slower CPU at tablet size", async () => {
   const results = [];
@@ -22,13 +22,13 @@ test("every track stays smooth on a 4× slower CPU at tablet size", async () => 
     const page = await openGame(env.browser, env.server.url, { width: 1024, height: 768, storage: { settings: { sound: false, voice: false } } });
     const cdp = await page.context().newCDPSession(page);
     await cdp.send("Emulation.setCPUThrottlingRate", { rate: 4 });
-    await page.evaluate((t) => {
+    await page.evaluate(([t, all]) => {
       window.__game.state.update((s) => {
-        for (const id of ["city", "forest", "desert", "snow", "night", "space"]) s.races.tracks[id] = { unlocked: 3, best: { 1: 1 }, challenge: 0, races: 0 };
+        for (const id of all) s.races.tracks[id] = { unlocked: 3, best: { 1: 1 }, challenge: 0, races: 0 };
         s.look = { ...s.look, car: "rocket", color: "galaxy", pattern: "stars", neon: "rainbow", trail: "rainbow", roof: "crown", wing: "double" };
       });
       location.hash = `#/game/race/${t}/3`;
-    }, track);
+    }, [track, TRACKS]);
     await page.waitForFunction(() => window.__game.race?.phase === "racing", null, { timeout: 30000 });
     // the 3D pictures of the track are made once (part 24); then the race must run smoothly
     await page.waitForFunction(() => !window.__game.racePicsPending?.(), null, { timeout: 20000 });

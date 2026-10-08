@@ -40,11 +40,15 @@ function pickRace(s) {
   TRACKS.forEach((t, ti) => {
     if (!isTrackUnlocked(t.id, s)) return;
     for (let level = 1; level <= trackProgress(t.id, s).unlocked; level++) {
-      options.push({ track: t, level, rank: ti * 10 + level, light: difficulty(power, recommendedPower(t.id, level)) });
+      const p = trackProgress(t.id, s);
+      // still something to win here: the top open level of the track (part 25: with tracks
+      // after Space the child also goes back to finish the older tracks)
+      const fresh = level === p.unlocked && p.best[level] !== 1;
+      options.push({ track: t, level, rank: ti * 10 + level + (fresh ? 1000 : 0), light: difficulty(power, recommendedPower(t.id, level)) });
     }
   });
-  // the newest level; when it is 🔴 the child still tries it every other time
-  // (the game says "you can try"), otherwise it plays the best 🟢 level
+  // the newest level that still has something to win; when it is 🔴 the child still tries it
+  // every other time (the game says "you can try"), otherwise it plays the best 🟢 level
   const newest = [...options].sort((a, b) => b.rank - a.rank)[0];
   if (newest.light !== "red" || rng.random() < 0.5) return newest;
   return options.filter((o) => o.light === "green").sort((a, b) => b.rank - a.rank)[0] || newest;
@@ -98,6 +102,7 @@ export function simulate({ seed = 1, races = 400, onRace = null } = {}) {
       mark("space5", i);
       marks.space5Power = carPower(carStats());
     }
+    if (isLevelUnlocked("beach", 5, st)) mark("beach5", i);
     if (BOSSES.every((b) => (st.bosses[b.track] || 0) > 0)) mark("allBosses", i);
     marks.bosses = Object.values(st.bosses).filter(Boolean).length;
     // longest stretch of races without a new level or track, until Space 5 (frustration check)

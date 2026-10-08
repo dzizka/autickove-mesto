@@ -3,7 +3,7 @@
 import { RACE } from "../js/data/tracks.js";
 import { createRace, step, steer } from "../js/games/race/physics.js";
 
-const SOLID = new Set(["obstacle", "traffic"]);
+const SOLID = new Set(["obstacle", "traffic", "animal"]); // animals (part 25) by where they stand now
 
 function blocked(race, lane, from, to) {
   return race.objects.some((o) => SOLID.has(o.kind) && !o.hit && Math.abs(o.x - lane) < 0.7 && o.d > from && o.d < to);

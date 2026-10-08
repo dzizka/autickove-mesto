@@ -38,6 +38,8 @@ export const EN_DATA = {
   Sneh: "Snow",
   Noc: "Night",
   Vesmír: "Space",
+  Farma: "Farm",
+  Pláž: "Beach",
   Modrý: "Blue",
   Zelený: "Green",
   Fialový: "Purple",
@@ -47,6 +49,8 @@ export const EN_DATA = {
   Škorpión: "Scorpion",
   "Snežný Yeti": "Snow Yeti",
   Netopier: "Bat",
+  Býk: "Bull",
+  Krab: "Crab",
   Ufo: "UFO",
 
   // stats and car parts

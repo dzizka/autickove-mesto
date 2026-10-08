@@ -1,6 +1,6 @@
 // Moving home background (DESIGN-v2 §14, part 14): behind the buttons the child's car drives
 // on a pseudo-3D road, seen from behind with its whole look and the buddy. The track changes
-// every little while; day tracks by day, night and space in the evening. It runs at a lower
+// every little while; day tracks (also Farm and Beach) by day, night and space in the evening. It runs at a lower
 // frame rate than the races, pauses under an open window and when the tab is hidden, and the
 // parents can stop it ("Pohyblivé pozadie" in the settings): then it is one still picture.
 
@@ -13,7 +13,7 @@ import { createDriveScene } from "../games/race/drive-scene.js";
 
 export const HOME_FPS = 30;
 export const TRACK_SECONDS = 25;
-const DAY = ["city", "forest", "desert", "snow"];
+const DAY = ["city", "forest", "desert", "snow", "farm", "beach"];
 const NIGHT = ["night", "space"];
 const STILL_FPS = 1; // without motion the picture is redrawn rarely (the 3D car may still arrive)
 

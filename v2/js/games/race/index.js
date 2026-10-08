@@ -16,6 +16,7 @@ import { drawScene, drawPlayer, drawHeadlights, drawSpeedLines, laneOffset, riva
 import { carPic, readyPic, hasWebGL } from "../../render/car-pics.js";
 import { trackPics } from "../../render/road-sprites.js";
 import { createWeather, drawWeather } from "./weather.js";
+import { drawSplash } from "./road-life.js";
 import { createHud, showPodium } from "./hud.js";
 import { buddyBadge } from "../../screens/buddy-badge.js";
 import { t } from "../../core/i18n.js";
@@ -153,6 +154,7 @@ export default {
       ctx.speak(text, { interrupt: false });
     };
     let lastCoinSound = 0;
+    let lastHop = -1;
     let lastDt = 1 / 60;
     let finishing = false;
 
@@ -179,7 +181,7 @@ export default {
           sfx.coin();
         } else if (ev.type === "hit") {
           sfx.oops();
-          sayOnce("hit", "Bum! Vyhýbaj sa prekážkam.");
+          if (race.time - lastHop > 0.2) sayOnce("hit", "Bum! Vyhýbaj sa prekážkam.");
         } else if (ev.type === "shield") {
           tone(1200, 0.2, { type: "sine", to: 600, volume: 0.15 });
           sayOnce("shield", "Štít ťa ochránil!");
@@ -194,6 +196,19 @@ export default {
         else if (ev.type === "overtake") {
           tone(600, 0.15, { type: "triangle", to: 1200, volume: 0.1 });
           sayOnce("overtake", "Predbehol si ho!");
+        } else if (ev.type === "animal") {
+          // part 25: an animal walks onto the road (the ⚠ sign showed it before)
+          tone(660, 0.12, { type: "triangle", to: 880, volume: 0.1 });
+          setTimeout(() => tone(880, 0.12, { type: "triangle", to: 660, volume: 0.1 }), 140);
+          sayOnce("animal", "Pozor, zvieratko na ceste! Obíď ho.");
+        } else if (ev.type === "hop") {
+          lastHop = race.time;
+          tone(500, 0.25, { type: "sine", to: 1200, volume: 0.1 });
+          sayOnce("hop", "Hop! Zvieratko uskočilo. Nabudúce ho obíď.");
+        } else if (ev.type === "splash") {
+          fx.splash = { t: 0, color: ev.color };
+          tone(900, 0.18, { type: "sawtooth", to: 300, volume: 0.05 });
+          sayOnce("splash", "Čľap!");
         } else if (ev.type === "finish") onFinish();
       }
       race.events.length = 0;
@@ -272,7 +287,8 @@ export default {
         const r = renderRoad(g, V, road, { z: camZ, x: camX, frame, fog });
         drawScene(g, V, road, race, { base: r.base, camZ, fog, time });
         if (track.scene.night) drawHeadlights(g, V, V.w / 2, race.effects.lightRange);
-        drawPlayer(g, V, road, race, fx, camX, time, lastDt);
+        const px = drawPlayer(g, V, road, race, fx, camX, time, lastDt);
+        drawSplash(g, V, px, fx, lastDt);
         drawSpeedLines(g, V, race, time);
         drawWeather(g, V, weather, lastDt, p.speed);
       },

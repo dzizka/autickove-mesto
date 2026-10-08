@@ -110,7 +110,7 @@ test("every course row leaves a free lane and all objects have finite coordinate
         for (const o of objs) {
           for (const key of ["lane", "x", "d", "len", "speed", "fly"]) assert.ok(Number.isFinite(o[key]), `${t.id}: ${o.kind}.${key} = ${o[key]}`);
         }
-        const solid = objs.filter((o) => o.kind === "obstacle");
+        const solid = objs.filter((o) => o.kind === "obstacle" || o.kind === "animal"); // an animal stops in its lane
         for (const o of solid) {
           const lanesHere = new Set(solid.filter((s) => Math.abs(s.d - o.d) < 4).map((s) => s.lane));
           assert.ok(lanesHere.size < t.lanes, `${t.id} ${level}: all lanes blocked at ${o.d}`);

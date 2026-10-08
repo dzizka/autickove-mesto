@@ -80,6 +80,35 @@ export const MODELS = {
   asteroid: { path: "nature/rock_largeC", w: 520, opts: { tint: "#8a80a8", tintK: 0.6 }, fb: "asteroid" },
   satellite: { path: "proc:satellite", w: 600, fb: "satellite" },
   crystalRock: { path: "proc:crystalRock", w: 420, fb: "crystalRock" },
+
+  // ---- farm (part 25) ----
+  barn: { path: "proc:barn", w: 2300, opts: { rot: 20 }, fb: "house" },
+  silo: { path: "proc:silo", w: 850, fb: "tower" },
+  windmill: { path: "proc:windmill", w: 2000, opts: { rot: -15 }, fb: "house" },
+  tractor: { path: "carkit/tractor", w: 700, opts: { rot: 35 }, fb: "crate" },
+  baleBig: { path: "proc:bale", w: 650, opts: { rot: 70 }, fb: "crate" },
+  pumpkins: { path: "proc:pumpkin", w: 520, fb: "mushroom" },
+  corn: { path: "nature/crops_cornStageD", w: 520, fb: "bush" },
+  melon: { path: "nature/crop_melon", w: 450, fb: "bush" },
+  cabbage: { path: "nature/crops_leafsStageB", w: 420, fb: "bush" },
+  bale: { path: "proc:bale", w: 470, fb: "crate" },
+  pumpkin: { path: "proc:pumpkin", w: 420, fb: "barrel" },
+  milkCan: { path: "proc:milkCan", w: 300, fb: "barrel" },
+  // ---- beach (part 25) ----
+  palmShort: { path: "nature/tree_palmDetailedShort", w: 1000, fb: "palm" },
+  parasol: { path: "city/commercial/detail-parasol-a", w: 700, fb: "palm" },
+  beachHut: { path: "proc:beachHut", w: 1000, opts: { rot: 15 }, fb: "house" },
+  beachHutPink: { path: "proc:beachHutPink", w: 1000, opts: { rot: -15 }, fb: "house" },
+  lifeguard: { path: "proc:lifeguard", w: 900, opts: { rot: 25 }, fb: "lamp" },
+  castleBig: { path: "proc:sandcastle", w: 700, fb: "rock" },
+  ballSmall: { path: "proc:beachBall", w: 320, fb: "snowball" },
+  boardUp: { path: "proc:surfboard", w: 380, opts: { rot: 30 }, fb: "cone" },
+  sailboat: { path: "proc:sailboat", w: 900, opts: { rot: 70 }, fb: "" },
+  buoy: { path: "proc:buoy", w: 300, fb: "" },
+  shell: { path: "nature/stone_smallA", w: 260, opts: { tint: "#fff1e0", tintK: 0.75 }, fb: "rock" },
+  sandcastle: { path: "proc:sandcastle", w: 560, fb: "crate" },
+  beachBall: { path: "proc:beachBall", w: 420, fb: "snowball" },
+  surfboard: { path: "proc:surfboard", w: 340, fb: "cone" },
 };
 
 /** Sizes of things drawn on the road (× their width) and how fog hides them. */
@@ -162,6 +191,30 @@ export const DECOR = {
     posts: { id: "glowPost", every: 16 },
     stands: ["stands", "bannerTower"],
     landmarks: [{ kind: "rings", at: 0.3, len: 70 }, { kind: "rings", at: 0.72, len: 70 }],
+  },
+  farm: {
+    far: ["barn", "silo", "oak", "windmill", "treeRound", "tractor", "baleBig", "barn", "oak"],
+    farEvery: [5, 9],
+    near: ["corn", "corn", "pumpkins", "melon", "cabbage", "baleBig"],
+    nearEvery: [4, 7],
+    edge: { kind: "fence", stretch: [80, 40] },
+    stands: ["standsOpen", "flagGreen", "flagRed"],
+    landmarks: [{ kind: "bridge", at: 0.38, len: 35 }, { kind: "tunnel", at: 0.68, len: 55 }],
+    tunnel: { face: "#8a6a4a", top: "#7cc95a", wall: "#b08a5a", ceil: "#7a5636", light: "#ffe28a" },
+    water: ["#3f9fd0", "#57b4e0"],
+  },
+  beach: {
+    far: ["palm", "parasol", "beachHut", "palmShort", "lifeguard", "beachHutPink", "castleBig", "parasol", "palm"],
+    farEvery: [4, 8],
+    near: ["shell", "ballSmall", "boardUp", "shell", "parasol"],
+    nearEvery: [5, 9],
+    // the sea side (TRACKS scene.sea): boats and buoys on the water, shells on the sand
+    farSea: ["sailboat", "buoy", "buoy", "sailboat"],
+    nearSea: ["shell", "shell", "ballSmall"],
+    stands: ["stands", "flagRed", "bannerTower"],
+    landmarks: [{ kind: "tunnel", at: 0.3, len: 50 }, { kind: "bridge", at: 0.62, len: 50 }],
+    tunnel: { face: "#c9a27a", top: "#7fc35c", wall: "#d9b88a", ceil: "#a8855a", light: "#fff3c4" },
+    water: ["#2aa9e0", "#38b6ea"],
   },
 };
 

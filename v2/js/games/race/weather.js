@@ -1,10 +1,11 @@
-// Weather particles over the race view (DESIGN-v2 §4.1): leaves, sand, snow and space dust.
+// Weather particles over the race view (DESIGN-v2 §4.1): leaves, sand, snow, space dust and
+// (part 25) blossom petals over the farm.
 // Screen-space, so they work the same for every road shape.
 
 /** Weather particles live here; each gets all coordinates at creation. */
 export function createWeather(track, L) {
   const kind = track.weather;
-  const count = { leaves: 14, sand: 26, snow: 40, stars: 60, night: 0, none: 0 }[kind] ?? 0;
+  const count = { leaves: 14, sand: 26, snow: 40, stars: 60, petals: 18, night: 0, none: 0 }[kind] ?? 0;
   const parts = [];
   for (let i = 0; i < count; i++) {
     parts.push({ x: Math.random() * L.w, y: Math.random() * L.h, v: 0.5 + Math.random(), r: 1 + Math.random() * 2.5, phase: Math.random() * 6.28 });
@@ -35,6 +36,13 @@ export function drawWeather(g, L, weather, dt, speed) {
       p.y += (v * 4) * dt;
       g.fillStyle = "rgba(255,236,190,.55)";
       g.fillRect(p.x, p.y, p.r * 6, p.r);
+    } else if (kind === "petals") {
+      p.y += (18 + v * 4) * p.v * dt;
+      p.x += Math.sin(p.y / 50 + p.phase) * 0.9 + 20 * dt;
+      g.fillStyle = p.phase > 3 ? "rgba(255,190,220,.9)" : "rgba(255,255,255,.9)";
+      g.beginPath();
+      g.ellipse(p.x, p.y, p.r * 1.6, p.r, p.phase + p.y / 40, 0, 6.29);
+      g.fill();
     } else if (kind === "stars") {
       p.y += v * 8 * p.v * dt;
       g.fillStyle = "rgba(180,240,255,.8)";
