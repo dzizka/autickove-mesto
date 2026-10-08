@@ -41,7 +41,8 @@ export const RACE = {
 };
 
 /**
- * Per track (DESIGN-v2 §4.1): lanes, sprite ids for scenery and obstacles (render/road-sprites.js),
+ * Per track (DESIGN-v2 §4.1): lanes, obstacle ids (models in data/race-props.js, which also holds
+ * the scenery along each track; 2D drawings in render/road-sprites.js),
  * scene = colours of the pseudo-3D view (far: skyline | hills | dunes | mountains | space),
  * road = repeating plan of [metres, curve, hill]; curves and hills are only for the eye.
  */
@@ -54,7 +55,6 @@ export const TRACKS = [
     coinBonus: 1,
     weather: "none",
     colors: { ground: "#7ccf5a", groundAlt: "#6cc04b", road: "#5a606b", line: "#ffffff", edge: "#ffd23f", sky: "#9be3f0" },
-    scenery: ["house", "tree", "lamp", "house", "bush", "tower"],
     obstacles: ["cone", "barrier", "crate"],
     traffic: ["#f2c94c", "#56ccf2", "#eb5757", "#ffffff", "#bb6bd9"],
     slippery: 0,
@@ -71,7 +71,6 @@ export const TRACKS = [
     coinBonus: 1.15,
     weather: "leaves",
     colors: { ground: "#3f8f3a", groundAlt: "#367e32", road: "#8a6a4a", line: "#f4e3c1", edge: "#5b4330", sky: "#bfe8b0" },
-    scenery: ["tree", "pine", "tree", "mushroom", "pine", "rock", "🦌"],
     obstacles: ["log", "rock", "stump"],
     traffic: ["#8d6e63", "#f2994a", "#6fcf97", "#f2c94c"],
     slippery: 0.1,
@@ -88,8 +87,7 @@ export const TRACKS = [
     coinBonus: 1.3,
     weather: "sand",
     colors: { ground: "#f2d18b", groundAlt: "#e8c27a", road: "#c79a5b", line: "#fff4d6", edge: "#a87b45", sky: "#ffe6a8" },
-    scenery: ["cactus", "rock", "cactus", "palm", "🐫"],
-    obstacles: ["cactusSmall", "rock", "tumbleweed"],
+    obstacles: ["cactusSmall", "sandRock", "tumbleweed"],
     traffic: ["#e0e0e0", "#f2994a", "#eb5757", "#2d9cdb"],
     slippery: 0.15,
     airTime: 1.0,
@@ -105,7 +103,6 @@ export const TRACKS = [
     coinBonus: 1.45,
     weather: "snow",
     colors: { ground: "#f4f9ff", groundAlt: "#e6f0fa", road: "#b8c6d6", line: "#ffffff", edge: "#7fa3c4", sky: "#dceeff" },
-    scenery: ["snowPine", "snowman", "snowPine", "snowPine", "house", "🐧"],
     obstacles: ["snowman", "iceBlock", "snowball"],
     traffic: ["#eb5757", "#2d9cdb", "#27ae60", "#f2c94c"],
     slippery: 1, // lane changes overshoot unless handling is high
@@ -122,7 +119,6 @@ export const TRACKS = [
     coinBonus: 1.6,
     weather: "night",
     colors: { ground: "#2c4a3a", groundAlt: "#264233", road: "#3a3f4b", line: "#fff6b0", edge: "#ffd23f", sky: "#1c2340" },
-    scenery: ["lamp", "house", "lamp", "tree", "tower"],
     obstacles: ["cone", "barrier", "barrel"],
     traffic: ["#f2c94c", "#ffffff", "#eb5757", "#56ccf2"],
     slippery: 0.1,
@@ -139,7 +135,6 @@ export const TRACKS = [
     coinBonus: 1.8,
     weather: "stars",
     colors: { ground: "#120f2e", groundAlt: "#17133a", road: "#3b2f7a", line: "#7df9ff", edge: "#ff6ad5", sky: "#0b0820" },
-    scenery: ["crystal", "planet", "crystal", "crystal", "ufo"],
     obstacles: ["asteroid", "satellite", "crystalRock"],
     traffic: ["#7df9ff", "#ff6ad5", "#c3ff6a", "#ffffff"],
     slippery: 0.2,

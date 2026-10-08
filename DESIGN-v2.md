@@ -31,7 +31,7 @@ Iné hry a systémy z v1 (mesto, album, minihry…) pôvodne do v2 nepatrili. **
 
 ## 2. Štruktúra kódu
 
-Bez inštalácie a bez kompilácie: čisté HTML, CSS a JavaScript moduly (`<script type="module">`), ktoré GitHub Pages servíruje priamo. Knižnice sú povolené (rodič ich pôvodne nechcel, lebo plánoval hru v jednom súbore; na GitHube to už neplatí). Ukladajú sa priamo do `v2/vendor/` aj s licenciou, nič sa nesťahuje z cudzích serverov. Modely áut sú z balíka Kenney Car Kit (CC0) v `v2/models/`. Hra je na adrese `/v2/`. Kým nie je hotová, `/` ďalej vedie na `v1/`.
+Bez inštalácie a bez kompilácie: čisté HTML, CSS a JavaScript moduly (`<script type="module">`), ktoré GitHub Pages servíruje priamo. Knižnice sú povolené (rodič ich pôvodne nechcel, lebo plánoval hru v jednom súbore; na GitHube to už neplatí). Ukladajú sa priamo do `v2/vendor/` aj s licenciou, nič sa nesťahuje z cudzích serverov. Modely sú z balíkov Kenney (Car, City, Nature, Racing a Toy Car Kit, všetko CC0) v `v2/models/`. Hra je na adrese `/v2/`. Kým nie je hotová, `/` ďalej vedie na `v1/`.
 
 ```
 v2/
@@ -57,6 +57,7 @@ v2/
 │   │   ├── menu.js         # štyri piliere hry (tlačidlá Domov a navigácie)
 │   │   ├── stats.js        # štatistiky, sloty, začiatočné auto, účinky štatistík v pretekoch
 │   │   ├── cars.js  tuning.js  tracks.js  bosses.js
+│   │   ├── race-props.js   # 3D modely okolia trate a prekážok, okolie každej trate (časť 24)
 │   │   ├── garage.js  legendaries.js   # úrovne dielov, ceny, súčiastky z truhlice; 12 schopností
 │   │   ├── crew.js  trophies.js  quests.js
 │   │   ├── city.js  album.js  # mesto (budovy), album (stránky nálepiek), denný darček
@@ -82,6 +83,7 @@ v2/
 │   │   ├── three/          # kit.js (modely) paint.js (farba, vzory) car3d.js (auto s tuningom)
 │   │   │                   # stage.js (scéna s autom) snapshot.js (obrázok auta)
 │   │   │                   # town.js (mesto zhora: auto, ovládanie, kamera) town-map.js (ulice, pozemky, mince)
+│   │   │                   # props3d.js (modely z tvarov, sneh, nádych, svietiace okná)
 │   │   └── emoji.js        # emoji kreslené do malého plátna (rýchle na tablete)
 │   ├── screens/            # home.js garage.js tuning.js crew.js gallery.js parents.js
 │   │                       # settings.js test-menu.js topbar.js coloring.js (výber obrázka) trophies.js
@@ -91,7 +93,8 @@ v2/
 │   └── games/
 │       ├── demo/           # skúšobná jazda len z testovacieho menu (overuje slučku a odmeny)
 │       ├── race/           # index.js  spawner.js  physics.js  hud.js  boss.js  abilities.js (schopnosti dielov)
-│       │                   # road.js (úseky cesty, projekcia, obloha)  scene.js (prekážky, autá, efekty)  weather.js
+│       │                   # road.js (úseky cesty, projekcia, obloha, rozmiestnenie okolia)  scene.js (prekážky, autá, efekty)  weather.js
+│       │                   # decor.js (zábradlia, tunely, kruhy, brány, tiene)
 │       │                   # drive-scene.js (auto na prázdnej ceste)  test-drive.js (🛣️ skúšobná jazda)
 │       ├── coloring/       # index.js  free-paint.js  by-number.js  brush.js  tools.js (panel nástrojov)
 │       ├── mini/shell.js   # spoločný rám hier v herni: 🏠, hviezdy obtiažnosti, pruh postupu, 🔊, koniec s hviezdami
@@ -141,17 +144,25 @@ Vo v1 sa našli tri chyby (sú opravené vo v1). Vo v2 im treba predísť od za�
 
   | Trať | Pruhy | Cesta | Prekážky | Krajina |
   |---|---|---|---|---|
-  | Mesto | 3 | mierne zákruty, rovina | kužele, zábrany, debny | domy, stromy, lampy, mrakodrapy na obzore |
-  | Les | 2 | lesná cesta, veľa zákrut, pahorky | kmene, kamene, pne | stromy, smreky, huby, zelené kopce |
-  | Púšť | 4 | dlhé rovinky cez duny | kaktusy, kamene, guľatý bodliak | kaktusy, skaly, slnko, duny |
-  | Sneh | 3 | horské zákruty a kopce | snehuliaci, ľadové kocky, snehové gule | smreky so snehom, hory, sneženie |
-  | Noc | 3 | mesto v noci | kužele, zábrany, sudy | lampy so svetlom, okná svietia, mesiac, hviezdy |
-  | Vesmír | 5 | veľké vlny hore a dole | asteroidy, satelity, kryštály | planéty, neónové kryštály, hviezdy |
+  | Mesto | 3 | mierne zákruty, rovina | kužele, zábrany, debny | domy, mrakodrapy, stromy, kvetináče, lampy, zvodidlá; most cez rieku, tunel v kopci |
+  | Les | 2 | lesná cesta, veľa zákrut, pahorky | kmene, kamene, pne | listnaté stromy, smreky, stany, huby, kríky, polená, drevený plot; drevený most, tunel |
+  | Púšť | 4 | dlhé rovinky cez duny | kaktusy, pieskové kamene, guľatý bodliak | kaktusy, pieskové skaly, palmy, kamienky, nízky múrik; tunel v skale |
+  | Sneh | 3 | horské zákruty a kopce | snehuliaci, ľadové kocky, snehové gule | zasnežené smreky, chaty so snehom na streche, snehuliaci, polená, červeno-biele tyče; tunel v hore |
+  | Noc | 3 | mesto v noci | kužele, zábrany, sudy | domy a mrakodrapy so svietiacimi oknami, lampy so svetlom, zvodidlá; tunel so svetlami, most |
+  | Vesmír | 5 | veľké vlny hore a dole | asteroidy, satelity, kryštály | svietiace kryštály, fialové skaly, planéty, ufo, svietiace stĺpiky a zábradlie; neónové kruhy nad cestou |
 
   - Na trati s viacerými pruhmi je viac prekážok a premávky, aby bola rovnako hustá. Vždy ostane aspoň jeden voľný pruh.
   - V noci je hmla tmavá a cestu osvetľujú svetlá auta. Legendárny Svetlomet posunie hmlu ďalej.
   - Prekážky, mince, kanistre, rampy a autá sú kreslené vlastnými tvarmi, nie emoji. Emoji ostávajú pri ikonách power-upov, kamarátov a bossov.
   - Auto hráča je vidieť zozadu so všetkým, čo dieťa kúpilo: druh auta, farba, vzor, kolesá, spojler, nálepka, vec na streche, neón a stopa.
+- **Okolie trate v 3D (časť 24, po skúšaní):** rodič chcel krajšie preteky: okolie bolo riedke, ploché a na oboch stranách rovnaké, prekážky malé.
+  - **Modely:** všetko pri ceste aj na ceste je obrázok 3D modelu (Kenney Nature Kit, Racing Kit, City Kit, Car Kit, všetko CC0, licencie v `v2/models/*/License.txt`). Čo v balíkoch chýba (snehuliak, ľadová kocka, snehová guľa, sud, satelit, kryštály, snehové tyče, brána), je postavené z jednoduchých tvarov v `render/three/props3d.js`. Zoznam modelov a okolia každej trate je v `data/race-props.js`.
+  - **Úpravy modelov:** sneh na všetkom, čo je otočené nahor (strechy, smreky, skaly), farebný nádych (pieskové skaly, fialové skaly vo vesmíre), v noci tlmené modré svetlo a svietiace okná. Prírodné farby sú zelenšie (balík je modrastý).
+  - **Okolie:** veľké veci ďalej od cesty a malé priamo pri ceste, každá strana zvlášť (strany sa nezrkadlia). Pod vecami je mäkký tieň. Pri ceste sú v úsekoch zvodidlá, drevený plot, múrik alebo svietiace zábradlie, v pravidelnom rytme lampy alebo tyče. Na trati je vždy to isté okolie (pevné náhodné čísla).
+  - **Pamätné miesta:** most cez rieku (voda namiesto trávy, zábradlie), tunel (vchod v kopci, skale alebo hore, vo vnútri steny, strop a svetlá; nič v ňom nestojí), vo Vesmíre neónové kruhy. Strop tunela je vždy nad očami aj na vysokom telefóne.
+  - **Štart a cieľ:** nad štartom brána so zelenými šípkami, nad cieľom šachovnicová brána, obe s balónmi; pri oboch tribúny otočené k ceste, vlajky a veže. Pri víťazstve vybuchnú konfety.
+  - **Prekážky** sú 3D modely pre každú trať a kreslia sa 1,9-krát väčšie (predtým 1,7). Hmla ich skrýva len do polovice, aby boli vidieť skôr.
+  - **Výkon:** obrázky sa urobia raz počas odpočítavania (červené svetlo počká najviac 2,5 s, aby sa stromy nemenili počas jazdy); vzdialené a malé veci sa nekreslia, ďaleké zábradlie sa kreslí po kúskoch. Keď zariadenie nestíha (menej ako 28 snímok za sekundu pol sekundy), vynechá sa časť stromov a domov (nikdy lampy, tyče a tribúny); úroveň si hra pamätá do ďalších pretekov. Bez WebGL ostanú 2D kresby a začína sa s polovicou okolia.
 
 ### 4.2 Dva druhy úprav auta
 
@@ -363,6 +374,8 @@ Každá časť sa po dokončení nahrá na GitHub a dá sa hneď hrať na `/v2/`
 | **20. Hranie bez slov** | Ukážková ruka na každej obrazovke a v každej hre, obrázok ku každému zvuku, ❔ vysvetlenie pre rodiča, titulky (bod 15.2) | dieťa, ktoré nepočuje a nečíta, vie hrať samo |
 | **21. Kamaráti a ekonomika** | Kŕmenie cukríkom, hra s chytaním hviezd, XP z herne a pohladkania, viac mincí v herni, viac cukríkov (bod 6.1) | kamarát rastie aj bez pretekov a cukríky aj herňa majú zmysel |
 | **22. Ekonomika súčiastok** | 40 menších úrovní dielu, hotové auto mení súčiastky na mince, súčiastky z herne a darčeka, pruh k ďalšiemu vylepšeniu (bod 4.7) | dieťa vylepšuje auto pravidelne a súčiastky sa nehromadia |
+| **23. Rozloženie na PC** | Zarovnaný výber pretekov, rovnako široké karty Nastavení, úzky stĺpec v Kamarátoch (bod 14) | obrazovky na PC sú usporiadané a nič netrčí |
+| **24. Okolie trate** | 3D modely okolia a prekážok, tiene, hustejšie okolie bez zrkadlenia, zábradlia, mosty, tunely, neónové kruhy, brány s tribúnami, konfety, menej okolia na pomalom zariadení (bod 4.1) | každá trať je plná, iná a pamätná a ide plynulo |
 
 ---
 
@@ -454,7 +467,7 @@ Každá hra má 3 obtiažnosti, ktoré si dieťa vyberá samo (od časti 13), a 
 - **Domov (časť 14, hotové):** za tlačidlami beží pseudo 3D cesta, po ktorej jazdí auto dieťaťa zozadu (so všetkým tuningom a kamarátom) a samo občas mení pruh. Trate sa striedajú každých 25 s (cez deň Mesto, Les, Púšť, Sneh; od 19:00 do 7:00 Noc a Vesmír). Ťuknutie na auto zatrúbi a auto vyskočí. Tlačidlá sú na polopriehľadnom paneli. Pozadie kreslí 30 snímok za sekundu (preteky 60), zastaví sa pri otvorenom okne a skrytej karte. V Nastaveniach je vypínač „🎞️ Pohyblivé pozadie“ (uloženie v12, `settings.motion`); vypnuté alebo pri systémovom „obmedziť pohyb“ ostane jeden nehybný obrázok.
 - **Pozadie a široké obrazovky (po skúšaní na PC, rodič vybral možnosť A):** za obrazovkami menu je pokojná pohyblivá obloha (`screens/backdrop.js`): farby podľa času dňa, pomalé mraky, v diaľke kopce a mestečko (v noci svietia okná a hviezdy), občas autíčko na ceste a balón. Kreslí 20 snímok za sekundu, na domove a v pretekoch sa skryje, v minihrách stojí, vypínač „Pohyblivé pozadie“ ho zastaví. Od šírky 1200 px sa obrazovky roztiahnu (`css/screens/wide.css`): Vzhľad má veľkú točňu na celú výšku a panel vedľa, Garáž veľký zdvihák, väčšie trate, kamaráti, obrázky, trofeje a dlaždice herne; minihry rastú s obrazovkou (premenná `--u`: 1,35 od 1200 px, 1,7 od 1700 × 950 px).
 - **Po skúšaní (8. 10.):** kamarát už nie je nakreslený na aute, ale sedí ako odznak spolujazdca vedľa auta (Vzhľad, Garáž, domov, preteky). Ťuknutím na neho v Kamarátoch alebo na 🏠 zostane doma, vtedy nedáva bonus. Autá v pretekoch sú vidieť pod uhlom `RACE.carViewDeg` = 12° (34° pôsobilo ako jazda po zadných kolesách, 18° bolo ešte vysoko; 12° zvolil rodič). Okno po minihre má 🔁 znova, 🎪 herňa, 🏠 domov.
-- **Audit 3D a stability (8. 10.):** 3D sa zapne len na skutočnej grafickej karte (`failIfMajorPerformanceCaveat`), inak 2D. Mesto kreslí tiene raz (nie každý snímok), auto má mäkký tieň pod sebou, pri pomalom tablete samo zníži rozlíšenie a potom vypne tiene. Pri strate WebGL mesto prejde na 2D ulicu, pri načítaní krúži autíčko. Nájom mení len mince, nie celú budovu; spoločné geometrie a materiály, nič sa nehromadí v pamäti GPU. Rýchle ťukanie vo Vzhľade stavia len posledné auto. Klávesy WASD všade, kde sú šípky. Preteky počkajú pred odpočítavaním najviac 1,5 s na 3D auto dieťaťa (bez preskoku z 2D). V meste šípka na okraji ukazuje k minciam mimo obrazovky; na mobile sú ⬅️ ➡️ v ľavom a ⬆️ ⬇️ v pravom dolnom rohu.
+- **Audit 3D a stability (8. 10.):** 3D sa zapne len na skutočnej grafickej karte (`failIfMajorPerformanceCaveat`), inak 2D. Mesto kreslí tiene raz (nie každý snímok), auto má mäkký tieň pod sebou, pri pomalom tablete samo zníži rozlíšenie a potom vypne tiene. Pri strate WebGL mesto prejde na 2D ulicu, pri načítaní krúži autíčko. Nájom mení len mince, nie celú budovu; spoločné geometrie a materiály, nič sa nehromadí v pamäti GPU. Rýchle ťukanie vo Vzhľade stavia len posledné auto. Klávesy WASD všade, kde sú šípky. Preteky počkajú pred odpočítavaním najviac 1,5 s na 3D auto dieťaťa (bez preskoku z 2D); od časti 24 najviac 2,5 s aj na obrázky okolia trate. V meste šípka na okraji ukazuje k minciam mimo obrazovky; na mobile sú ⬅️ ➡️ v ľavom a ⬆️ ⬇️ v pravom dolnom rohu.
 - **3D auto (časť 15a):** skutočne otočné auto vo Vzhľade (samo sa pomaly otáča, dá sa točiť prstom, pri výbere sa natočí k tomu, čo sa mení) a na zdviháku v Garáži. Dlaždice vo Vzhľade ukazujú obrázky 3D auta. Bez WebGL ostane 2D auto. Tlačidlo „Skúšobná jazda“ (auto na ceste v pseudo 3D) príde v časti 15b spolu s obrázkom auta zozadu.
   - Rodič chce porovnať dve možnosti: vlastný model vytvorený z tvaru auta z boku, a hotový voľne dostupný model (Kenney, licencia CC0). Náhľad: `/v2/preview/car3d.html`.
   - **Rozhodnutie rodiča:** všetky autá v hre budú z balíka **Kenney Car Kit** (CC0), aby grafika bola jednotná. Raketa odpadne (kto ju vlastní, dostane raketové auto; migrácia uloženia v11). Ponechajú sa všetky autá z balíka, pri skúšaní sa niektoré odoberú alebo pridajú.

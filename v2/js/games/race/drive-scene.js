@@ -45,6 +45,7 @@ export function createDriveScene(canvas, { track, look, buddy = null, dprMax = 2
     race.phase = "racing";
     race.countdown = 0;
     road = buildRoad(track, ROAD_METRES);
+    road.lazyPics = true; // scenery pictures are made slowly, one by one, behind the menu
     camX = 0;
     skyX = 0;
     if (size.w > 0) backdrop = createBackdrop(track, V, size.dpr);

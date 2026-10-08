@@ -4,13 +4,44 @@
 
 import { emojiSprite } from "./emoji.js";
 import { propPic, readyPic } from "./car-pics.js";
-import { drawPic } from "./car-back.js";
+import { drawPropPic } from "./car-back.js";
+import { MODELS, DECOR, RACE_DRAW, TRACK_MOOD } from "../data/race-props.js";
 
-/** Obstacles that are Kenney models (part 15b): model path and width in sprite units. */
-export const PROPS = { cone: { path: "carkit/cone", w: 360 }, crate: { path: "carkit/box", w: 480 }, barrier: { path: "city/roads/construction-barrier", w: 680 } };
+/** Rough widths in sprite units of the 2D-only sprites, used to keep scenery off the road. */
+export const SPRITE_WIDTH = { lamp: 300, planet: 1500, ufo: 1200 };
 
-/** Rough widths in sprite units, used to keep scenery off the road. */
-export const SPRITE_WIDTH = { house: 1500, tower: 1200, tree: 900, pine: 800, snowPine: 800, palm: 900, lamp: 300, cactus: 600, rock: 550, bush: 600, snowman: 500, crystal: 500, planet: 1500, ufo: 1200, mushroom: 500 };
+/** Width in sprite units of a sprite or model id (built models without w: their real size). */
+export function spriteWidth(id, pic = null) {
+  const m = MODELS[id];
+  if (m) return m.w || (pic?.meta.size?.[0] || 4) * 300;
+  return SPRITE_WIDTH[id] || 600;
+}
+
+/**
+ * The 3D picture of model `id` for a track (part 24). o = { track (id), side (−1 | 1 beside the
+ * road: seen a little from the road), scenery (sharpness), lazy }. Null without WebGL.
+ */
+export function modelPic(id, o = {}) {
+  const m = MODELS[id];
+  if (!m) return null;
+  const mood = TRACK_MOOD[o.track];
+  const opts = { ...m.opts, mood, lazy: !!o.lazy };
+  if (mood !== "night") delete opts.windows; // lit windows only at night
+  if (o.scenery) opts.ppu = RACE_DRAW.sceneryPpu;
+  if (m.turn && o.side) opts.yaw = -Math.sign(o.side);
+  if (m.face && o.side) opts.rot = -Math.sign(o.side) * m.face; // turned towards the road
+  return propPic(m.path, opts);
+}
+
+/** Start making every picture a track needs (obstacles first); returns the cache entries. */
+export function trackPics(track, { lazy = false } = {}) {
+  const d = DECOR[track.id] || {};
+  const pics = (track.obstacles || []).map((id) => modelPic(id, { track: track.id, lazy }));
+  pics.push(propPic(`proc:startGate:${track.lanes}`, { lazy }), propPic(`proc:gate:${track.lanes}`, { lazy }));
+  const beside = [...new Set([...(d.near || []), ...(d.far || []), ...(d.stands || []), d.posts?.id].filter(Boolean))];
+  for (const id of beside) for (const side of MODELS[id]?.turn || MODELS[id]?.face ? [-1, 1] : [0]) pics.push(modelPic(id, { track: track.id, side, scenery: true, lazy }));
+  return pics.filter(Boolean);
+}
 
 const isEmoji = (id) => typeof id === "string" && /[^\x20-\x7e]/.test(id);
 
@@ -64,7 +95,7 @@ function rect(g, c, x, y, w, h, r = 0) {
 const HOUSE = ["#f4a261", "#e9c46a", "#8ecae6", "#f28482", "#b5e48c", "#cdb4db"];
 
 /**
- * Draw sprite `id`. o = { night, seed (0..1), side (-1|1), t (seconds), snow }.
+ * Draw sprite `id`. o = { night, seed (0..1), side (-1|1), t (seconds), snow, track, scenery, lazy }.
  * Unknown ids that are emoji are drawn as emoji; returns false for anything else.
  */
 export function drawRoadSprite(g, id, x, y, u, o = {}) {
@@ -72,10 +103,15 @@ export function drawRoadSprite(g, id, x, y, u, o = {}) {
   const s = (v) => v * u;
   const seed = o.seed ?? 0.5;
   const t = o.t || 0;
-  const prop = PROPS[id] && readyPic(propPic(PROPS[id].path));
-  if (prop) {
-    drawPic(g, prop, x, y, s(PROPS[id].w));
-    return true;
+  if (MODELS[id]) {
+    // a 3D model picture (part 24); its 2D drawing until the picture is ready
+    const pic = readyPic(modelPic(id, { track: o.track, side: o.side, scenery: o.scenery, lazy: o.lazy }));
+    if (pic) {
+      drawPropPic(g, pic, x, y, s(spriteWidth(id, pic)));
+      return true;
+    }
+    id = MODELS[id].fb;
+    if (!id) return true; // nothing to draw until the picture is ready
   }
   switch (id) {
     case "tree":

@@ -1,7 +1,7 @@
 // Race game module (DESIGN-v2 §4.1): pseudo-3D view from behind, the car drives by itself,
 // taps left/right change lanes. Ends on the podium and hands the result to the host.
 
-import { h } from "../../core/ui.js";
+import { h, confetti } from "../../core/ui.js";
 import { RACE } from "../../data/tracks.js";
 import { carStats, raceEffects, getTrack, carAbilities } from "../../systems/stats.js";
 import { isLevelUnlocked, previewUnlocks, isBossReady, rivalEase } from "../../systems/progress.js";
@@ -13,8 +13,8 @@ import { createTrail } from "../../render/effects.js";
 import { createRace, step, steer, finalOrder } from "./physics.js";
 import { M, PLAYER_Z, SEG, buildRoad, makeView, renderRoad, createBackdrop, drawBackdrop, fogDensity, segIndex } from "./road.js";
 import { drawScene, drawPlayer, drawHeadlights, drawSpeedLines, laneOffset, rivalKind, trafficKind, BOSS_KIND } from "./scene.js";
-import { carPic, propPic, readyPic } from "../../render/car-pics.js";
-import { PROPS } from "../../render/road-sprites.js";
+import { carPic, readyPic, hasWebGL } from "../../render/car-pics.js";
+import { trackPics } from "../../render/road-sprites.js";
 import { createWeather, drawWeather } from "./weather.js";
 import { createHud, showPodium } from "./hud.js";
 import { buddyBadge } from "../../screens/buddy-badge.js";
@@ -43,7 +43,8 @@ export function raceReward(race) {
 const BOSS_SAY = ["Hurá! Porazil si bossa!", "Boss bol tentoraz rýchlejší. Skús to znova!"];
 
 let cleanup = [];
-export const PIC_WAIT_MS = 1500;
+let sceneryDetail = 1; // 1 = all scenery; less on a device that is too slow (see watchSpeed)
+export const PIC_WAIT_MS = 2500;
 
 export default {
   id: "race",
@@ -79,7 +80,7 @@ export default {
     // so the car does not change from the 2D drawing to 3D in front of the child
     const ownPic = carPic(look, "back");
     const waitUntil = performance.now() + PIC_WAIT_MS;
-    for (const id of track.obstacles || []) if (PROPS[id]) propPic(PROPS[id].path);
+    const scenery = trackPics(track); // obstacles, gates, scenery (part 24)
     race.look = look;
     race.buddy = buddy; // test hook: the buddy rides along
 
@@ -205,6 +206,7 @@ export default {
       const unlocks = previewUnlocks(result.extra);
       stopMusic();
       ctx.audio.playNotes(looks.horn.notes);
+      if (race.place === 1) confetti(80); // a win bursts into confetti (part 24)
       setTimeout(() => wrap.isConnected && sfx.win(), 500); // not on another screen
       ctx.speak(boss ? BOSS_SAY[race.place === 1 ? 0 : 1] : PLACE_SAY[race.place - 1]);
       await new Promise((r) => setTimeout(r, 900));
@@ -215,16 +217,37 @@ export default {
       ctx.finish(result);
     }
 
+    // An older tablet that cannot keep up gets less scenery (part 24): after about half a second of
+    // slow frames in the race, every step leaves out more of the trees and houses (never posts,
+    // lamps or grandstands). The race itself is never changed.
+    // The level found is kept for the next races (sceneryDetail).
+    let slow = 0;
+    // without WebGL (old devices) the scenery is drawn from many 2D shapes: start with half of it
+    road.detail = hasWebGL() ? sceneryDetail : Math.min(sceneryDetail, 0.5);
+    const picsPending = () => scenery.some((e) => !e.ready && !e.failed);
+    const watchSpeed = (dt) => {
+      if (race.phase !== "racing" || picsPending()) return; // making pictures is slow by itself
+      // below ~28 frames a second (a 30 fps battery saver is not "slow")
+      slow = dt > 1 / 28 ? slow + dt : Math.max(0, slow - dt * 0.5);
+      if (slow > 0.4 && road.detail > 0.35) {
+        road.detail = sceneryDetail = Math.round((road.detail - 0.25) * 100) / 100;
+        slow = 0;
+      }
+    };
+
     const loop = ctx.createLoop({
       update(dt) {
         lastDt = dt;
         // Tests may speed time up; the simulation always uses small steps.
         const scale = Math.max(1, Math.min(20, Number(window.__game?.testTimeScale) || 1));
         if (helpOpen()) return; // the adult reads the ❔ help: the race waits
-        if (ownPic && !ownPic.failed && !readyPic(ownPic) && race.phase === "countdown" && scale === 1 && performance.now() < waitUntil) {
+        // …and for the pictures of the track (part 24), so trees and houses do not change in the race
+        const waiting = (ownPic && !ownPic.failed && !readyPic(ownPic)) || picsPending();
+        if (waiting && race.phase === "countdown" && scale === 1 && performance.now() < waitUntil) {
           hud.update(); // the first red light stays on a moment longer
           return;
         }
+        watchSpeed(dt);
         let left = dt * scale;
         while (left > 1e-6) {
           const d = Math.min(0.05, left);
@@ -258,11 +281,12 @@ export default {
     loop.start();
     ctx.speak(boss ? t("{name}! Predbehni ho a vyhýbaj sa tomu, čo hádže!", { name: t(boss.name) }) : t("{name}. Ťukaj vľavo a vpravo a vyhýbaj sa prekážkam!", { name: t(track.name) }));
     window.__game && (window.__game.race = race); // test hook
+    window.__game && Object.assign(window.__game, { road, racePicsPending: picsPending });
   },
 
   stop() {
     cleanup.forEach((fn) => fn());
     cleanup = [];
-    if (window.__game) window.__game.race = null;
+    if (window.__game) Object.assign(window.__game, { race: null, road: null, racePicsPending: null });
   },
 };

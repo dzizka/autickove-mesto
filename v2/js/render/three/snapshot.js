@@ -6,6 +6,7 @@
 import * as THREE from "three";
 import { addLights, loadAny, getKitScale } from "./kit.js";
 import { buildCar, disposeCar } from "./car3d.js";
+import { buildProc, tint, addSnow, litWindows, freshen, MOODS } from "./props3d.js";
 import { RACE } from "../../data/tracks.js";
 
 const EL = ((RACE.carViewDeg ?? 34) * Math.PI) / 180;
@@ -25,6 +26,8 @@ const VIEWS = {
 let renderer = null;
 let scene = null;
 let ground = null;
+let lights = [];
+let propLight = null;
 let queue = Promise.resolve();
 
 function setup() {
@@ -42,6 +45,11 @@ function setup() {
   const fill = new THREE.DirectionalLight("#ffffff", 1.2); // lights the sides the sun misses
   fill.position.set(-6, 4, -3);
   scene.add(fill);
+  // props are seen from the road, the side the sun misses: a light from the camera for them only
+  propLight = new THREE.DirectionalLight("#ffffff", 0);
+  propLight.position.set(2, 7, -10);
+  scene.add(propLight);
+  lights = scene.children.filter((o) => o.isLight && o !== propLight).map((l) => ({ l, i: l.intensity, c: l.color.clone() }));
   ground = new THREE.Mesh(new THREE.PlaneGeometry(30, 30), new THREE.ShadowMaterial({ opacity: 0.22 }));
   ground.rotation.x = -Math.PI / 2;
   ground.receiveShadow = true;
@@ -52,7 +60,7 @@ function setup() {
 const YAW = 0.26; // 15°
 
 /** Orthographic camera fitted around the object for this view. Returns { cam, w, h, ppu }. */
-function fitCamera(object, view, yaw = 0) {
+function fitCamera(object, view, yaw = 0, ppu = 0) {
   const v = VIEWS[view];
   const dir = new THREE.Vector3(...v.dir);
   if (yaw) dir.applyAxisAngle(new THREE.Vector3(0, 1, 0), -yaw * YAW);
@@ -81,7 +89,7 @@ function fitCamera(object, view, yaw = 0) {
     const bottom = y0 + pad - h * 0.1 * scale; // like the 2D car: a little room below the wheels
     [x0, x1, y0, y1] = [cx - (w / 2) * scale, cx + (w / 2) * scale, bottom, bottom + h * scale];
   } else {
-    const k = Math.min(v.ppu, MAX_PX / Math.max(x1 - x0, y1 - y0));
+    const k = Math.min(ppu || v.ppu, MAX_PX / Math.max(x1 - x0, y1 - y0));
     w = Math.max(8, Math.round((x1 - x0) * k));
     h = Math.max(8, Math.round((y1 - y0) * k));
   }
@@ -132,15 +140,34 @@ function metaFor(view, at, s, car, w, ppu) {
 
 async function build(kind, payload) {
   if (kind === "car") return buildCar(payload.r, { ...payload.opts, neon: payload.view === "side" });
-  const src = (await loadAny(payload.path)).clone(true);
-  const size = new THREE.Box3().setFromObject(src).getSize(new THREE.Vector3());
-  src.scale.setScalar((payload.path.startsWith("carkit/") ? await getKitScale() : 1.6 / Math.max(size.x, size.z)) * (payload.scale || 1));
+  // built models ("proc:…") are in metres; Kenney models are fitted to 1.6 units across
+  const proc = payload.path.startsWith("proc:");
+  const src = proc ? buildProc(payload.path) : (await loadAny(payload.path)).clone(true);
+  if (!src) throw new Error(`unknown prop ${payload.path}`);
+  if (payload.rot) src.rotation.y = (payload.rot * Math.PI) / 180; // e.g. a grandstand turned to the road
+  if (!proc) {
+    const size = new THREE.Box3().setFromObject(src).getSize(new THREE.Vector3());
+    src.scale.setScalar((payload.path.startsWith("carkit/") ? await getKitScale() : 1.6 / Math.max(size.x, size.z)) * (payload.scale || 1));
+  }
   const wrap = new THREE.Group();
   wrap.add(src);
   const box = new THREE.Box3().setFromObject(wrap);
   src.position.set(-(box.min.x + box.max.x) / 2, -box.min.y, -(box.min.z + box.max.z) / 2);
+  if (payload.path.startsWith("nature/")) freshen(wrap);
+  if (payload.tint) tint(wrap, payload.tint, payload.tintK ?? 0.5);
+  if (payload.windows && payload.mood === "night") litWindows(wrap);
+  if (payload.snow) addSnow(wrap, typeof payload.snow === "number" ? payload.snow : 0.5);
   src.traverse((o) => o.isMesh && (o.castShadow = true));
-  return { object: wrap, size: box.getSize(new THREE.Vector3()) };
+  return { object: wrap, size: new THREE.Box3().setFromObject(wrap).getSize(new THREE.Vector3()), proc };
+}
+
+/** Free what this picture made for itself; shared Kenney geometry stays in the cache. */
+function disposeProp(object, proc) {
+  object.traverse((o) => {
+    if (!o.isMesh) return;
+    if (proc || o.userData.snow) o.geometry.dispose();
+    if (proc || o.userData.snow || o.userData.ownMat) (Array.isArray(o.material) ? o.material : [o.material]).forEach((m) => (m.map && proc && m.map.dispose(), m.dispose()));
+  });
 }
 
 async function draw(kind, payload) {
@@ -148,21 +175,35 @@ async function draw(kind, payload) {
   const item = await build(kind, payload);
   scene.add(item.object);
   ground.visible = payload.view === "side"; // races, maze and crossing draw their own shadow
+  const mood = MOODS[payload.mood] || MOODS.day;
+  for (const { l, i, c } of lights) {
+    l.intensity = i * (l.isHemisphereLight ? mood.hemi : mood.sun);
+    l.color.copy(c).multiply(new THREE.Color(mood.color));
+  }
+  propLight.intensity = kind === "prop" ? 1.7 * mood.sun : 0;
+  renderer.shadowMap.enabled = kind !== "prop"; // props have no ground to throw a shadow on
+  propLight.color.set(mood.color);
   try {
-    const { cam, w, h, ppu } = fitCamera(item.object, payload.view, payload.yaw || 0);
+    const { cam, w, h, ppu } = fitCamera(item.object, payload.view, payload.yaw || 0, payload.ppu || 0);
     renderer.setSize(w, h, false);
     renderer.render(scene, cam);
-    const url = renderer.domElement.toDataURL("image/png");
-    return { url, w, h, meta: metaFor(payload.view, projector(cam, w, h), item.size, item.wheelSpots ? item : null, w, ppu) };
+    // props are only drawn on canvases: a bitmap is much quicker than a PNG (part 24)
+    const bitmap = kind === "prop" && window.createImageBitmap ? await createImageBitmap(renderer.domElement) : null;
+    const url = bitmap ? null : renderer.domElement.toDataURL("image/png");
+    const meta = metaFor(payload.view, projector(cam, w, h), item.size, item.wheelSpots ? item : null, w, ppu);
+    if (kind === "prop") meta.size = item.size.toArray(); // model units (metres for built models)
+    return { url, bitmap, w, h, meta };
   } finally {
     scene.remove(item.object);
     if (kind === "car") disposeCar(item.object);
+    else disposeProp(item.object, item.proc);
   }
 }
 
 /**
  * Render a picture. kind "car": payload { r (resolved look), opts, view };
- * kind "prop": payload { path (under v2/models), scale, view }.
+ * kind "prop": payload { path (under v2/models, or "proc:<name>" from props3d.js), scale, view,
+ * yaw, rot (degrees), ppu, tint, tintK, snow (true or the least "up" of a face), mood ("day" | "night" | "space"), windows }.
  */
 export function renderPicture(kind, payload) {
   const job = queue.then(() => draw(kind, payload));

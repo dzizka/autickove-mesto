@@ -56,9 +56,12 @@ function remember(key, make, lazy = false) {
   }
   e.promise = start()
     .then(async (res) => {
-      const img = new Image();
-      img.src = res.url;
-      await img.decode();
+      let img = res.bitmap;
+      if (!img) {
+        img = new Image();
+        img.src = res.url;
+        await img.decode();
+      }
       Object.assign(e, { ready: true, img, meta: res.meta, w: res.w, h: res.h, url: res.url });
       return e;
     })
@@ -81,10 +84,16 @@ export function carPic(look, view, opts = {}) {
   return remember(key, () => snapshot().then((m) => m.renderPicture("car", { r: resolveLook(look), opts: { colorHex: look?.colorHex || null, passenger: opts.passenger || null }, view, yaw })), yaw !== 0);
 }
 
-/** Picture of a prop (cone, box, barrier) from behind, like the race camera sees it. */
-export function propPic(path, scale = 1) {
+/**
+ * Picture of a prop (cone, tree, house…) from behind, like the race camera sees it.
+ * opts (part 24): { yaw (−1, 0, 1), rot, ppu, tint, tintK, snow, mood, windows } – see snapshot.js;
+ * lazy = made later, one by one (scenery seen while a race is not starting).
+ */
+export function propPic(path, opts = {}) {
   if (!hasWebGL()) return null;
-  return remember(`prop|${path}|${scale}`, () => snapshot().then((m) => m.renderPicture("prop", { path, scale, view: "back" })));
+  const o = typeof opts === "number" ? { scale: opts } : opts;
+  const key = `prop|${path}|${["scale", "yaw", "rot", "ppu", "tint", "tintK", "snow", "mood", "windows"].map((k) => o[k] ?? "").join("|")}`;
+  return remember(key, () => snapshot().then((m) => m.renderPicture("prop", { ...o, path, view: "back" })), !!o.lazy);
 }
 
 /** A ready picture or null (and the picture is made in the background). */
@@ -118,6 +127,27 @@ export function scaledPic(e, px) {
     if (e.scaled.size > 12) e.scaled.delete(e.scaled.keys().next().value);
   }
   return { canvas: c, k: c.width / e.w };
+}
+
+/**
+ * The picture halved as often as it can be while staying at least `px` pixels of body width
+ * (part 24). Many props at many sizes: a few halvings made once each are cheaper than a
+ * freshly scaled copy for every size, and the browser scales the rest while drawing.
+ */
+export function mipPic(e, px) {
+  if (!e.mips) e.mips = [e.img];
+  const want = Math.max(0, Math.min(6, Math.floor(Math.log2(e.meta.bodyW / Math.max(1, px)))));
+  while (e.mips.length <= want) {
+    const prev = e.mips[e.mips.length - 1];
+    const c = document.createElement("canvas");
+    c.width = Math.max(1, Math.round(prev.width / 2));
+    c.height = Math.max(1, Math.round(prev.height / 2));
+    const g = c.getContext("2d");
+    g.imageSmoothingQuality = "high";
+    g.drawImage(prev, 0, 0, c.width, c.height);
+    e.mips.push(c);
+  }
+  return e.mips[want];
 }
 
 /**

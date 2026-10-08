@@ -1,5 +1,6 @@
 // Performance on an older tablet (DESIGN-v2 §4.1, part 7): the race runs with the CPU slowed
 // down 4× at tablet size, with the heaviest looks (galaxy paint, rainbow neon and trail).
+// Part 24: measured once the track's 3D pictures are made; a slow device may draw less scenery.
 
 import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
@@ -29,15 +30,17 @@ test("every track stays smooth on a 4× slower CPU at tablet size", async () => 
       location.hash = `#/game/race/${t}/3`;
     }, track);
     await page.waitForFunction(() => window.__game.race?.phase === "racing", null, { timeout: 30000 });
+    // the 3D pictures of the track are made once (part 24); then the race must run smoothly
+    await page.waitForFunction(() => !window.__game.racePicsPending?.(), null, { timeout: 20000 });
     await page.evaluate(() => window.__game.frameTiming.reset());
     await page.waitForTimeout(4000);
-    const r = await page.evaluate(() => ({ ...window.__game.frameTiming }));
+    const r = await page.evaluate(() => ({ ...window.__game.frameTiming, detail: window.__game.road?.detail }));
     if (track === "night") await screenshot(page, "1024-night-perf");
-    results.push({ track, fps: r.frames / 4, avgMs: r.busyMs / Math.max(1, r.frames) });
+    results.push({ track, fps: r.frames / 4, avgMs: r.busyMs / Math.max(1, r.frames), detail: r.detail });
     assert.deepEqual(page.errors, []);
     await page.context().close();
   }
-  console.log(results.map((r) => `${r.track}: ${r.fps.toFixed(0)} fps, ${r.avgMs.toFixed(1)} ms`).join("; "));
+  console.log(results.map((r) => `${r.track}: ${r.fps.toFixed(0)} fps, ${r.avgMs.toFixed(1)} ms, scenery ${r.detail}`).join("; "));
   for (const r of results) {
     assert.ok(r.fps >= 40, `${r.track}: ${r.fps.toFixed(0)} fps`);
     assert.ok(r.avgMs <= 8, `${r.track}: ${r.avgMs.toFixed(1)} ms of game code per frame`);

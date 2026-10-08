@@ -3,7 +3,8 @@
 // the race itself (physics.js) stays straight lanes and metres.
 
 import { RACE } from "../../data/tracks.js";
-import { SPRITE_WIDTH } from "../../render/road-sprites.js";
+import { spriteWidth } from "../../render/road-sprites.js";
+import { DECOR, MODELS } from "../../data/race-props.js";
 
 export const M = 300; // world units per metre
 export const SEG = 200; // segment length in units (2/3 m)
@@ -47,7 +48,7 @@ export function buildRoad(track, length) {
     const i = segs.length;
     const z1 = START + i * SEG;
     const mark = z1 + SEG > 2.3 * M && z1 < 3.5 * M ? "start" : z1 + SEG > length * M && z1 < (length + 2.4) * M ? "finish" : null;
-    segs.push({ i, z1, curve: finite(curve), y1: y, y2: finite(yEnd, y), c: Math.floor(i / RUMBLE) % 2, mark, p1: point(), p2: point(), clip: 0, n: -1, frame: -1, scenery: [] });
+    segs.push({ i, z1, curve: finite(curve), y1: y, y2: finite(yEnd, y), c: Math.floor(i / RUMBLE) % 2, mark, p1: point(), p2: point(), clip: 0, n: -1, frame: -1, scenery: [], land: null, edge: null });
     y = finite(yEnd, y);
   };
   const section = (metres, curve, hill) => {
@@ -66,18 +67,76 @@ export function buildRoad(track, length) {
   const plan = Array.isArray(track.road) && track.road.length ? track.road : [[100, 0, 0]];
   for (let k = 0; START + segs.length * SEG < (length + AFTER) * M; k++) section(...plan[k % plan.length]);
 
-  // scenery on both sides, the same every time on this track
+  const decor = DECOR[track.id] || {};
+  placeDecor(segs, track, decor, half, length);
+  return { segs, track, lanes, half, length, decor, detail: 1 };
+}
+
+/**
+ * The surroundings (part 24, DESIGN-v2 §4.1), the same every time on a track: landmarks
+ * (bridge, tunnel, rings), rails in stretches, big things away from the road and small things
+ * right beside it (each side on its own, so the sides never mirror), posts, lamps, and the
+ * grandstands, flags and gates at the start and the finish.
+ */
+function placeDecor(segs, track, decor, half, length) {
   const rnd = seeded([...track.id].reduce((h, ch) => h * 31 + ch.charCodeAt(0), 7));
-  const kinds = track.scenery?.length ? track.scenery : ["tree"];
-  for (let i = 6; i < segs.length; i += 6 + Math.floor(rnd() * 9)) {
-    for (const side of [-1, 1]) {
-      if (rnd() > 0.78) continue;
-      const id = kinds[Math.floor(rnd() * kinds.length)];
-      const w = SPRITE_WIDTH[id] || 600;
-      segs[i].scenery.push({ id, off: side * (half * 1.14 + w / 2 + 150 + rnd() * 1400), side, seed: rnd() });
+  const pick = (list) => list[Math.floor(rnd() * list.length)];
+  const between = ([a, b]) => a + Math.floor(rnd() * (b - a + 1));
+  const kerb = half * 1.14;
+  const at = (z) => Math.max(0, Math.min(segs.length - 1, Math.floor((z - START) / SEG)));
+  const start = segs.findIndex((s) => s.mark === "start");
+  const finish = segs.findIndex((s) => s.mark === "finish");
+  const busy = (i) => (start >= 0 && Math.abs(i - start) < 14) || (finish >= 0 && Math.abs(i - finish) < 14);
+
+  for (const l of decor.landmarks || []) {
+    const a = at(l.at * length * M);
+    const b = Math.min(at((l.at * length + l.len) * M), finish > 0 ? finish - 30 : segs.length - 1);
+    for (let i = a; i <= b; i++) segs[i].land = l.kind;
+    if (b > a) segs[a].landStart = l.kind;
+  }
+  // rails in stretches; a bridge always has its railing
+  for (let i = 0, on = false; i < segs.length; ) {
+    const n = decor.edge ? between([Math.round(decor.edge.stretch[on ? 0 : 1] * 0.6), decor.edge.stretch[on ? 0 : 1]]) : segs.length;
+    for (let k = i; k < Math.min(segs.length, i + n); k++) segs[k].edge = on && decor.edge && !segs[k].land ? decor.edge.kind : null;
+    i += n;
+    on = !on;
+  }
+  for (const s of segs) if (s.land === "bridge") s.edge = "bridge";
+
+  const free = (i) => !segs[i].land && !busy(i);
+  const put = (i, id, side, off, extra = {}) => segs[i].scenery.push({ id, off: side * off, side, seed: rnd(), ...extra });
+  for (const side of [-1, 1]) {
+    if (decor.far?.length) {
+      for (let i = 4 + between([0, 6]); i < segs.length; i += between(decor.farEvery || [5, 10])) {
+        if (!free(i)) continue;
+        const id = pick(decor.far);
+        put(i, id, side, kerb + spriteWidth(id) / 2 + 380 + rnd() * 1700, { shadow: !!MODELS[id] });
+      }
+    }
+    if (decor.near?.length) {
+      for (let i = 3 + between([0, 4]); i < segs.length; i += between(decor.nearEvery || [6, 10])) {
+        if (!free(i)) continue;
+        const id = pick(decor.near);
+        put(i, id, side, kerb + spriteWidth(id) / 2 + 140 + rnd() * 260, { shadow: true, small: true });
+      }
     }
   }
-  return { segs, track, lanes, half, length };
+  // posts and lamps keep a beat, on both sides in turn
+  const beat = (every, id, off) => {
+    for (let i = 6, k = 0; i < segs.length; i += every, k++) if (!segs[i].land || segs[i].land === "bridge") put(i, id, k % 2 ? 1 : -1, off, { keep: true });
+  };
+  if (decor.posts) beat(decor.posts.every, decor.posts.id, kerb + 90);
+  if (decor.lamps) beat(decor.lamps, "lamp", kerb + 110);
+  // the start and the finish: gates over the road, grandstands and flags beside it
+  for (const [i, gate] of [[start, "startGate"], [finish, "gate"]]) {
+    if (i < 0) continue;
+    segs[i].gate = gate;
+    const stands = decor.stands || [];
+    stands.forEach((id, k) => {
+      const j = Math.max(0, Math.min(segs.length - 1, i + 2 + k * 5));
+      for (const side of [-1, 1]) put(j, id, side, kerb + spriteWidth(id) / 2 + 220, { shadow: k === 0, keep: true });
+    });
+  }
 }
 
 export function segIndex(R, z) {
@@ -130,7 +189,8 @@ function drawSegment(g, V, R, s, fog, fogColor) {
   const a = s.p1;
   const b = s.p2;
   const ay = a.y + 1; // 1 px overlap hides seams
-  g.fillStyle = sc.grass[s.c];
+  // under a bridge the grass is a river (part 24)
+  g.fillStyle = s.land === "bridge" && R.decor?.water ? R.decor.water[s.c] : sc.grass[s.c];
   g.fillRect(0, b.y, V.w, ay - b.y);
   quad(g, sc.rumble[s.c], a.x, ay, a.w * 1.1, b.x, b.y, b.w * 1.1);
   if (s.mark === "finish") {
@@ -156,6 +216,10 @@ function drawSegment(g, V, R, s, fog, fogColor) {
         quad(g, sc.line, a.x + a.w * f, ay, l1, b.x + b.w * f, b.y, l2);
       }
     }
+  }
+  if (s.land === "tunnel") {
+    g.fillStyle = "rgba(0,0,0,.22)"; // dimmer inside a tunnel
+    g.fillRect(0, b.y, V.w, ay - b.y);
   }
   if (fog > 0.02) {
     g.globalAlpha = fog;

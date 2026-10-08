@@ -4,12 +4,14 @@
 
 import { RACE } from "../../data/tracks.js";
 import { M, SEG, CAM_H, DEPTH, PLAYER_Z, DRAW, LANE, CAR_W, segIndex, fogAt } from "./road.js";
-import { drawRoadSprite, emojiAt } from "../../render/road-sprites.js";
+import { drawRoadSprite, emojiAt, spriteWidth } from "../../render/road-sprites.js";
+import { RACE_DRAW } from "../../data/race-props.js";
+import { drawEdge, drawTunnel, drawPortal, drawRing, drawGate, groundSpot } from "./decor.js";
 import { drawCarBack, backFoot } from "../../render/car-back.js";
 import { neonColor, updateTrail, drawTrail } from "../../render/effects.js";
 
 // Things on the road are drawn larger than life, so a child spots them early (§4.1).
-const BIG = { obstacle: 1.7, coin: 1.4, fuel: 1.4, star: 1.4, powerup: 1.4 };
+const BIG = { obstacle: RACE_DRAW.obstacle, coin: 1.4, fuel: 1.4, star: 1.4, powerup: 1.4 };
 // Car Kit models for the other cars (part 15b); one kind per colour keeps the pictures few
 export const TRAFFIC_KINDS = ["van", "taxi", "pickup", "truck", "jeep", "garbage", "sedan"];
 export const RIVAL_KINDS = ["sports", "hatch", "sedan", "luxury"];
@@ -69,26 +71,6 @@ function drawRamp(g, R, V, o) {
   }
 }
 
-function drawFinishArch(g, V, s) {
-  const a = s.p1;
-  const pole = Math.max(2, a.w * 0.04);
-  const h = a.s * 1700 * V.KX; // 1700 units high
-  const top = a.y - h;
-  for (const side of [-1, 1]) {
-    g.fillStyle = "#e4e9f0";
-    g.fillRect(a.x + side * a.w * 1.12 - pole / 2, top, pole, h);
-  }
-  const bw = a.w * 2.24;
-  const bh = h * 0.16;
-  const cells = 16;
-  for (let k = 0; k < cells; k++) {
-    for (let r = 0; r < 2; r++) {
-      g.fillStyle = (k + r) % 2 ? "#111111" : "#ffffff";
-      g.fillRect(a.x - bw / 2 + (k * bw) / cells, top + (r * bh) / 2, bw / cells + 0.5, bh / 2 + 0.5);
-    }
-  }
-}
-
 function drawObject(g, R, V, o, p0, t, night) {
   if (o.kind === "ramp") return drawRamp(g, R, V, o);
   const p = { ...p0, u: p0.u * (BIG[o.kind] || 1) };
@@ -135,7 +117,7 @@ function drawObject(g, R, V, o, p0, t, night) {
     g.lineWidth = Math.max(1, 25 * p.u);
     g.stroke();
     emojiAt(g, o.icon, p.x, cy, 340 * p.u * pulse);
-  } else if (!drawRoadSprite(g, o.icon, p.x, p.y, p.u, { t, night, seed: (o.id % 89) / 89 })) {
+  } else if (!drawRoadSprite(g, o.icon, p.x, p.y, p.u, { t, night, seed: (o.id % 89) / 89, track: R.track.id })) {
     emojiAt(g, o.icon, p.x, p.y - 300 * p.u, 600 * p.u);
   }
   g.restore();
@@ -192,34 +174,52 @@ export function drawScene(g, V, R, race, view) {
     put(o.d * M, { z: o.d * M, o });
   }
   for (const r of race.rivals) if (Number.isFinite(r.d)) put(r.d * M, { z: r.d * M, r });
-  const finishZ = R.length * M;
-  const finishSeg = segIndex(R, finishZ);
 
   for (let n = DRAW - 1; n > 0; n--) {
     const s = R.segs[base + n];
     if (!s || s.frame !== R.frame || s.p1.cz <= DEPTH) continue;
     const list = buckets.get(s.i);
-    if (!s.scenery.length && !list && s.i !== finishSeg) continue;
+    if (!s.scenery.length && !list && !s.gate && !s.edge && !s.land) continue;
     g.save();
     if (s.clip < V.h) {
       g.beginPath();
       g.rect(0, 0, V.w, s.clip);
       g.clip();
     }
-    g.globalAlpha = 1 - fogAt(n, fog);
+    const f = fogAt(n, fog);
+    g.globalAlpha = 1 - f;
     const a = s.p1;
     const u = a.s * V.KX;
-    for (const sp of s.scenery) drawRoadSprite(g, sp.id, a.x + sp.off * u, a.y, u, { night, seed: sp.seed, side: sp.side, t, snow: R.track.id === "snow" });
-    if (s.i === finishSeg) drawFinishArch(g, V, s);
+    if (s.land === "tunnel") drawTunnel(g, V, R, s);
+    if (s.landStart === "tunnel") drawPortal(g, V, R, s);
+    if (s.land === "rings") drawRing(g, V, R, s, t);
+    if (s.edge) {
+      // far away a few segments of rail are drawn as one piece
+      const step = n < 40 ? 1 : n < 80 ? 2 : 4;
+      const e = R.segs[Math.min(s.i + step - 1, base + DRAW - 1, R.segs.length - 1)];
+      if (s.i % step === 0) drawEdge(g, V, R, s, night, e.frame === R.frame ? e : s);
+    }
+    for (const sp of s.scenery) {
+      const x = a.x + sp.off * u;
+      const sw = spriteWidth(sp.id) * u;
+      if (sw < 1.5 || x + sw < 0 || x - sw > V.w || (sp.small && n > 75)) continue; // too small or off the screen
+      if (sp.seed > R.detail && !sp.keep) continue; // a slow device draws less scenery (index.js)
+      if (sp.shadow && sw > 6 && n < 70) groundSpot(g, x, a.y, spriteWidth(sp.id), u, night);
+      drawRoadSprite(g, sp.id, x, a.y, u, { night, seed: sp.seed, side: sp.side, t, snow: R.track.id === "snow", track: R.track.id, scenery: true, lazy: !!R.lazyPics });
+    }
+    if (s.gate) drawGate(g, V, R, s);
     if (list) {
       list.sort((x, y) => y.z - x.z);
       for (const it of list) {
         const rel = it.z - camZ;
         if (it.o) {
           if (rel < PLAYER_Z * 0.55) continue;
+          // obstacles show through the fog early, so there is time to change lanes (§4.1)
+          g.globalAlpha = 1 - f * (it.o.kind === "obstacle" ? RACE_DRAW.obstacleFog : 1);
           const p = placeAt(R, V, it.z, laneOffset(R, it.o.x));
           if (p) drawObject(g, R, V, it.o, p, t, night);
         } else {
+          g.globalAlpha = 1 - f;
           const near = clamp01((rel - PLAYER_Z * 0.7) / (PLAYER_Z * 0.3));
           if (near <= 0) continue;
           const p = placeAt(R, V, it.z, laneOffset(R, it.r.x));

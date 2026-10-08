@@ -5,7 +5,7 @@
 import { resolveLook } from "../systems/tuning.js";
 import { shade } from "./car-side.js";
 import { bodyPaint, drawPattern, safeColor } from "./car-top.js";
-import { carPic, readyPic, scaledPic } from "./car-pics.js";
+import { carPic, readyPic, scaledPic, mipPic } from "./car-pics.js";
 
 const cache = new Map();
 const CATS = ["car", "color", "pattern", "wheels", "wing", "sticker", "roof"];
@@ -222,6 +222,13 @@ export function drawCarBack(g, look, x, y, width, { angle = 0, alpha = 1, dpr = 
   g.drawImage(s.canvas, -s.ax * k, -s.ay * k, s.w * k, s.h * k);
   g.restore();
   return { sprite: s, k };
+}
+
+/** Draw a ready prop picture (tree, house, cone…) with its bottom centre at (x, y), `width` wide. */
+export function drawPropPic(g, pic, x, y, width) {
+  const m = pic.meta;
+  const f = width / m.bodyW;
+  g.drawImage(mipPic(pic, width * 1.6), x - m.ax * f, y - m.ay * f, pic.w * f, pic.h * f);
 }
 
 /** Draw a ready 3D picture with the same anchors as the 2D sprite (bottom centre, body width). */
