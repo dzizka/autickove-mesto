@@ -10,7 +10,6 @@ import { isModalOpen } from "../core/ui.js";
 import { TRACKS } from "../data/tracks.js";
 import { setLook } from "../systems/stats.js";
 import { getLook } from "../systems/tuning.js";
-import { activeBuddy, buddyLook } from "../systems/crew.js";
 import { createDriveScene } from "../games/race/drive-scene.js";
 
 export const HOME_FPS = 30;
@@ -47,7 +46,6 @@ export function startHomeRoad(stage) {
   const scene = createDriveScene(canvas, {
     track: tracks[0],
     look: { ...getLook(), ...setLook() },
-    buddy: buddyLook(activeBuddy()),
     dprMax: 1.5,
     speed: 0.75,
     speedLines: false,

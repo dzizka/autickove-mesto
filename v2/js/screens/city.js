@@ -13,7 +13,6 @@ import { getLook, resolveLook, colorLook } from "../systems/tuning.js";
 import { carSidePic } from "../render/car-side.js";
 import { hasWebGL } from "../render/car-pics.js";
 import { setLook } from "../systems/stats.js";
-import { activeBuddy, buddyLook } from "../systems/crew.js";
 
 const COLORS = ["#ff5a5f", "#2f80ed", "#ffd23f", "#3ebd4a", "#8f5bd8", "#ff8c42"];
 
@@ -204,7 +203,6 @@ export default {
             onReady: () => loading.remove(),
             onLost: () => fallBack(new Error("WebGL context lost")),
             look: resolveLook({ ...getLook(), ...setLook() }),
-            passenger: buddyLook(activeBuddy())?.icon || null,
             phase: dayPhase(),
             onLot: (id) => details(BUILDINGS.find((b) => b.id === id)),
             onCoins: (id, at) => {

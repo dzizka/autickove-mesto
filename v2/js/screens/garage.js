@@ -9,7 +9,7 @@ import { carStats, carPower, activeSetBonuses, setLook } from "../systems/stats.
 import { partPower, compareToEquipped, equipBest, dismantleableLow, dismantleLow, bagPrice, expandBag } from "../systems/garage.js";
 import { canAfford } from "../systems/economy.js";
 import { createCarView } from "../render/car-view.js";
-import { activeBuddy, buddyLook } from "../systems/crew.js";
+import { buddyBadge } from "./buddy-badge.js";
 import { getLook } from "../systems/tuning.js";
 import { partCard, openPartDetail } from "./part-card.js";
 import { openSetBook } from "./set-book.js";
@@ -50,12 +50,12 @@ export default {
         );
       };
 
-      carView.setLook({ ...getLook(), ...setLook() }, { passenger: buddyLook(activeBuddy())?.icon });
+      carView.setLook({ ...getLook(), ...setLook() });
       const lift = h(
         "div",
         { class: "lift card" },
         h("div", { class: "lift-slots left" }, SLOTS.slice(0, 3).map(slotBtn)),
-        h("div", { class: "lift-car" }, carView.el, h("div", { class: "lift-post", "aria-hidden": "true" })),
+        h("div", { class: "lift-car" }, carView.el, h("div", { class: "lift-post", "aria-hidden": "true" }), buddyBadge()),
         h("div", { class: "lift-slots right" }, SLOTS.slice(3).map(slotBtn)),
       );
 

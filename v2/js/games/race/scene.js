@@ -284,8 +284,6 @@ export function drawPlayer(g, V, R, race, fx, camX, time, dt) {
   const ghost = race.ab?.ghostT > 0;
   const car = drawCarBack(g, fx.look || {}, x, y, w, { angle: lean, alpha: ghost ? 0.45 + 0.2 * Math.sin(time * 20) : 1, dpr: fx.dpr || 1 });
   if (car && R.track.scene.night) tailGlow(g, x, y, car, w);
-  // the crew buddy rides along, its face in the rear window (DESIGN-v2 §6)
-  if (car && fx.buddy?.icon && car.sprite.win) emojiAt(g, fx.buddy.icon, x + car.sprite.win[0] * car.k, y + car.sprite.win[1] * car.k, w * 0.3);
   if (fx.sparkle) emojiAt(g, "✨", x + w * 0.5, y - w * 0.95, w * 0.22, 0.6 + 0.4 * Math.sin(time * 5));
   for (const pop of fx.popups || []) {
     pop.t += dt;

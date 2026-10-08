@@ -39,10 +39,10 @@ function chestSvg() {
 const CHEST_REMIND_MS = 5000;
 const CHEST_AUTO_OPEN_MS = 12000;
 
-export function presentReward(granted, { onHome, onAgain } = {}) {
+export function presentReward(granted, { onHome, onAgain, onGames } = {}) {
   if (granted.coloringReward) return presentColoringReward(granted, { onHome });
   const loot = granted.loot;
-  if (!loot?.parts?.length) return rewardModal(granted, { onHome, onAgain });
+  if (!loot?.parts?.length) return rewardModal(granted, { onHome, onAgain, onGames });
 
   const best = Math.max(...loot.parts.map((p) => rarityIndex(p.rarity)));
   const chest = h("button", { class: "chest", "data-testid": "chest", "aria-label": "Otvoriť truhlicu", style: { "--glow": rarityDef(loot.parts[0].rarity).color } }, chestSvg());

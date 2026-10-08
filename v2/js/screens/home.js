@@ -7,7 +7,7 @@ import { getState } from "../core/state.js";
 import { questDef, isDone, claimQuest, ensureQuests } from "../systems/quests.js";
 import { go } from "../core/router.js";
 import { startHomeRoad } from "./home-road.js";
-import { activeBuddy, buddyLook } from "../systems/crew.js";
+import { buddyBadge } from "./buddy-badge.js";
 import { getLook, resolveLook } from "../systems/tuning.js";
 import { playNotes } from "../core/audio.js";
 import { PILLARS } from "../data/menu.js";
@@ -29,12 +29,13 @@ export default {
       class: "home-stage",
       "data-testid": "home-car",
       "aria-label": "Tvoje auto, trúbiť",
-      dataset: { car: r.car.id, neon: r.neon.id, ...(buddyLook(activeBuddy())?.icon ? { passenger: buddyLook(activeBuddy()).icon } : {}) },
+      dataset: { car: r.car.id, neon: r.neon.id },
       onclick: () => {
         playNotes(r.horn.notes);
         road?.hop();
       },
     });
+    stage.append(buddyBadge({ link: false })); // the co-driver rides along next to the car, not painted on it
 
     const buttons = PILLARS.map((p) =>
       bigButton({

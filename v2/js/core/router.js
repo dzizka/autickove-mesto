@@ -3,6 +3,7 @@
 // Games:   { id, title, icon, unlockLevel, start(view, ctx), stop() } ending with ctx.finish(result)
 
 import { emit } from "./events.js";
+import { MINIGAMES } from "../data/minigames.js";
 import { createLoop } from "./loop.js";
 import { getState } from "./state.js";
 import * as rng from "./rng.js";
@@ -82,6 +83,8 @@ function leaveCurrent() {
   current = null;
 }
 
+const MINI_IDS = new Set(MINIGAMES.map((g) => g.id));
+
 function show() {
   const [first, ...params] = parseHash();
   leaveCurrent();
@@ -154,6 +157,7 @@ function runGame(game, params = []) {
         rewardPresenter(granted, {
           onHome: goHome,
           onAgain: () => show(), // same hash: re-run the game from scratch
+          onGames: MINI_IDS.has(game.id) ? () => go("games") : null, // back to the 🎪 games room
         });
       }
       return granted;

@@ -17,6 +17,7 @@ import { carPic, propPic, readyPic } from "../../render/car-pics.js";
 import { PROPS } from "../../render/road-sprites.js";
 import { createWeather, drawWeather } from "./weather.js";
 import { createHud, showPodium } from "./hud.js";
+import { buddyBadge } from "../../screens/buddy-badge.js";
 
 const PLACE_SAY = [
   "Prvé miesto! Si víťaz!",
@@ -62,7 +63,7 @@ export default {
 
     const abilities = carAbilities();
     const race = createRace({ track, level, effects: raceEffects(carStats(), abilities, crewBonus()), rng: ctx.rng, short: !!ctx.state().cheats.shortRaces, abilities, boss, ease: rivalEase(track.id, level) });
-    const hud = createHud(wrap, race, { onExit: ctx.exit });
+    const hud = createHud(wrap, race, { onExit: ctx.exit, buddy: buddyBadge({ small: true, link: false }) });
     // The car looks exactly like in the showroom (plus the look of a complete set):
     // kind, paint, wheels, roof… and neon and trail.
     const look = { ...getLook(), ...setLook() };

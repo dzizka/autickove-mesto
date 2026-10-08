@@ -9,7 +9,7 @@ import { currentPlace } from "./physics.js";
 
 const PLAYER_COLOR = "#ff5a5f";
 
-export function createHud(root, race, { onExit }) {
+export function createHud(root, race, { onExit, buddy = null }) {
   const markers = [
     ...race.rivals.map((r) => (r.isBoss ? h("span", { class: "rh-dot boss", style: { background: r.color } }, r.icon) : h("span", { class: "rh-dot", style: { background: r.color } }))),
     h("span", { class: "rh-dot me", style: { background: PLAYER_COLOR } }, "🚗"),
@@ -29,7 +29,7 @@ export function createHud(root, race, { onExit }) {
     "div",
     { class: "race-hud" },
     h("div", { class: "rh-top" }, exit, track, medal),
-    h("div", { class: "rh-side" }, fuel, shields, coins),
+    h("div", { class: "rh-side" }, fuel, shields, coins, buddy), // buddy: the co-driver badge
     lights,
     arrows,
   );
@@ -81,7 +81,7 @@ export function showPodium(root, order, { place, unlocks, look, buddy }) {
   const steps = [1, 0, 2].map((i) => {
     const row = order[i];
     if (!row) return h("div");
-    const car = row.isPlayer ? carSidePic(look || {}, { passenger: buddy?.icon }) : carSidePic({ colorHex: row.color });
+    const car = row.isPlayer ? carSidePic(look || {}) : carSidePic({ colorHex: row.color });
     return h(
       "div",
       { class: `pd-step pd-${i + 1}${row.isPlayer ? " me" : ""}` },
@@ -99,7 +99,7 @@ export function showPodium(root, order, { place, unlocks, look, buddy }) {
     "div",
     { class: "podium", "data-testid": "podium", "data-place": String(place) },
     h("div", { class: "pd-stage" }, steps),
-    fourth && h("div", { class: `pd-fourth${fourth.isPlayer ? " me" : ""}` }, h("div", { class: "pd-car small" }, fourth.isPlayer ? carSidePic(look || {}, { passenger: buddy?.icon }) : carSidePic({ colorHex: fourth.color })), "🏁"),
+    fourth && h("div", { class: `pd-fourth${fourth.isPlayer ? " me" : ""}` }, h("div", { class: "pd-car small" }, fourth.isPlayer ? carSidePic(look || {}) : carSidePic({ colorHex: fourth.color })), "🏁"),
     extras,
   );
   root.append(el);

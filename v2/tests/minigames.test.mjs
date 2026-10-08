@@ -108,6 +108,9 @@ test("pexeso: pairs, a mistake, stars and the next level", async () => {
   const s = await page.evaluate(() => window.__game.state.getState());
   assert.equal(s.minigames.pexeso.level, 2);
   assert.ok(s.coins > 0);
+  // 🎪 goes back to the games room to pick another game
+  await page.getByTestId("reward-games").click();
+  await page.getByTestId("screen-games").waitFor();
   assert.deepEqual(page.errors, []);
   await page.context().close();
 });

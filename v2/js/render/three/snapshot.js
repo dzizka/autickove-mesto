@@ -6,6 +6,9 @@
 import * as THREE from "three";
 import { addLights, loadAny, getKitScale } from "./kit.js";
 import { buildCar, disposeCar } from "./car3d.js";
+import { RACE } from "../../data/tracks.js";
+
+const EL = ((RACE.carViewDeg ?? 34) * Math.PI) / 180;
 
 /** The side picture has exactly the 2D car's viewBox (240 × 124), twice as sharp. */
 export const SIDE_VB = [240, 124];
@@ -15,7 +18,7 @@ const MAX_PX = 1024;
 // where the camera looks from (towards the model's centre); the car faces +z
 const VIEWS = {
   side: { dir: [-0.84, 0.36, 0.41], up: [0, 1, 0] }, // left side, a little from the front: front points right
-  back: { dir: [0, 0.56, -0.83], up: [0, 1, 0], ppu: 240 }, // sharp enough for a 2× tablet screen // from behind and above (34°), like the race camera looks at the road
+  back: { dir: [0, Math.sin(EL), -Math.cos(EL)], up: [0, 1, 0], ppu: 240 }, // from behind, RACE.carViewDeg above; ppu sharp enough for a 2× tablet
   top: { dir: [0, 1, 0], up: [0, 0, 1], ppu: 150 }, // from above, the front points up
 };
 

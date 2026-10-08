@@ -12,7 +12,7 @@ import { crewDef, crewRarity, activeBuddy, buddyLook, abilityValue, xpToNext, is
 
 const ABILITY_SAY = { speed: "rýchlosť", handling: "ovládanie", armor: "odolnosť", fuel: "benzín", magnet: "magnet", luck: "šťastie" };
 
-function abilityIcon(def) {
+export function abilityIcon(def) {
   if (def.ability.kind === "stat") return STATS[def.ability.stat]?.icon || "⭐";
   return def.ability.kind === "coins" ? "🪙" : "🛡️";
 }
@@ -23,7 +23,7 @@ function abilitySay(def) {
 }
 
 /** Big buddy face with hat and glasses on top. */
-function buddyFace(entry, cls = "") {
+export function buddyFace(entry, cls = "") {
   const l = buddyLook(entry);
   return h(
     "span",
@@ -194,8 +194,12 @@ export default {
                 h("small", { class: "cost" }, ` 🍬${step.candy}`, b.level < step.level ? " 🔒" : ""),
               ),
             h("button", { class: "btn sky", "data-testid": "wardrobe-open", "aria-label": "Oblečenie", onclick: () => openWardrobe(getState().crew.owned[b.id], paint) }, "🧢🕶️"),
+            h("button", { class: "btn ghost", "data-testid": "buddy-home", "aria-label": "Nechať doma", onclick: () => (setActive(null), sfx.back(), speak(`${def.name} zostane doma.`), paint()) }, "🏠"),
           ),
         );
+      } else if (Object.keys(s.crew.owned).length) {
+        // buddies at home: an empty seat, pick one below
+        main = h("div", { class: "card buddy-empty", "data-testid": "buddy-seat", "aria-label": "Prázdne miesto" }, h("div", { class: "be-row" }, h("span", {}, "💺"), h("span", { class: "be-point" }, "👇")));
       } else {
         main = h("div", { class: "card buddy-empty", "aria-hidden": "true" }, h("div", { class: "be-row" }, h("span", {}, "🥚"), h("span", {}, "➡️"), h("span", {}, "🏁🏁🏁"), h("span", {}, "➡️"), h("span", {}, "🐣")));
       }
@@ -221,9 +225,16 @@ export default {
                   speak("Tohto kamaráta ešte nemáš. Vajíčka padajú od bossov a z truhlíc.");
                   return;
                 }
-                setActive(c.id);
-                sfx.tap();
-                speak(`${c.name} ide s tebou! ${c.name} ${abilitySay(c)}.`);
+                if (s.crew.active === c.id) {
+                  // tapped the buddy that rides along: it stays at home now
+                  setActive(null);
+                  sfx.back();
+                  speak(`${c.name} zostane doma.`);
+                } else {
+                  setActive(c.id);
+                  sfx.tap();
+                  speak(`${c.name} ide s tebou! ${c.name} ${abilitySay(c)}.`);
+                }
                 paint();
               },
             },

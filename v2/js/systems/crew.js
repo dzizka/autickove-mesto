@@ -165,8 +165,9 @@ export function evolve(id) {
   return true;
 }
 
+/** Put a buddy in the passenger seat, or nobody (id null: the buddy stays at home, no bonus). */
 export function setActive(id) {
-  if (!getState().crew.owned[id]) return false;
+  if (id !== null && !getState().crew.owned[id]) return false;
   update((s) => {
     s.crew.active = id;
   });

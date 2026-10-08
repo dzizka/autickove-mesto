@@ -8,7 +8,6 @@ import { speak, playNotes, sfx } from "../../core/audio.js";
 import { TRACKS } from "../../data/tracks.js";
 import { setLook } from "../../systems/stats.js";
 import { getLook, resolveLook } from "../../systems/tuning.js";
-import { activeBuddy, buddyLook } from "../../systems/crew.js";
 import { createDriveScene } from "./drive-scene.js";
 
 export const TEST_DRIVE_SECONDS = 14;
@@ -65,7 +64,7 @@ export function openTestDrive(look = { ...getLook(), ...setLook() }, { onClose }
       onClose?.();
     },
   });
-  scene = createDriveScene(canvas, { track, look, buddy: buddyLook(activeBuddy()) });
+  scene = createDriveScene(canvas, { track, look });
   resize();
   loop.start();
   speak("Skúšobná jazda! Ťukaj vľavo a vpravo.");

@@ -191,7 +191,7 @@ export function confetti(pieces = 60) {
 }
 
 /** End-of-game reward dialog: coins fly to the counter, then Home / Again. */
-export function rewardModal(result, { onHome, onAgain } = {}) {
+export function rewardModal(result, { onHome, onAgain, onGames } = {}) {
   const box = modal(
     [
       h("div", { class: "modal-icon bounce", "aria-hidden": "true" }, "🏆"),
@@ -202,9 +202,10 @@ export function rewardModal(result, { onHome, onAgain } = {}) {
       h(
         "div",
         { class: "modal-row" },
+        // 🔁 again first and biggest, then 🎪 back to the games room (small games), then 🏠 home
+        onAgain && h("button", { class: "btn grass big-choice", "data-testid": "reward-again", "aria-label": "Znova", onclick: () => onAgain() }, "🔁"),
+        onGames && h("button", { class: "btn plum", "data-testid": "reward-games", "aria-label": "Herňa", onclick: () => onGames() }, "🎪"),
         h("button", { class: "btn sun", "data-testid": "reward-home", "aria-label": "Domov", onclick: () => onHome?.() }, "🏠"),
-        onAgain &&
-          h("button", { class: "btn grass", "data-testid": "reward-again", "aria-label": "Znova", onclick: () => onAgain() }, "🔁"),
       ),
     ],
     { dismissible: false, testId: "reward-modal" },

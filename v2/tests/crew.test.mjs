@@ -170,13 +170,15 @@ test("races give eggs: the first one is sure in race 3, eggs tick and the buddy 
   assert.ok(buddy, "a buddy hatched and sits in the car");
   const icon = await page.evaluate(async () => (await import("./js/systems/crew.js")).buddyIcon(window.__game.state.getState().crew.owned[window.__game.state.getState().crew.active]));
 
-  // visible in the car: home, garage, and in the race
+  // the buddy rides along as a badge next to the car (not painted on it): home, garage, race
   await page.getByTestId("topbar-home").click();
-  assert.equal(await page.locator("[data-testid=home-car]").getAttribute("data-passenger"), icon);
+  assert.equal(await page.locator("[data-testid=home-car] [data-testid=buddy-badge]").getAttribute("data-buddy"), buddy);
   await page.getByTestId("home-garage").click();
-  assert.equal(await page.locator(".lift-car [data-testid=car-view]").getAttribute("data-passenger"), icon);
+  assert.equal(await page.locator(".lift-car [data-testid=buddy-badge]").getAttribute("data-buddy"), buddy);
+  assert.equal(await page.locator(".lift-car [data-testid=car-view]").getAttribute("data-passenger"), null, "no buddy on the car");
   await page.evaluate(() => (location.hash = "#/game/race/city/1"));
   await page.waitForFunction(() => window.__game.race?.phase === "racing");
+  assert.equal(await page.locator(".race-hud [data-testid=buddy-badge]").getAttribute("data-buddy"), buddy);
   assert.equal(await page.evaluate(() => window.__game.race.buddy?.icon), icon);
   await page.waitForTimeout(800);
   await screenshot(page, "390-race-buddy");
@@ -235,6 +237,16 @@ for (const width of WIDTHS) {
     assert.equal(await page.evaluate(() => window.__game.state.getState().coins), 300 - 80 - 100);
     assert.equal(await page.getByTestId("wear-hat-crown").isDisabled(), true, "too expensive");
     await page.getByRole("button", { name: "✖" }).click();
+    // the buddy can stay at home: no bonus, an empty seat next to the car
+    await page.getByTestId("buddy-home").click();
+    assert.equal(await page.evaluate(() => window.__game.state.getState().crew.active), null);
+    await page.getByTestId("buddy-seat").waitFor();
+    await page.getByTestId("buddy-kitten").click();
+    assert.equal(await page.evaluate(() => window.__game.state.getState().crew.active), "kitten");
+    await page.getByTestId("buddy-kitten").click(); // tapping the one in the car sends it home
+    assert.equal(await page.evaluate(() => window.__game.state.getState().crew.active), null);
+    await page.evaluate(() => (location.hash = "#/garage"));
+    assert.equal(await page.locator(".lift-car [data-testid=buddy-badge]").getAttribute("data-buddy"), "");
     assert.deepEqual(page.errors, []);
     await page.context().close();
   });

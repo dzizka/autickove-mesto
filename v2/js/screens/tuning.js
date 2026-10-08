@@ -10,9 +10,9 @@ import { canAfford } from "../systems/economy.js";
 import { itemsOf, getLook, resolveLook, isOwned, priceOf, select, buy, randomLook } from "../systems/tuning.js";
 import { carSidePic } from "../render/car-side.js";
 import { createCarView } from "../render/car-view.js";
+import { buddyBadge } from "./buddy-badge.js";
 import { openTestDrive } from "../games/race/test-drive.js";
 import { setLook } from "../systems/stats.js";
-import { activeBuddy, buddyLook } from "../systems/crew.js";
 
 const TABS = [CARS_TAB, ...TUNING];
 const MINI_CAR = new Set(["car", "pattern", "wheels", "wing", "neon"]);
@@ -47,11 +47,12 @@ export default {
 
     function paint() {
       const look = shownLook();
-      carView.setLook(look, { trail: look.trail !== "none", passenger: buddyLook(activeBuddy())?.icon });
+      carView.setLook(look, { trail: look.trail !== "none" });
       const stage = h(
         "div",
         { class: "showroom", "data-testid": "showroom" },
         h("div", { class: "spotlight", "aria-hidden": "true" }),
+        buddyBadge(),
         h("div", { class: "turntable", "aria-hidden": "true" }),
         h("div", { class: "show-car", "data-testid": "show-car" }, carView.el),
       );
