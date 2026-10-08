@@ -57,12 +57,22 @@
 .town-loading-car { font-size: 3rem; animation: town-loading 1.6s linear infinite; }
 @keyframes town-loading { from { transform: rotate(0deg) translateY(-70px) rotate(90deg); } to { transform: rotate(360deg) translateY(-70px) rotate(90deg); } }
 .town-3d { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+/* coins out of sight: an arrow at the edge points to them */
+.town-hint { position: absolute; top: 0; left: 0; z-index: 1; display: grid; place-items: center; width: 0; height: 0; pointer-events: none; }
+.town-hint[hidden] { display: none; }
+.town-hint > span { position: absolute; top: 0; left: 0; translate: -50% -50%; display: grid; place-items: center; }
+.town-hint > span:last-child { width: 52px; height: 52px; border-radius: 50%; background: rgba(255, 255, 255, .92); box-shadow: var(--shadow); font-size: 1.8rem; animation: hint-pulse 1s ease-in-out infinite; }
+.town-hint-arrow { width: 100px; height: 100px; }
+.town-hint-arrow::after { content: ""; position: absolute; right: 0; top: 50%; translate: 0 -50%; border-top: 16px solid transparent; border-bottom: 16px solid transparent; border-left: 22px solid #ffb800; filter: drop-shadow(0 2px 1px rgba(0, 0, 0, .3)); }
+@keyframes hint-pulse { 50% { transform: scale(1.12); } }
 .town-pad { position: absolute; right: 12px; bottom: 12px; display: grid; grid-template-areas: ". u ." "l . r" ". d ."; grid-template-columns: repeat(3, 68px); grid-template-rows: repeat(3, 68px); gap: 6px; }
 .town-pad button { border: 0; border-radius: 22px; background: rgba(255, 255, 255, .9); font-size: 2rem; box-shadow: 0 3px 8px rgba(0, 0, 0, .3); touch-action: none; cursor: pointer; }
 .town-pad button:active { transform: scale(.94); background: var(--sun, #ffd23f); }
 .town-pad .pad-u { grid-area: u; } .town-pad .pad-d { grid-area: d; } .town-pad .pad-l { grid-area: l; } .town-pad .pad-r { grid-area: r; }
+/* phone: ⬅️ ➡️ in the left corner, ⬆️ ⬇️ in the right one; the middle of the town stays free */
 @media (max-width: 600px) {
-  .town-pad { right: 50%; transform: translateX(50%); grid-template-columns: repeat(3, 60px); grid-template-rows: repeat(3, 60px); }
+  .town-pad { left: 10px; right: 10px; bottom: 10px; grid-template-areas: ". . . u" "l r . d"; grid-template-columns: 58px 58px 1fr 58px; grid-template-rows: 58px 58px; gap: 8px; pointer-events: none; }
+  .town-pad button { pointer-events: auto; font-size: 1.7rem; background: rgba(255, 255, 255, .85); }
 }
 
 /* ---------- album ---------- */

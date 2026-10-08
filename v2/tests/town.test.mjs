@@ -221,6 +221,20 @@ test("the town: a loading car first, WASD drives, GPU memory stays flat, a lost 
   await page.context().close();
 });
 
+test("coins out of sight: an arrow at the edge shows where they are", async () => {
+  const now = Date.now();
+  const page = await openGame(env.browser, env.server.url, { width: 390, storage: quiet({ level: 8, city: { buildings: { police: 1 }, rentAt: { police: now - 5 * 3600000 } } }) });
+  await page.getByTestId("home-city").click();
+  await page.getByTestId("town-loading").waitFor({ state: "detached", timeout: 30000 });
+  await page.waitForFunction(() => document.querySelector("[data-testid=town-hint]")?.dataset.shown === "true", null, { timeout: 10000 });
+  await screenshot(page, "390-town-hint");
+  // drive to the coins: the arrow goes away when they are on the screen
+  await page.evaluate(() => window.__game.town.driveToCoins("police"));
+  await page.waitForFunction(() => document.querySelector("[data-testid=town-hint]").dataset.shown === "false", null, { timeout: 10000 });
+  assert.deepEqual(page.errors, []);
+  await page.context().close();
+});
+
 test("the daily gift opens on the home screen once a day", async () => {
   const page = await openGame(env.browser, env.server.url, { width: 390, storage: quiet({ coins: 0, daily: { last: "2000-01-01", streak: 4 } }) });
   await page.getByTestId("daily-modal").waitFor();

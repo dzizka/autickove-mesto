@@ -158,6 +158,18 @@ for (const width of WIDTHS) {
   });
 }
 
+test("the race waits a moment for the 3D car before the countdown", async () => {
+  const page = await openGame(env.browser, env.server.url, { width: 1280, storage: quiet({ look: { car: "garbage", color: "pink" } }), hash: "#/game/race/city/1" });
+  await page.getByTestId("race-canvas").waitFor();
+  // when the countdown moves on, the picture of the child's car is ready (or 1.5 s passed)
+  const t0 = Date.now();
+  await page.waitForFunction(() => window.__game.race && window.__game.race.countdown < 2.5, null, { timeout: 15000 });
+  const ready = await page.evaluate(async () => (await import("./js/render/car-pics.js")).carPic(window.__game.race.look, "back").ready);
+  assert.ok(ready || Date.now() - t0 >= 1400, "the countdown waited for the 3D car");
+  assert.deepEqual(page.errors, []);
+  await page.context().close();
+});
+
 test("test drive: the car drives on an empty road, steers and the drive ends", async () => {
   const page = await openGame(env.browser, env.server.url, { width: 390, storage: quiet(), hash: "#/tuning" });
   await page.getByTestId("test-drive").click();

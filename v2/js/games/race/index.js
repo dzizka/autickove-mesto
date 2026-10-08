@@ -13,7 +13,7 @@ import { createTrail } from "../../render/effects.js";
 import { createRace, step, steer, finalOrder } from "./physics.js";
 import { M, PLAYER_Z, SEG, buildRoad, makeView, renderRoad, createBackdrop, drawBackdrop, fogDensity, segIndex } from "./road.js";
 import { drawScene, drawPlayer, drawHeadlights, drawSpeedLines, laneOffset, rivalKind, trafficKind, BOSS_KIND } from "./scene.js";
-import { carPic, propPic } from "../../render/car-pics.js";
+import { carPic, propPic, readyPic } from "../../render/car-pics.js";
 import { PROPS } from "../../render/road-sprites.js";
 import { createWeather, drawWeather } from "./weather.js";
 import { createHud, showPodium } from "./hud.js";
@@ -40,6 +40,7 @@ export function raceReward(race) {
 const BOSS_SAY = ["Hurá! Porazil si bossa!", "Boss bol tentoraz rýchlejší. Skús to znova!"];
 
 let cleanup = [];
+export const PIC_WAIT_MS = 1500;
 
 export default {
   id: "race",
@@ -71,6 +72,10 @@ export default {
     // pictures of the 3D cars and props are made during the countdown (2D until they are ready)
     const others = [...race.rivals.map((r) => ({ colorHex: r.color, car: r.isBoss ? BOSS_KIND : rivalKind(r.color) })), ...(track.traffic || []).map((c) => ({ colorHex: c, car: trafficKind(track, c) }))];
     for (const l of [look, ...others]) carPic(l, "back");
+    // the countdown waits (at most PIC_WAIT_MS) for the picture of the child's own 3D car,
+    // so the car does not change from the 2D drawing to 3D in front of the child
+    const ownPic = carPic(look, "back");
+    const waitUntil = performance.now() + PIC_WAIT_MS;
     for (const id of track.obstacles || []) if (PROPS[id]) propPic(PROPS[id].path);
     race.look = look;
     race.buddy = buddy; // test hook: the buddy rides along
@@ -212,6 +217,10 @@ export default {
         lastDt = dt;
         // Tests may speed time up; the simulation always uses small steps.
         const scale = Math.max(1, Math.min(20, Number(window.__game?.testTimeScale) || 1));
+        if (ownPic && !ownPic.failed && !readyPic(ownPic) && race.phase === "countdown" && scale === 1 && performance.now() < waitUntil) {
+          hud.update(); // the first red light stays on a moment longer
+          return;
+        }
         let left = dt * scale;
         while (left > 1e-6) {
           const d = Math.min(0.05, left);

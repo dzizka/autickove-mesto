@@ -145,6 +145,37 @@ export function createTown(host, { look, passenger = null, phase = "day", onLot,
     }
   }
 
+  // ---------- coins out of sight: an arrow at the edge shows where they wait ----------
+  const hint = document.createElement("div");
+  hint.className = "town-hint";
+  hint.dataset.testid = "town-hint";
+  hint.hidden = true;
+  hint.innerHTML = '<span class="town-hint-arrow" aria-hidden="true"></span><span aria-hidden="true">🪙</span>';
+  host.append(hint);
+  const arrow = hint.firstElementChild;
+  const ndc = new THREE.Vector3();
+  function pointToCoins(w, h) {
+    let best = null;
+    let bestD = Infinity;
+    for (const c of map.coins()) {
+      const d = c.position.distanceToSquared(car.mesh.position);
+      if (d < bestD) [best, bestD] = [c, d];
+    }
+    if (!best) return (hint.hidden = true), (hint.dataset.shown = "false");
+    ndc.copy(best.position).project(camera);
+    const inView = Math.abs(ndc.x) < 0.9 && Math.abs(ndc.y) < 0.88 && ndc.z < 1;
+    hint.hidden = inView;
+    hint.dataset.shown = String(!inView);
+    if (inView) return;
+    const sx = ((ndc.x + 1) / 2) * w;
+    const sy = ((1 - ndc.y) / 2) * h;
+    const m = 44; // keep the arrow fully on the screen
+    const x = Math.max(m, Math.min(w - m, sx));
+    const y = Math.max(m, Math.min(h - m * 2, sy)); // more room at the bottom (arrows, menu)
+    hint.style.transform = `translate(${x}px, ${y}px)`;
+    arrow.style.transform = `rotate(${Math.atan2(sy - h / 2, sx - w / 2)}rad)`;
+  }
+
   // ---------- camera ----------
   const focus = new THREE.Vector3(car.x, 0, car.z);
   function frame(dt) {
@@ -158,6 +189,8 @@ export function createTown(host, { look, passenger = null, phase = "day", onLot,
     focus.lerp(car.mesh.position, Math.min(1, dt * 3));
     camera.position.set(focus.x, 24 * far, focus.z + 8 * far);
     camera.lookAt(focus.x, 0, focus.z);
+    camera.updateMatrixWorld();
+    pointToCoins(w, h);
   }
   frame(1);
 
@@ -246,6 +279,7 @@ export function createTown(host, { look, passenger = null, phase = "day", onLot,
       renderer.dispose();
       renderer.forceContextLoss?.();
       canvas.remove();
+      hint.remove();
     },
   };
 }
