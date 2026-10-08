@@ -11,6 +11,7 @@ import { hintSlot } from "../systems/garage.js";
 import { PILLARS } from "../data/menu.js";
 import { openParentGate } from "./test-menu.js";
 import { t, num } from "../core/i18n.js";
+import { helpButton } from "./help.js";
 
 const HOLD_MS = 3000;
 
@@ -65,6 +66,7 @@ export function mountTopbar(header, nav) {
     coins,
     h("div", { class: "spacer" }),
     h("button", { class: "icon-btn", "data-testid": "repeat-voice", "aria-label": "Zopakovať", onclick: repeat }, "🔊"),
+    helpButton(),
     gearButton(),
   );
 

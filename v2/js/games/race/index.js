@@ -19,6 +19,7 @@ import { createWeather, drawWeather } from "./weather.js";
 import { createHud, showPodium } from "./hud.js";
 import { buddyBadge } from "../../screens/buddy-badge.js";
 import { t } from "../../core/i18n.js";
+import { helpOpen } from "../../screens/help.js";
 
 const PLACE_SAY = [
   "Prvé miesto! Si víťaz!",
@@ -219,6 +220,7 @@ export default {
         lastDt = dt;
         // Tests may speed time up; the simulation always uses small steps.
         const scale = Math.max(1, Math.min(20, Number(window.__game?.testTimeScale) || 1));
+        if (helpOpen()) return; // the adult reads the ❔ help: the race waits
         if (ownPic && !ownPic.failed && !readyPic(ownPic) && race.phase === "countdown" && scale === 1 && performance.now() < waitUntil) {
           hud.update(); // the first red light stays on a moment longer
           return;

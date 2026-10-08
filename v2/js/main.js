@@ -6,6 +6,7 @@ import * as rng from "./core/rng.js";
 import * as audio from "./core/audio.js";
 import * as i18n from "./core/i18n.js";
 import * as ui from "./core/ui.js";
+import { startHints, hint } from "./core/hint.js";
 import * as router from "./core/router.js";
 import { loopStats, frameTiming } from "./core/loop.js";
 import { exportCode, parseCode } from "./core/save-transfer.js";
@@ -160,7 +161,8 @@ events.on("gameFinished", () => checkTrophies());
 
 // The one allowed global: hooks for automated tests (DESIGN-v2 §2). Set before the router
 // starts, so a game opened straight from the URL can register its hooks too.
-window.__game = { state, events, rng, audio, ui, router, loopStats, frameTiming, exportCode, parseCode };
+startHints(); // the demo hand 👆 for children who cannot hear or read (part 20)
+window.__game = { state, events, rng, audio, ui, router, loopStats, frameTiming, exportCode, parseCode, hint };
 
 startPlayClock();
 startBackdrop(); // the calm moving sky behind the menu screens

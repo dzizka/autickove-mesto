@@ -8,8 +8,9 @@ import { exportCode, parseCode } from "../core/save-transfer.js";
 import { goHome, go } from "../core/router.js";
 import { t, LANGS, getLang } from "../core/i18n.js";
 
-function toggleRow({ key, icon, label, say }) {
-  const on = () => getState().settings[key] !== false;
+function toggleRow({ key, icon, label, say, off = false }) {
+  // off: the switch is off unless turned on (captions); the others are on unless turned off
+  const on = () => (off ? getState().settings[key] === true : getState().settings[key] !== false);
   const btn = h("button", {
     class: "switch",
     role: "switch",
@@ -152,6 +153,7 @@ export default {
           toggleRow({ key: "sound", icon: "🔔", label: "Zvuky", say: "Zvuky sú zapnuté." }),
           toggleRow({ key: "voice", icon: "🗣️", label: "Hlas", say: "Hlas je zapnutý." }),
           toggleRow({ key: "motion", icon: "🎞️", label: "Pohyblivé pozadie", say: "Pozadie sa hýbe." }),
+          toggleRow({ key: "captions", icon: "💬", label: "Titulky", say: "Titulky sú zapnuté.", off: true }),
           !hasLangVoice() && h("p", { class: "small" }, getLang() === "sk" ? "Tento prehliadač nemá slovenský hlas. Hra číta náhradným hlasom." : "Tento prehliadač nemá anglický hlas. Hra číta náhradným hlasom."),
         ),
         h(

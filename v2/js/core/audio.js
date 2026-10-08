@@ -3,6 +3,7 @@
 
 import { getState } from "./state.js";
 import { auto, getLang, langDef } from "./i18n.js";
+import { emit } from "./events.js";
 
 let ctx = null;
 let master = null;
@@ -98,6 +99,7 @@ export function speak(text, { interrupt = true } = {}) {
   if (!text) return;
   text = auto(text);
   lastSpoken = text;
+  emit("spoke", { text }); // 💬 captions show it, also with the voice off (part 20)
   const synth = window.speechSynthesis;
   if (!voiceOn() || !synth) return;
   try {

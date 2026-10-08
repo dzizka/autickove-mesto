@@ -3,7 +3,7 @@
 // car first and bought with coins; looks never change stats. Each car kind has its own
 // part levels from the garage, so the badge shows the power of the car on the platform.
 
-import { h, toast, confetti } from "../core/ui.js";
+import { h, toast, confetti, soundWaves } from "../core/ui.js";
 import { speak, sfx, playNotes } from "../core/audio.js";
 import * as rng from "../core/rng.js";
 import { TUNING, CARS_TAB } from "../data/tuning.js";
@@ -75,7 +75,7 @@ export default {
       const buttons = h(
         "div",
         { class: "show-buttons" },
-        h("button", { class: "btn sun", "data-testid": "horn", "aria-label": "Trúbiť", onclick: () => playNotes(resolveLook(look).horn.notes) }, "📯 Trúbiť"),
+        h("button", { class: "btn sun", "data-testid": "horn", "aria-label": "Trúbiť", onclick: () => (playNotes(resolveLook(look).horn.notes), soundWaves(root.querySelector("[data-testid=show-car]"))) }, "📯 Trúbiť"),
         h(
           "button",
           {
@@ -186,7 +186,7 @@ export default {
               "data-owned": String(owned),
               "aria-label": item.name || item.id,
               onclick: () => {
-                if (tab === "horn") playNotes(item.notes);
+                if (tab === "horn") playNotes(item.notes), soundWaves(root.querySelector("[data-testid=show-car]"));
                 else sfx.tap();
                 carView.focus(tab);
                 if (owned) {

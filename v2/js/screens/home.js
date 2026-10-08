@@ -1,6 +1,6 @@
 // Home screen: the child's car driving on the moving road (home-road.js) and big buttons.
 
-import { h, bigButton, flyCoins } from "../core/ui.js";
+import { h, bigButton, flyCoins, soundWaves } from "../core/ui.js";
 import { speak, sfx } from "../core/audio.js";
 import * as rng from "../core/rng.js";
 import { getState } from "../core/state.js";
@@ -32,6 +32,7 @@ export default {
       dataset: { car: r.car.id, neon: r.neon.id },
       onclick: () => {
         playNotes(r.horn.notes);
+        soundWaves(stage);
         road?.hop();
       },
     });

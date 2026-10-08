@@ -3,7 +3,7 @@
 // (part 16); without WebGL it is a street with a coin bubble to tap. Buildings open games.
 // Sky follows the real time of day.
 
-import { h, modal, closeModal, flyCoins, confetti, toast } from "../core/ui.js";
+import { h, modal, closeModal, flyCoins, confetti, toast, soundWaves } from "../core/ui.js";
 import { speak, sfx, playNotes } from "../core/audio.js";
 import { getState } from "../core/state.js";
 import { go, startGame, getGames, isUnlocked } from "../core/router.js";
@@ -226,7 +226,7 @@ export default {
         const look = i === 0 ? getLook() : { ...colorLook(COLORS[i % COLORS.length]), car: resolveLook({ car: kind }).car.id };
         return h(
           "button",
-          { class: `city-car${i % 2 ? " back" : ""}`, "aria-label": "Auto", style: { animationDuration: `${14 + i * 5}s`, animationDelay: `${-i * 4}s` }, onclick: () => playNotes(resolveLook(look).horn.notes) },
+          { class: `city-car${i % 2 ? " back" : ""}`, "aria-label": "Auto", style: { animationDuration: `${14 + i * 5}s`, animationDelay: `${-i * 4}s` }, onclick: (e) => (playNotes(resolveLook(look).horn.notes), soundWaves(e.currentTarget)) },
           carSidePic(look),
         );
       });

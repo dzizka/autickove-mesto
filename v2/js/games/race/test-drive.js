@@ -2,7 +2,7 @@
 // whole look on an empty city road for a short while. No rivals, no obstacles, no rewards;
 // tap left or right to change lanes, 📯 honks. Ends by itself or with ✖.
 
-import { h, modal, closeModal } from "../../core/ui.js";
+import { h, modal, closeModal, soundWaves } from "../../core/ui.js";
 import { createLoop } from "../../core/loop.js";
 import { speak, playNotes, sfx } from "../../core/audio.js";
 import { TRACKS } from "../../data/tracks.js";
@@ -17,7 +17,7 @@ export function openTestDrive(look = getLook(), { onClose } = {}) {
   const looks = resolveLook(look);
   const canvas = h("canvas", { class: "drive-canvas", "data-testid": "test-drive-canvas" });
   const close = h("button", { class: "btn ghost drive-close", "data-testid": "test-drive-close", "aria-label": "Koniec", onclick: () => closeModal() }, "✖");
-  const horn = h("button", { class: "btn sun drive-horn", "aria-label": "Trúbiť", onclick: () => playNotes(looks.horn.notes) }, "📯");
+  const horn = h("button", { class: "btn sun drive-horn", "aria-label": "Trúbiť", onclick: () => (playNotes(looks.horn.notes), soundWaves(canvas)) }, "📯");
   const time = h("div", { class: "drive-time", "aria-hidden": "true" }, h("i"));
   const wrap = h("div", { class: "drive-wrap" }, canvas, time, close, horn);
 

@@ -4,6 +4,7 @@
 import { h } from "../../core/ui.js";
 import { miniProgress, miniReward, setPick } from "../../systems/minigames.js";
 import { MINI } from "../../data/minigames.js";
+import { helpButton } from "../../screens/help.js";
 
 export function createShell(view, ctx, game) {
   // the level the child picked (#/game/pexeso/2), else its last pick, else the recommendation
@@ -23,6 +24,7 @@ export function createShell(view, ctx, game) {
       h("span", { class: "mini-level", "aria-label": "Obtiažnosť" }, Array.from({ length: MINI.levels }, (_, i) => h("i", { class: i < level ? "on" : "" }, "★"))),
       h("div", { class: "mini-progress", "data-testid": "mini-progress" }, fill),
       h("button", { class: "icon-btn", "data-testid": "mini-repeat", "aria-label": "Zopakovať", onclick: () => ctx.audio.repeat() }, "🔊"),
+      helpButton(),
     ),
     stage,
   );
@@ -64,11 +66,18 @@ export function createShell(view, ctx, game) {
   };
 }
 
-/** A little shake on a wrong answer (restarts the animation). */
+/** A little shake on a wrong answer (restarts the animation), with a ✖ you can see (part 20). */
 export function shake(el) {
   el.classList.remove("shake");
   void el.offsetWidth;
   el.classList.add("shake");
+  const r = el.getBoundingClientRect?.();
+  if (!r) return;
+  const x = h("span", { class: "wrong-mark", "aria-hidden": "true" }, "✖");
+  x.style.left = `${r.left + r.width / 2}px`;
+  x.style.top = `${r.top + r.height / 2}px`;
+  document.body.append(x);
+  setTimeout(() => x.remove(), 900);
 }
 
 /** n dots (counting help), in rows of five. */

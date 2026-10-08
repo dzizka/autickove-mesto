@@ -6,6 +6,7 @@ import { h } from "../../core/ui.js";
 import { MEDALS } from "../../data/tracks.js";
 import { carSidePic } from "../../render/car-side.js";
 import { currentPlace } from "./physics.js";
+import { helpButton } from "../../screens/help.js";
 
 const PLAYER_COLOR = "#ff5a5f";
 
@@ -29,7 +30,7 @@ export function createHud(root, race, { onExit, buddy = null }) {
     "div",
     { class: "race-hud" },
     h("div", { class: "rh-top" }, exit, track, medal),
-    h("div", { class: "rh-side" }, fuel, shields, coins, buddy), // buddy: the co-driver badge
+    h("div", { class: "rh-side" }, fuel, shields, coins, buddy, helpButton("icon-btn rh-help")), // buddy: the co-driver badge; ❔ for the adult
     lights,
     arrows,
   );

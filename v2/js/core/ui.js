@@ -3,6 +3,8 @@
 
 import { sfx, speak } from "./audio.js";
 import { auto } from "./i18n.js";
+import { on } from "./events.js";
+import { getState } from "./state.js";
 
 // texts on the page are translated by their Slovak wording (core/i18n.js)
 const TEXT_ATTRS = new Set(["aria-label", "title", "placeholder"]);
@@ -237,4 +239,30 @@ export function crashModal(result, { onHome } = {}) {
   );
   sfx.oops();
   speak("Ups, auto sa zaseklo. Mince si si nechal. Poďme domov.");
+}
+
+// ---------- 💬 captions (part 20): what the game says, as a bubble, when switched on ----------
+let captionEl = null;
+let captionTimer = null;
+on("spoke", ({ text }) => {
+  if (!getState().settings.captions || !text) return;
+  captionEl?.remove();
+  clearTimeout(captionTimer);
+  captionEl = h("div", { class: "caption", "data-testid": "caption", role: "status" }, text);
+  document.body.append(captionEl);
+  captionTimer = setTimeout(() => captionEl?.remove(), Math.min(7000, 1800 + text.length * 70));
+});
+
+/**
+ * 📯 Sound you can see (part 20): rings spread from an element when it makes a sound
+ * (a horn), for children who cannot hear it.
+ */
+export function soundWaves(el) {
+  if (!el?.getBoundingClientRect) return;
+  const r = el.getBoundingClientRect();
+  const w = h("span", { class: "sound-waves", "aria-hidden": "true", "data-testid": "sound-waves" }, h("i"), h("i"), h("i"));
+  w.style.left = `${r.left + r.width / 2}px`;
+  w.style.top = `${r.top + r.height * 0.4}px`;
+  document.body.append(w);
+  setTimeout(() => w.remove(), 1300);
 }

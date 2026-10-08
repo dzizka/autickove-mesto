@@ -117,3 +117,13 @@ body[data-mode="game"] .view { max-width: none; padding: 0; height: 100dvh; }
   .bottom-nav { gap: 2px; padding: 4px; }
   .nav-btn { width: min(50px, calc((100vw - 34px) / 7)); height: min(50px, calc((100vw - 34px) / 7)); font-size: 1.55rem; }
 }
+
+/* part 20: the top bar has ❓ too; on a phone everything gets a bit smaller instead of squeezed */
+.topbar > * { flex-shrink: 0; }
+.topbar .spacer { flex-shrink: 1; min-width: 0; }
+@media (max-width: 420px) {
+  .topbar { gap: 5px; padding-left: 8px; padding-right: 8px; }
+  .topbar .icon-btn { width: 44px; height: 44px; font-size: 1.25rem; }
+  .level-badge { width: 48px; height: 48px; }
+  .coins { padding-left: 10px; padding-right: 12px; }
+}

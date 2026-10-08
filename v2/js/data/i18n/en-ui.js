@@ -216,6 +216,8 @@ export const EN_UI = {
   "Hlas je zapnutý.": "The voice is on.",
   "Pohyblivé pozadie": "Moving background",
   "Pozadie sa hýbe.": "The background moves.",
+  Titulky: "Captions",
+  "Titulky sú zapnuté.": "Captions are on.",
   "Tento prehliadač nemá slovenský hlas. Hra číta náhradným hlasom.": "This browser has no Slovak voice. The game reads with another voice.",
   "Tento prehliadač nemá anglický hlas. Hra číta náhradným hlasom.": "This browser has no English voice. The game reads with another voice.",
   "📤 Preniesť postup": "📤 Move progress",

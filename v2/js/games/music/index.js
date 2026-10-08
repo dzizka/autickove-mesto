@@ -56,6 +56,7 @@ export default {
         busy = false;
         sign.textContent = "👆";
         sh.stage.dataset.turn = "child";
+        sh.stage.dataset.next = String(melody[0]); // where the demo hand points (part 20)
         ctx.speak("Teraz ty!");
       }, 600 + melody.length * MUSIC.gap[L]);
       sh.stage.dataset.turn = "cars";
@@ -66,7 +67,10 @@ export default {
       honk(i);
       if (melody[pos] === i) {
         pos++;
-        if (pos < melody.length) return;
+        if (pos < melody.length) {
+          sh.stage.dataset.next = String(melody[pos]);
+          return;
+        }
         busy = true;
         sh.progress((melody.length - MUSIC.start[L] + 1) / (goal - MUSIC.start[L] + 1));
         if (melody.length >= goal) {
