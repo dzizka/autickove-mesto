@@ -156,7 +156,7 @@ function drawBack(g, r, w, plain) {
   if (!plain) {
     // spoiler (the formula always has its big rear wing)
     const size = formula ? Math.max(1.3, r.wing.size || 0) : r.wing.size || 0;
-    if (size && !r.wing.feather) {
+    if (size) {
       const ws = w * (0.55 + 0.3 * size);
       const wy = formula ? -lift - w * 0.72 : top + w * 0.02;
       const wc = safeColor(r.wing.color, "#2b2d33");
@@ -166,17 +166,6 @@ function drawBack(g, r, w, plain) {
       rr(g, wc, -ws / 2, wy - w * 0.05, ws, w * 0.06, w * 0.02);
       if (r.wing.double) rr(g, wc, -ws / 2, wy - w * 0.14, ws, w * 0.05, w * 0.02);
       top = Math.min(top, wy - w * (r.wing.double ? 0.14 : 0.05));
-    }
-    if (r.wing.feather) {
-      for (const sx of [-1, 1]) {
-        g.fillStyle = "#ffffff";
-        g.beginPath();
-        g.ellipse(sx * w * 0.62, top + w * 0.15, w * 0.24, w * 0.1, sx * -0.5, 0, 6.29);
-        g.fill();
-        g.beginPath();
-        g.ellipse(sx * w * 0.56, top + w * 0.26, w * 0.18, w * 0.08, sx * -0.3, 0, 6.29);
-        g.fill();
-      }
     }
     const stickerY = kind === "fire" || kind === "truck" ? -lift - w * 0.55 : kind === "formula" ? -lift - w * 0.27 : kind === "rocket" ? -lift - w * 0.45 : -lift - w * 0.42;
     const stickerX = kind === "jeep" ? w * 0.3 : 0;

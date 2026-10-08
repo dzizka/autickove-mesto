@@ -64,8 +64,11 @@
 .buy-bar.poor .buy-price { color: var(--tomato-dark); }
 
 .tune-panel { width: 100%; max-width: none; margin: 0; display: grid; gap: 12px; }
-.tune-tabs { display: flex; flex-wrap: wrap; gap: 6px; }
-.tune-tabs .chip { flex: 0 0 auto; }
+/* category tabs: big buttons, 5 in a row on a phone (part 18: they were tiny) */
+.tune-tabs { display: grid; grid-template-columns: repeat(auto-fill, minmax(54px, 1fr)); gap: 8px; }
+.tune-tabs .chip { display: grid; place-items: center; height: auto; min-height: 52px; padding: 4px; border: 3px solid #e4e9f0; border-radius: 16px; background: #fff; font: inherit; font-size: 1.6rem; cursor: pointer; box-shadow: 0 3px 0 #e4e9f0; }
+.tune-tabs .chip.active { border-color: var(--sky); background: #e3f7fa; box-shadow: 0 3px 0 var(--sky); }
+.tune-tabs .chip:active { transform: translateY(2px); }
 .tune-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 10px; }
 .tile {
   position: relative;
@@ -126,3 +129,4 @@
 .drive-time { position: absolute; left: 84px; right: 84px; top: 30px; height: 12px; border-radius: 999px; background: rgba(255, 255, 255, .45); overflow: hidden; }
 .drive-time i { display: block; height: 100%; width: 100%; background: var(--sun, #ffd23f); }
 .show-power { position: absolute; top: 12px; right: 12px; z-index: 3; }
+.tab-svg { width: 1.6em; height: 1.1em; vertical-align: middle; }

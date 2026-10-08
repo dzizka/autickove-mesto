@@ -6,6 +6,8 @@ import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
 import { CARS } from "../js/data/cars.js";
 import { TUNING } from "../js/data/tuning.js";
+import "../js/core/state.js"; // first: state and tuning import each other
+import { resolveLook, fitsCar } from "../js/systems/tuning.js";
 import { setup, openGame, screenshot, WIDTHS } from "./helpers.mjs";
 
 let env;
@@ -18,18 +20,30 @@ after(async () => {
 
 const quiet = { settings: { sound: false, voice: false } };
 
-test("data: the Car Kit cars, 9 categories with 5–15 options, free first item, unique ids", () => {
+test("data: the Car Kit cars, 9 categories with 5–21 options, free first item, unique ids", () => {
   assert.ok(CARS.length >= 15);
   for (const kind of ["sedan", "jeep", "taxi", "police", "fire", "formula", "truck", "future"]) assert.ok(CARS.some((c) => c.id === kind), kind);
   assert.equal(CARS[0].price, 0);
   assert.deepEqual(TUNING.map((c) => c.id), ["color", "pattern", "wheels", "wing", "sticker", "roof", "neon", "trail", "horn"]);
   for (const c of TUNING) {
-    assert.ok(c.items.length >= 5 && c.items.length <= 15, `${c.id}: ${c.items.length}`);
+    assert.ok(c.items.length >= 5 && c.items.length <= 21, `${c.id}: ${c.items.length}`);
     assert.equal(c.items[0].price, 0, `${c.id} first item is free`);
     assert.equal(new Set(c.items.map((i) => i.id)).size, c.items.length, `${c.id} ids unique`);
     assert.ok(c.items.slice(1).every((i) => i.price > 0));
   }
   assert.ok(TUNING[0].items.some((i) => i.special === "rainbow") && TUNING[0].items.some((i) => i.special === "galaxy"));
+});
+
+test("part 18: spoilers and roof items only on cars where they fit", () => {
+  const look = { wing: "big", roof: "crown" };
+  assert.deepEqual([resolveLook({ ...look, car: "sedan" }).wing.id, resolveLook({ ...look, car: "sedan" }).roof.id], ["big", "crown"]);
+  assert.deepEqual([resolveLook({ ...look, car: "fire" }).wing.id, resolveLook({ ...look, car: "fire" }).roof.id], ["none", "none"]);
+  assert.deepEqual([resolveLook({ ...look, car: "van" }).wing.id, resolveLook({ ...look, car: "van" }).roof.id], ["none", "crown"]);
+  for (const c of CARS) {
+    assert.equal(typeof c.fit?.spoiler, "boolean", `${c.id} says if a spoiler fits`);
+    assert.equal(fitsCar("color", c.id), true);
+  }
+  assert.ok(CARS.filter((c) => c.fit.spoiler).length >= 3, "a few cars take a spoiler");
 });
 
 test("every car × every option renders from the side and from above", async () => {
@@ -81,7 +95,7 @@ test("every neon and every trail in a race: no error, not even a caught one", as
     const trails = itemsOf("trail").map((i) => i.id);
     const cars = itemsOf("car").map((i) => i.id);
     const n = Math.max(neons.length, trails.length);
-    return Array.from({ length: n }, (_, i) => ({ neon: neons[i % neons.length], trail: trails[i % trails.length], car: cars[i % cars.length], color: ["rainbow", "galaxy", "gold", "black"][i % 4], pattern: ["flames", "camo", "stars", "hearts"][i % 4], wheels: i % 2 ? "monster" : "neon", wing: i % 2 ? "double" : "angel", roof: "crown", sticker: "dino" }));
+    return Array.from({ length: n }, (_, i) => ({ neon: neons[i % neons.length], trail: trails[i % trails.length], car: cars[i % cars.length], color: ["rainbow", "galaxy", "gold", "black"][i % 4], pattern: ["flames", "camo", "stars", "hearts"][i % 4], wheels: i % 2 ? "monster" : "neon", wing: i % 2 ? "double" : "big", roof: "crown", sticker: "dino" }));
   });
   const tracks = ["city", "night", "snow", "space"];
   for (let i = 0; i < combos.length; i++) {

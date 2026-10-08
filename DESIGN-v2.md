@@ -151,12 +151,12 @@ Vo v1 sa našli tri chyby (sú opravené vo v1). Vo v2 im treba predísť od za�
   - Na trati s viacerými pruhmi je viac prekážok a premávky, aby bola rovnako hustá. Vždy ostane aspoň jeden voľný pruh.
   - V noci je hmla tmavá a cestu osvetľujú svetlá auta. Legendárny Svetlomet posunie hmlu ďalej.
   - Prekážky, mince, kanistre, rampy a autá sú kreslené vlastnými tvarmi, nie emoji. Emoji ostávajú pri ikonách power-upov, kamarátov a bossov.
-  - Auto hráča je vidieť zozadu so všetkým, čo dieťa kúpilo: druh auta, farba, vzor, kolesá, krídlo, nálepka, vec na streche, neón a stopa.
+  - Auto hráča je vidieť zozadu so všetkým, čo dieťa kúpilo: druh auta, farba, vzor, kolesá, spojler, nálepka, vec na streche, neón a stopa.
 
 ### 4.2 Dva druhy úprav auta
 
 - **Diely auta (od časti 17, garáž B):** každé auto má 6 dielov. Dieťa ich v Garáži vylepšuje za súčiastky 🔩 z pretekov. Diely nemenia vzhľad auta.
-- **Vzhľad (tuning):** farba, vzor, kolesá, krídlo, nálepky, strecha, neón, stopa, klaksón. Kupuje sa za mince a **nemá štatistiky**. Dieťa si vždy môže nechať auto, ktoré sa mu páči (bod 5).
+- **Vzhľad (tuning):** farba, vzor, kolesá, spojler, nálepky, strecha, neón, stopa, klaksón. Kupuje sa za mince a **nemá štatistiky**. Dieťa si vždy môže nechať auto, ktoré sa mu páči (bod 5).
 - **Prečo garáž B** (rozhodnutie rodiča po skúšaní): náhodné diely so vzácnosťou, taškou, porovnávaním a setmi boli pre 6-ročné dieťa zložité a nebavili ho. Teraz platí jedno pravidlo: **ťukni na diel a diel je silnejší.**
 
 ### 4.3 Sloty a štatistiky
@@ -234,9 +234,15 @@ Každá schopnosť má vlastný zvuk a efekt, aby ju dieťa spoznalo. Pri aute v
 ## 5. Vzhľad auta (tuning)
 
 - **Autá:** 18 druhov z balíka Kenney Car Kit (osobné, džíp, taxík, dodávka, polícia, športiak, sanitka, hasiči, pikap, smetiari, traktor, pretekár, formula, luxusné auto, kamión, dve motokáry s mimozemšťanom, raketové auto), ktoré sa kupujú za mince (bod 14). Druh auta je len vzhľad, štatistiky dávajú diely.
-- **Kategórie vzhľadu:** farba (aj dúhová a galaxia), vzor, kolesá, krídlo, nálepka, strecha, neón, stopa za autom, klaksón. Každá s 5 až 15 možnosťami.
-- **Showroom:** auto na otočnej plošine pod reflektorom, tlačidlá 📯 Trúbiť a 🎲 Náhodne.
+- **Kategórie vzhľadu:** farba (aj dúhová, galaxia a strieborná), vzor, kolesá, spojler, nálepka, vec na streche, neón, stopa za autom, klaksón. Každá s 7 až 21 možnosťami, v mriežke od najlacnejšej.
+- **Showroom:** auto na otočnej plošine pod reflektorom, tlačidlá 📯 Trúbiť, 🛣️ Jazda a 🎲 Náhodne. Kategórie sú veľké tlačidlá (5 v rade na telefóne).
 - **Zobrazenie:** všetko, čo si dieťa kúpi, vidno v pretekoch aj v Garáži.
+- **Časť 18, upratanie tuningu (po skúšaní, rozhodnutie rodiča):**
+  - **Len spojlery, žiadne krídla.** Anjelské krídla zmizli, lebo nie všetky deti pochopia, že „krídlo“ je spojler. Kategória sa volá Spojler a má vlastnú kreslenú ikonu (spojler nemá emoji). Je 6 spojlerov (malý, veľký, čierny, biely, dvojitý, zlatý).
+  - **Nie každý diel sedí na každé auto.** Spojler sa dá dať len na autá s kufrom (autíčko, športiak, pretekár). Vec na strechu nejde na autá, ktoré majú na streche vlastné svetlá, tabuľu alebo rebrík (taxík, polícia, sanitka, hasiči, smetiari, kamión), ani na otvorené autá (formula, motokáry, raketové auto). Na takom aute sa záložka nezobrazí a diel sa nenakreslí; výber ostane uložený pre iné auto. Pravidlá sú v `data/cars.js` (`fit`).
+  - **Diely sedia na skutočnom tvare auta.** Spojler stojí na kufri, vec na streche na najvyššom mieste strechy a nálepky sú na dverách. Miesto sa nájde lúčmi na model auta, takže to sedí na každom druhu.
+  - **Nové veci:** 3D veci na strechu (krabica, šachovnicová vlajka, otáznikový box, banán, točiaca sa zlatá minca) z balíkov Car Kit, Racing Kit a Toy Car Kit (CC0, `v2/models/racingkit`, `v2/models/toykit`), ďalších 6 farieb, 6 nálepiek, 2 neóny, 3 stopy a 2 klaksóny. Surfista zo strechy zmizol (človek na aute).
+  - **Staré uloženie (v13 → v14):** kto mal kúpené anjelské krídla alebo surfistu, dostane mince späť (700 a 300).
 
 ---
 
@@ -332,6 +338,7 @@ Každá časť sa po dokončení nahrá na GitHub a dá sa hneď hrať na `/v2/`
 | **15b. Obrázky áut všade** | Obrázky toho istého 3D auta zboku, zozadu a zhora všade v hre (domov, preteky, hry, mesto), kužele a krabice ako prekážky, skúšobná jazda vo Vzhľade (bod 14) | auto vyzerá všade rovnako |
 | **16. Mesto zhora** | Mesto z City Kit modelov zhora, dieťa jazdí po uliciach a zbiera nájomné (bod 14) | dieťa nájde a vyberie mince samo |
 | **17. Garáž B** | Každé auto má 6 dielov s úrovňou 1 až 20, ťuknutie vylepší diel za súčiastky, schopnosti na úrovni 6 a 14, truhlica so súčiastkami a zlatým dielom, migrácia uloženia v13 (body 4.2 až 4.8) | dieťa vylepší auto bez čítania a nové auto má vlastný postup |
+| **18. Upratanie tuningu** | Len spojlery, diely len na autá, kam sedia, umiestnenie podľa tvaru auta, nové veci, veľké záložky (bod 5) | každý diel na každom aute vyzerá, že tam patrí |
 
 ---
 

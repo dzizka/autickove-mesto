@@ -203,3 +203,16 @@ img.car-pic { display: block; width: 100%; height: auto; -webkit-user-drag: none
 .buddy-badge.small .buddy-badge-ab { width: 24px; height: 24px; font-size: .8rem; }
 .lift-car, .home-stage { position: relative; }
 .modal-row .btn.big-choice { min-width: 112px; font-size: 2.2rem; }
+
+/* ---------- chips: round choice buttons (tuning tabs, colouring modes) ---------- */
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip {
+  min-width: var(--tap);
+  height: var(--tap);
+  border: 3px solid transparent;
+  border-radius: 999px;
+  background: var(--paper-soft);
+  font-size: 1.4rem;
+  cursor: pointer;
+}
+.chip.active { border-color: var(--sky); background: #e3f7fa; }

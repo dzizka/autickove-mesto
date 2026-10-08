@@ -94,7 +94,6 @@ function wingSvg(w, [x, y], outline) {
   if (!w.size) return "";
   const s = w.size;
   const c = w.color || "#2b2d33";
-  if (w.feather) return `<path d="M${x + 10} ${y} C${x - 18} ${y - 26 * s} ${x - 30} ${y - 8} ${x - 14} ${y - 4} C${x - 26} ${y - 2} ${x - 20} ${y + 6} ${x + 4} ${y + 2} Z" fill="#fff" stroke="#c9d1dc" stroke-width="2"/>`;
   const blade = (dy) => `<rect x="${x - 14 * s}" y="${y - 12 * s - dy}" width="${30 * s}" height="${5 * s}" rx="2" fill="${c}" stroke="${outline}" stroke-width="1.5"/>`;
   return `<rect x="${x - 2}" y="${y - 12 * s}" width="4" height="${12 * s}" fill="${c}"/>${blade(0)}${w.double ? blade(9 * s) : ""}`;
 }

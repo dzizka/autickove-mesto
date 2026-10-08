@@ -28,10 +28,24 @@ export function defaultOwned() {
   return Object.fromEntries(CATEGORY_IDS.map((c) => [c, [itemsOf(c)[0].id]]));
 }
 
-/** Full item objects for every category; safe for any input (missing, old or broken). */
+/** Categories that only fit some cars (part 18): tuning category → CARS[].fit key. */
+const FIT_KEY = { wing: "spoiler", roof: "roof" };
+
+/** Does this tuning category fit this car kind? (A spoiler needs a trunk, a roof item a free roof.) */
+export function fitsCar(cat, carId) {
+  const key = FIT_KEY[cat];
+  if (!key) return true;
+  return getItem("car", carId).fit?.[key] !== false;
+}
+
+/**
+ * Full item objects for every category; safe for any input (missing, old or broken).
+ * A part that does not fit the car kind is left off (the choice stays saved for other cars).
+ */
 export function resolveLook(look = {}) {
   const src = look && typeof look === "object" ? look : {};
-  return Object.fromEntries(CATEGORY_IDS.map((c) => [c, getItem(c, src[c])]));
+  const carId = getItem("car", src.car).id;
+  return Object.fromEntries(CATEGORY_IDS.map((c) => [c, fitsCar(c, carId) ? getItem(c, src[c]) : itemsOf(c)[0]]));
 }
 
 /** A simple look for rivals and podium cars: just a colour. */

@@ -8,7 +8,7 @@ import { speak, sfx, playNotes } from "../core/audio.js";
 import * as rng from "../core/rng.js";
 import { TUNING, CARS_TAB } from "../data/tuning.js";
 import { canAfford } from "../systems/economy.js";
-import { itemsOf, getLook, resolveLook, isOwned, priceOf, select, buy, randomLook } from "../systems/tuning.js";
+import { itemsOf, getLook, resolveLook, isOwned, priceOf, select, buy, randomLook, fitsCar } from "../systems/tuning.js";
 import { carSidePic } from "../render/car-side.js";
 import { createCarView } from "../render/car-view.js";
 import { buddyBadge } from "./buddy-badge.js";
@@ -18,10 +18,20 @@ import { powerBadge } from "./stat-panel.js";
 
 const TABS = [CARS_TAB, ...TUNING];
 const MINI_CAR = new Set(["car", "pattern", "wheels", "wing", "neon"]);
-const SAY = { car: "Autá", color: "Farba", pattern: "Vzor", wheels: "Kolesá", wing: "Krídlo", sticker: "Nálepka", roof: "Strecha", neon: "Neón", trail: "Stopa", horn: "Klaksón" };
+const SAY = { car: "Autá", color: "Farba", pattern: "Vzor", wheels: "Kolesá", wing: "Spojler", sticker: "Nálepka", roof: "Strecha", neon: "Neón", trail: "Stopa", horn: "Klaksón" };
 
 let tab = "car";
 let carView = null;
+
+/** A tab icon: an emoji, or a small drawn spoiler (there is no emoji for one). */
+function tabIcon(icon) {
+  if (icon !== "spoiler") return icon;
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.setAttribute("viewBox", "0 0 40 28");
+  svg.setAttribute("class", "tab-svg");
+  svg.innerHTML = '<rect x="3" y="4" width="34" height="7" rx="3" fill="#ff5a5f" stroke="#2b2d33" stroke-width="2"/><rect x="9" y="10" width="4" height="10" fill="#2b2d33"/><rect x="27" y="10" width="4" height="10" fill="#2b2d33"/><rect x="2" y="20" width="36" height="5" rx="2" fill="#9aa0a6"/>';
+  return svg;
+}
 
 function swatch(item) {
   const bg = item.special === "rainbow" ? "linear-gradient(90deg,#ff5a5f,#ffd23f,#3ebd4a,#2ab7ca,#8f5bd8)" : item.special === "galaxy" ? "radial-gradient(circle at 40% 40%,#7b5cff,#3b2f7a 50%,#140f33)" : item.special === "gold" ? "linear-gradient(180deg,#fff2a8,#e8b923,#a87b00)" : item.value;
@@ -128,10 +138,14 @@ export default {
         );
       }
 
+      // a spoiler or a roof item does not fit every car: its tab is not shown then (part 18)
+      const carId = resolveLook(look).car.id;
+      const tabsHere = TABS.filter((t) => fitsCar(t.id, carId));
+      if (!tabsHere.some((t) => t.id === tab)) tab = "car";
       const tabs = h(
         "div",
         { class: "tune-tabs", role: "tablist" },
-        TABS.map((t) =>
+        tabsHere.map((t) =>
           h(
             "button",
             {
@@ -149,7 +163,7 @@ export default {
                 paint();
               },
             },
-            t.icon,
+            tabIcon(t.icon),
           ),
         ),
       );
@@ -158,7 +172,8 @@ export default {
       const grid = h(
         "div",
         { class: `tune-grid cat-${tab}`, "data-testid": "tune-grid" },
-        itemsOf(tab).map((item) => {
+        // cheapest first (the free one is always first)
+        [...itemsOf(tab)].sort((a, b) => a.price - b.price).map((item) => {
           const owned = isOwned(tab, item.id);
           const on = current[tab] === item.id;
           const previewing = preview && preview.cat === tab && preview.id === item.id;

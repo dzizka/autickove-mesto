@@ -209,7 +209,7 @@ export function carSprite(look, width, { dpr = 1 } = {}) {
 
   if (!traffic && !colorHex) {
     if (r.wing.size) {
-      g.fillStyle = safeColor(r.wing.color, r.wing.feather ? "#ffffff" : "#2b2d33");
+      g.fillStyle = safeColor(r.wing.color, "#2b2d33");
       const ws = w0 * (0.6 + 0.35 * r.wing.size);
       g.fillRect(w / 2 - ws / 2, h * 0.9, ws, h * 0.05);
       if (r.wing.double) g.fillRect(w / 2 - ws / 2, h * 0.83, ws, h * 0.04);

@@ -1,6 +1,8 @@
-// Appearance tuning (DESIGN-v2 §5): 9 categories, 5–15 options each, bought with coins.
+// Appearance tuning (DESIGN-v2 §5): 9 categories, 7–21 options each, bought with coins.
 // No stats here. The first item of every category is free and owned from the start.
-// 3D (part 15a): wheels and wings name a Car Kit `model`; `tint` colours a wheel.
+// 3D (part 15a): wheels and spoilers name a Car Kit `model`; `tint` colours a wheel.
+// Roof items with a `model` are 3D models (path under v2/models), the rest are emoji.
+// Spoilers and roof items only fit some cars (data/cars.js `fit`, part 18).
 
 export const TUNING = [
   {
@@ -22,6 +24,12 @@ export const TUNING = [
       { id: "black", value: "#2b2d33", price: 150 },
       { id: "gold", value: "#e8b923", special: "gold", price: 500 },
       { id: "rainbow", value: "#ff5a5f", special: "rainbow", price: 800 },
+      { id: "mint", value: "#7ee0c3", price: 90 },
+      { id: "sky", value: "#8fd3ff", price: 90 },
+      { id: "coral", value: "#ff7f6b", price: 90 },
+      { id: "lilac", value: "#c9a7f5", price: 110 },
+      { id: "brown", value: "#8d6e63", price: 110 },
+      { id: "silver", value: "#b8c0cc", price: 200 },
       { id: "galaxy", value: "#3b2f7a", special: "galaxy", price: 1000 },
     ],
   },
@@ -56,16 +64,18 @@ export const TUNING = [
     ],
   },
   {
+    // a rear spoiler (the id stays "wing" for old saves); only on cars with a trunk (fit.spoiler)
     id: "wing",
-    name: "Krídlo",
-    icon: "🪽",
+    name: "Spojler",
+    icon: "spoiler", // drawn as a small spoiler (screens/tuning.js), there is no emoji for it
     items: [
       { id: "none", price: 0 },
       { id: "small", size: 1, model: "debris-spoiler-a", price: 150 },
       { id: "big", size: 1.6, model: "debris-spoiler-b", price: 300 },
+      { id: "black", size: 1.3, color: "#2b2d33", model: "debris-spoiler-b", price: 250 },
+      { id: "white", size: 1.1, color: "#f4f6f8", model: "debris-spoiler-a", price: 250 },
       { id: "double", size: 1.3, double: true, model: "debris-spoiler-a", price: 450 },
       { id: "gold", size: 1.4, color: "#e8b923", model: "debris-spoiler-b", price: 600 },
-      { id: "angel", size: 1.2, feather: true, icon: "🪽", price: 700 },
     ],
   },
   {
@@ -85,6 +95,12 @@ export const TUNING = [
       { id: "heart", icon: "💖", price: 80 },
       { id: "rainbow", icon: "🌈", price: 120 },
       { id: "crown", icon: "👑", price: 200 },
+      { id: "rocket", icon: "🚀", price: 90 },
+      { id: "dog", icon: "🐶", price: 80 },
+      { id: "flower", icon: "🌸", price: 70 },
+      { id: "ball", icon: "⚽", price: 70 },
+      { id: "panda", icon: "🐼", price: 90 },
+      { id: "butterfly", icon: "🦋", price: 90 },
     ],
   },
   {
@@ -93,13 +109,17 @@ export const TUNING = [
     icon: "🎩",
     items: [
       { id: "none", icon: "", price: 0 },
+      { id: "box", icon: "📦", model: "carkit/box", height: 0.32, price: 120 },
+      { id: "flag", icon: "🏁", model: "racingkit/flagCheckersSmall", height: 0.6, price: 150 },
       { id: "siren", icon: "🚨", price: 200 },
-      { id: "crown", icon: "👑", price: 500 },
-      { id: "duck", icon: "🦆", price: 250 },
       { id: "party", icon: "🎉", price: 200 },
       { id: "antenna", icon: "📡", price: 150 },
-      { id: "surf", icon: "🏄", price: 300 },
+      { id: "mystery", icon: "❓", model: "toykit/item-box", height: 0.42, price: 250 },
+      { id: "banana", icon: "🍌", model: "toykit/item-banana", height: 0.4, price: 250 },
+      { id: "duck", icon: "🦆", price: 250 },
+      { id: "coin", icon: "🪙", model: "toykit/item-coin-gold", height: 0.42, spin: true, price: 350 },
       { id: "dino", icon: "🦕", price: 400 },
+      { id: "crown", icon: "👑", price: 500 },
     ],
   },
   {
@@ -113,6 +133,8 @@ export const TUNING = [
       { id: "green", value: "#47ff6a", price: 250 },
       { id: "yellow", value: "#ffe53b", price: 250 },
       { id: "purple", value: "#a15bff", price: 300 },
+      { id: "white", value: "#ffffff", price: 300 },
+      { id: "red", value: "#ff3b3b", price: 300 },
       { id: "fire", value: "#ff7a1a", special: "fire", price: 500 },
       { id: "rainbow", value: "#ff5a5f", special: "rainbow", price: 900 },
     ],
@@ -130,6 +152,9 @@ export const TUNING = [
       { id: "hearts", icon: "💖", style: "emoji", price: 350 },
       { id: "stars", icon: "⭐", style: "emoji", price: 350 },
       { id: "notes", icon: "🎵", style: "emoji", price: 350 },
+      { id: "snow", icon: "❄️", style: "emoji", price: 350 },
+      { id: "leaves", icon: "🍃", style: "emoji", price: 300 },
+      { id: "flowers", icon: "🌸", style: "emoji", price: 350 },
       { id: "rainbow", icon: "🌈", style: "rainbow", price: 800 },
     ],
   },
@@ -146,6 +171,8 @@ export const TUNING = [
       { id: "duck", icon: "🦆", price: 120, notes: [[620, 0.12, "sawtooth"], [560, 0.14, "sawtooth"], [620, 0.12, "sawtooth"]] },
       { id: "melody", icon: "🎵", price: 300, notes: [[523, 0.12, "triangle"], [659, 0.12, "triangle"], [784, 0.12, "triangle"], [1047, 0.25, "triangle"]] },
       { id: "siren", icon: "🚨", price: 400, notes: [[600, 0.3, "sine"], [900, 0.3, "sine"], [600, 0.3, "sine"], [900, 0.3, "sine"]] },
+      { id: "train", icon: "🚂", price: 250, notes: [[392, 0.35, "sawtooth"], [330, 0.5, "sawtooth"]] },
+      { id: "cat", icon: "🐱", price: 200, notes: [[700, 0.08, "triangle"], [900, 0.2, "triangle"], [650, 0.25, "triangle"]] },
     ],
   },
 ];

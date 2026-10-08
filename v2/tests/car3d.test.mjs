@@ -23,7 +23,18 @@ test("every car is a Car Kit model with a 2D shape, wheels and wings have models
   for (let i = 1; i < CARS.length; i++) assert.ok(CARS[i].price >= CARS[i - 1].price, "sorted by price");
   const items = (id) => TUNING.find((t) => t.id === id).items;
   for (const w of items("wheels")) assert.ok(existsSync(model(w.model)), `wheel ${w.id}`);
-  for (const w of items("wing").slice(1)) assert.ok(w.icon || existsSync(model(w.model)), `wing ${w.id}`);
+  for (const w of items("wing").slice(1)) assert.ok(existsSync(model(w.model)), `spoiler ${w.id}`);
+  for (const r of items("roof").filter((i) => i.model)) assert.ok(existsSync(new URL(`../models/${r.model}.glb`, import.meta.url)), `roof ${r.id}`);
+});
+
+test("part 18: no wings, and old saves get the coins for the angel wings and the surfer back", () => {
+  const ids = (cat) => TUNING.find((t) => t.id === cat).items.map((i) => i.id);
+  assert.ok(!ids("wing").includes("angel") && !ids("roof").includes("surf"));
+  const s = migrate({ version: 13, coins: 5, look: { car: "sedan", wing: "angel" }, owned: { wing: ["none", "angel", "big"], roof: ["none", "surf"] } });
+  assert.equal(s.coins, 5 + 700 + 300);
+  assert.deepEqual([s.owned.wing, s.owned.roof], [["none", "big"], ["none"]]);
+  assert.equal(migrate({ version: 13, coins: 5, owned: { roof: ["none", "surf"] } }).coins, 305);
+  assert.equal(migrate({ version: 13, coins: 5 }).coins, 5);
 });
 
 test("old saves: the rocket becomes the rocket car and stays bought", () => {
@@ -76,7 +87,7 @@ for (const width of WIDTHS) {
 }
 
 test("without WebGL the 2D car stays and everything still works", async () => {
-  const page = await openGame(env.browser, env.server.url, { width: 390, storage: quiet({ look: { car: "tractor", wing: "big" } }), hash: "#/tuning" });
+  const page = await openGame(env.browser, env.server.url, { width: 390, storage: quiet({ look: { car: "tractor", wing: "big" }, owned: { car: ["sedan", "tractor"], wing: ["none", "big"] } }), hash: "#/tuning" });
   await page.context().addInitScript(() => {
     const get = HTMLCanvasElement.prototype.getContext;
     HTMLCanvasElement.prototype.getContext = function (type, ...rest) {
@@ -92,6 +103,11 @@ test("without WebGL the 2D car stays and everything still works", async () => {
   assert.ok(await view.locator("svg.car-side").isVisible());
   assert.equal(await page.locator("canvas.car-3d").count(), 0, "no 3D canvas");
   assert.equal(await page.locator(".tile-car img").count(), 0);
+  // the tractor has no trunk: no spoiler tab; the sedan has one
+  assert.equal(await page.getByTestId("tab-wing").count(), 0);
+  assert.equal(await view.getAttribute("data-wing"), "none", "the saved spoiler is not drawn on the tractor");
+  await page.getByTestId("item-car-sedan").click();
+  assert.equal(await view.getAttribute("data-wing"), "big");
   await page.getByTestId("tab-wing").click();
   await page.getByTestId("item-wing-none").click();
   assert.equal(await view.getAttribute("data-wing"), "none");

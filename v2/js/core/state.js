@@ -10,7 +10,7 @@ import { defaultQuests } from "../systems/quests.js";
 import { RENAMED_CARS } from "../data/cars.js";
 
 export const STORAGE_KEY = "autickove-mesto-v2";
-export const CURRENT_VERSION = 13;
+export const CURRENT_VERSION = 14;
 
 /** Local date as YYYY-MM-DD (the same format as the play log). */
 export function todayKey(date = new Date()) {
@@ -125,6 +125,20 @@ const MIGRATIONS = {
       for (const k of ["firstEpic", "firstLegend", "legends6", "fullSet", "allSets", "plus5"]) delete out.trophies[k];
     }
     if (isPlainObject(s.quests) && Array.isArray(s.quests.active)) out.quests = { ...s.quests, active: s.quests.active.filter((q) => !["dismantle3", "equip1"].includes(q?.id)) };
+    return out;
+  },
+  // v13 → v14: tuning clean-up (part 18). The angel wings and the surfer on the roof are gone;
+  // a child who bought them gets the coins back.
+  13: (s) => {
+    const out = { ...s, version: 14 };
+    const owned = isPlainObject(s.owned) ? s.owned : {};
+    const has = (cat, id) => Array.isArray(owned[cat]) && owned[cat].includes(id);
+    const refund = (has("wing", "angel") ? 700 : 0) + (has("roof", "surf") ? 300 : 0);
+    if (refund) {
+      out.coins = Math.max(0, Number(s.coins) || 0) + refund;
+      const drop = (cat, id) => (Array.isArray(owned[cat]) ? owned[cat].filter((x) => x !== id) : owned[cat]);
+      out.owned = { ...owned, wing: drop("wing", "angel"), roof: drop("roof", "surf") };
+    }
     return out;
   },
 };

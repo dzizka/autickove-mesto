@@ -133,28 +133,34 @@ export const SHAPES = {
   },
 };
 
-const car = (id, name, icon, price, model, shape) => ({ id, name, icon, price, model, shape, ...SHAPES[shape] });
+// fit (play-test: not every tuning part fits every car): spoiler = a rear spoiler can sit on the
+// trunk; roof = there is a free roof for a roof item (not on cars with their own lights, sign or
+// ladder, and not on open cars). A part that does not fit is simply not shown on that car.
+const ALL = { spoiler: true, roof: true };
+const ROOF = { spoiler: false, roof: true };
+const NONE = { spoiler: false, roof: false };
+const car = (id, name, icon, price, model, shape, fit) => ({ id, name, icon, price, model, shape, fit, ...SHAPES[shape] });
 
 // sorted by price; the first one is free
 export const CARS = [
-  car("sedan", "Autíčko", "🚗", 0, "sedan", "sedan"),
-  car("jeep", "Džíp", "🚙", 400, "suv", "jeep"),
-  car("taxi", "Taxík", "🚕", 600, "taxi", "taxi"),
-  car("van", "Dodávka", "🚐", 700, "van", "jeep"),
-  car("police", "Polícia", "🚓", 900, "police", "police"),
-  car("hatch", "Športiak", "⚡", 1000, "hatchback-sports", "sedan"),
-  car("ambulance", "Sanitka", "🚑", 1100, "ambulance", "jeep"),
-  car("fire", "Hasiči", "🚒", 1300, "firetruck", "fire"),
-  car("pickup", "Pikap", "🛻", 1400, "truck", "jeep"),
-  car("garbage", "Smetiari", "♻️", 1500, "garbage-truck", "truck"),
-  car("tractor", "Traktor", "🚜", 1600, "tractor", "jeep"),
-  car("sports", "Pretekár", "🏁", 1700, "sedan-sports", "sedan"),
-  car("formula", "Formula", "🏎️", 1800, "race", "formula"),
-  car("luxury", "Luxusné auto", "💎", 2000, "suv-luxury", "jeep"),
-  car("truck", "Kamión", "🚚", 2200, "delivery", "truck"),
-  car("alien", "Mimozemšťan", "👽", 2500, "kart-oobi", "formula"),
-  car("alien2", "Mimozemšťan 2", "👾", 2600, "kart-oozi", "formula"),
-  car("future", "Raketové auto", "🚀", 3000, "race-future", "rocket"),
+  car("sedan", "Autíčko", "🚗", 0, "sedan", "sedan", ALL),
+  car("jeep", "Džíp", "🚙", 400, "suv", "jeep", ROOF),
+  car("taxi", "Taxík", "🚕", 600, "taxi", "taxi", NONE),
+  car("van", "Dodávka", "🚐", 700, "van", "jeep", ROOF),
+  car("police", "Polícia", "🚓", 900, "police", "police", NONE),
+  car("hatch", "Športiak", "⚡", 1000, "hatchback-sports", "sedan", ALL),
+  car("ambulance", "Sanitka", "🚑", 1100, "ambulance", "jeep", NONE),
+  car("fire", "Hasiči", "🚒", 1300, "firetruck", "fire", NONE),
+  car("pickup", "Pikap", "🛻", 1400, "truck", "jeep", ROOF),
+  car("garbage", "Smetiari", "♻️", 1500, "garbage-truck", "truck", NONE),
+  car("tractor", "Traktor", "🚜", 1600, "tractor", "jeep", ROOF),
+  car("sports", "Pretekár", "🏁", 1700, "sedan-sports", "sedan", ALL),
+  car("formula", "Formula", "🏎️", 1800, "race", "formula", NONE),
+  car("luxury", "Luxusné auto", "💎", 2000, "suv-luxury", "jeep", ROOF),
+  car("truck", "Kamión", "🚚", 2200, "delivery", "truck", NONE),
+  car("alien", "Mimozemšťan", "👽", 2500, "kart-oobi", "formula", NONE),
+  car("alien2", "Mimozemšťan 2", "👾", 2600, "kart-oozi", "formula", NONE),
+  car("future", "Raketové auto", "🚀", 3000, "race-future", "rocket", NONE),
 ];
 
 /** Old car ids that were replaced (save migration v10 → v11). */
